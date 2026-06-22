@@ -33,7 +33,7 @@ jobs:
         run: python math/scripts/generate_par_sheet.py --game novaforged --sims 500000 --out par-sheet.md
 
       - name: Upload PAR sheet artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: novaforged-par-sheet
           path: par-sheet.md
