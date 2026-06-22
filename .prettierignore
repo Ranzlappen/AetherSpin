@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build / generated output
+dist/
+build/
+.svelte-kit/
+.turbo/
+dist-stake/
+
+# Generated math library + vendored SDK engine
+math/library/
+math/engine/
+
+# Data files (machine-generated, not hand-formatted)
+*.csv
+*.jsonl
+
+# Misc
+pnpm-lock.yaml
+*.log

@@ -1,0 +1,18 @@
+# CODEOWNERS — default reviewers for AetherSpin.
+# Replace the placeholder owners below with real GitHub usernames / teams.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repos-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything.
+*                       @Ranzlappen
+
+# Math engine + game math.
+/math/                  @Ranzlappen
+/shared/games/          @Ranzlappen
+
+# Frontend web client.
+/frontend/              @Ranzlappen
+
+# CI, scripts, and root tooling.
+/.github/               @Ranzlappen
+/scripts/               @Ranzlappen

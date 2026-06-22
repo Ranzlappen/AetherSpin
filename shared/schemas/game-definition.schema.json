@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aetherspin.dev/schemas/game-definition.schema.json",
+  "title": "AetherSpin Game Definition",
+  "description": "Canonical, single-source-of-truth definition for an AetherSpin slot game, consumed by both the Python math engine and the TypeScript frontend.",
+  "type": "object",
+  "required": ["id", "displayName", "version", "engine", "currency", "bet", "betModes", "symbols", "paytable", "paylines", "scatter", "features"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "displayName": { "type": "string" },
+    "version": { "type": "string" },
+    "studio": { "type": "string" },
+    "theme": { "type": "string" },
+    "description": { "type": "string" },
+    "engine": {
+      "type": "object",
+      "required": ["type", "numReels", "numRows", "wincapMultiplier", "rtpTarget"],
+      "properties": {
+        "type": { "type": "string", "enum": ["lines", "ways", "cluster", "scatter"] },
+        "numReels": { "type": "integer", "minimum": 1 },
+        "numRows": { "type": "integer", "minimum": 1 },
+        "wincapMultiplier": { "type": "number", "minimum": 1 },
+        "rtpTarget": { "type": "number", "minimum": 0, "maximum": 1 },
+        "volatility": { "type": "string", "enum": ["low", "medium", "high", "very-high"] }
+      }
+    },
+    "currency": {
+      "type": "object",
+      "required": ["default", "apiAmountMultiplier", "bookAmountMultiplier"],
+      "properties": {
+        "default": { "type": "string" },
+        "apiAmountMultiplier": { "type": "integer" },
+        "bookAmountMultiplier": { "type": "integer" }
+      }
+    },
+    "bet": {
+      "type": "object",
+      "required": ["levels", "minBet", "maxBet"],
+      "properties": {
+        "defaultLevelIndex": { "type": "integer", "minimum": 0 },
+        "levels": { "type": "array", "items": { "type": "number" }, "minItems": 1 },
+        "minBet": { "type": "number" },
+        "maxBet": { "type": "number" },
+        "stepBet": { "type": "number" }
+      }
+    },
+    "betModes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "cost"],
+        "properties": {
+          "name": { "type": "string" },
+          "cost": { "type": "number", "minimum": 0 },
+          "label": { "type": "string" },
+          "isBuyBonus": { "type": "boolean" }
+        }
+      }
+    },
+    "symbols": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "kind"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "kind": { "type": "string", "enum": ["wild", "scatter", "high", "low", "bonus"] },
+          "color": { "type": "string" },
+          "substitutes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "paytable": {
+      "type": "object",
+      "additionalProperties": { "type": "object", "additionalProperties": { "type": "number" } }
+    },
+    "paylines": {
+      "type": "array",
+      "items": { "type": "array", "items": { "type": "integer", "minimum": 0 } }
+    },
+    "scatter": {
+      "type": "object",
+      "required": ["symbol", "minToTrigger", "pays"],
+      "properties": {
+        "symbol": { "type": "string" },
+        "minToTrigger": { "type": "integer", "minimum": 1 },
+        "pays": { "type": "object", "additionalProperties": { "type": "number" } }
+      }
+    },
+    "features": { "type": "object" }
+  }
+}

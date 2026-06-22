@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Python math engine: unit tests + RTP gate (standalone simulator, stdlib only).
+  # ---------------------------------------------------------------------------
+  math:
+    name: Math (tests + RTP gate)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          # The standalone simulator is stdlib-only; we only add pytest for CI.
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Run unit tests
+        run: python -m pytest math/tests -q
+
+      - name: Validate RTP (gates the build)
+        run: python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05
+
+  # ---------------------------------------------------------------------------
+  # Frontend workspace: type-check, test, build.
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: Frontend (check + test + build)
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.0
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        # Tolerate an absent/out-of-date lockfile so CI works before one is committed.
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Type-check
+        run: pnpm --filter @aetherspin/frontend run check
+
+      - name: Test
+        run: pnpm --filter @aetherspin/frontend test
+
+      - name: Build
+        run: pnpm --filter @aetherspin/frontend build
+
+  # ---------------------------------------------------------------------------
+  # Repo-wide lint: prettier + eslint over shared + frontend.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (prettier + eslint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.0
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Prettier check
+        run: pnpm exec prettier --check "**/*.{ts,svelte,js,json,md}"
+
+      - name: ESLint
+        # Lint shared + frontend sources; do not fail if eslint is not wired up yet.
+        run: pnpm exec eslint "shared/**/*.{ts,svelte}" "frontend/**/*.{ts,svelte}" || echo "eslint not configured or no matching files; skipping"

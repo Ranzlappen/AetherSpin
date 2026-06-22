@@ -1,0 +1,20 @@
+[project]
+name = "aetherspin-math"
+version = "1.0.0"
+description = "AetherSpin standalone slot math engine + Stake Engine math-sdk game implementations"
+requires-python = ">=3.11"
+readme = "README.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["simulator", "."]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["engine", "library"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

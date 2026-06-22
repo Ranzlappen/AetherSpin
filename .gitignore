@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+frontend/.svelte-kit/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Official math-sdk engine (cloned by scripts/setup-math.sh, not vendored)
+math/engine/
+
+# Generated math library output (regenerate with the simulator)
+math/library/*/
+!math/library/.gitkeep
+
+# Packaged Stake Engine upload bundles
+dist-stake/
+
+# Env & secrets
+.env
+.env.local
+*.local
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.log

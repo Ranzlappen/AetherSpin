@@ -1,0 +1,40 @@
+name: Math Validation (deep)
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly at 03:17 UTC.
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: math-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deep-validation:
+    name: Deep RTP validation + PAR sheet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Deep RTP validation (1,000,000 sims)
+        run: python math/scripts/validate_rtp.py --game novaforged --sims 1000000 --tol 0.03
+
+      - name: Generate PAR sheet (500,000 sims)
+        run: python math/scripts/generate_par_sheet.py --game novaforged --sims 500000 --out par-sheet.md
+
+      - name: Upload PAR sheet artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: novaforged-par-sheet
+          path: par-sheet.md
+          if-no-files-found: error
