@@ -6,7 +6,7 @@
 # and richer reporting.
 
 # Numerical / data analysis (optional: PAR sheets, distribution analysis)
-numpy>=1.26
+numpy>=2.4.6
 pandas>=2.1
 
 # Testing & quality
