@@ -1,9 +1,9 @@
 ---
 name: Feature request
 about: Suggest a new game feature, mechanic, or tooling improvement
-title: "[Feature] "
+title: '[Feature] '
 labels: enhancement
-assignees: ""
+assignees: ''
 ---
 
 ## Problem / motivation

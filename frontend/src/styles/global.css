@@ -1,0 +1,123 @@
+:root {
+  --bg: #05010f;
+  --bg-panel: rgba(12, 6, 34, 0.72);
+  --bg-panel-solid: #0c0622;
+  --neon-cyan: #7df9ff;
+  --neon-magenta: #ff45e0;
+  --neon-gold: #ffd166;
+  --neon-violet: #b388ff;
+  --text: #eaf6ff;
+  --text-dim: #9bb0d6;
+  --danger: #ff5470;
+  --radius: 14px;
+  --shadow-neon: 0 0 18px rgba(125, 249, 255, 0.35);
+  --font: "Rajdhani", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--text);
+  border: none;
+  background: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.neon-text {
+  text-shadow:
+    0 0 6px currentColor,
+    0 0 14px currentColor;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid rgba(125, 249, 255, 0.22);
+  border-radius: var(--radius);
+  backdrop-filter: blur(8px);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(125, 249, 255, 0.14), rgba(125, 249, 255, 0.04));
+  border: 1px solid rgba(125, 249, 255, 0.4);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.btn:not(:disabled):hover {
+  box-shadow: var(--shadow-neon);
+  transform: translateY(-1px);
+}
+
+.btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  border-color: var(--neon-magenta);
+  background: linear-gradient(180deg, rgba(255, 69, 224, 0.28), rgba(255, 69, 224, 0.08));
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

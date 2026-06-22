@@ -4,7 +4,20 @@
   "title": "AetherSpin Game Definition",
   "description": "Canonical, single-source-of-truth definition for an AetherSpin slot game, consumed by both the Python math engine and the TypeScript frontend.",
   "type": "object",
-  "required": ["id", "displayName", "version", "engine", "currency", "bet", "betModes", "symbols", "paytable", "paylines", "scatter", "features"],
+  "required": [
+    "id",
+    "displayName",
+    "version",
+    "engine",
+    "currency",
+    "bet",
+    "betModes",
+    "symbols",
+    "paytable",
+    "paylines",
+    "scatter",
+    "features"
+  ],
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
     "displayName": { "type": "string" },

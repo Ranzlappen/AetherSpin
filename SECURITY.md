@@ -8,7 +8,7 @@ Stake Engine game.
 
 - **All randomness and all payouts are determined server-side** by the certified
   RGS using the uploaded math library (books + lookup tables). The frontend only
-  *replays* the outcome the server already committed to.
+  _replays_ the outcome the server already committed to.
 - The book a round resolves to, the `payoutMultiplier`, and the balance are
   **authoritative from the RGS**. The client must treat its local mock
   (`frontend/src/core/mockRgs.ts`) as a dev-only convenience and never as a

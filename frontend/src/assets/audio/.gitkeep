@@ -1,0 +1,2 @@
+# Drop named audio files here (spin.mp3, win.mp3, ...) and register them in
+# src/core/sound.ts SOUND_SOURCES. The game runs silently without them.

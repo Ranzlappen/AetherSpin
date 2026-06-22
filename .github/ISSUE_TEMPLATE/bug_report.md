@@ -1,9 +1,9 @@
 ---
 name: Bug report
 about: Report a defect in the math engine, frontend, or tooling
-title: "[Bug] "
+title: '[Bug] '
 labels: bug
-assignees: ""
+assignees: ''
 ---
 
 ## Summary

@@ -7,7 +7,7 @@
  * `game_events.py` is kept consistent with).
  */
 
-export type GameType = "base" | "free";
+export type GameType = 'base' | 'free';
 
 /** board[reel][row] symbol id, top -> bottom. */
 export type Board = string[][];
@@ -21,7 +21,7 @@ export interface LineWin {
 }
 
 export interface RevealEvent {
-  type: "reveal";
+  type: 'reveal';
   gameType: GameType;
   board: Board;
   reelStops: number[];
@@ -32,27 +32,27 @@ export interface RevealEvent {
 }
 
 export interface LineWinsEvent {
-  type: "lineWins";
+  type: 'lineWins';
   gameType: GameType;
   wins: LineWin[];
   amount: number;
 }
 
 export interface ScatterWinEvent {
-  type: "scatterWin";
+  type: 'scatterWin';
   count: number;
   amount: number;
 }
 
 export interface FreeSpinTriggerEvent {
-  type: "freeSpinTrigger";
+  type: 'freeSpinTrigger';
   scatters: number;
   awarded: number;
   startMultiplier: number;
 }
 
 export interface FreeSpinResultEvent {
-  type: "freeSpinResult";
+  type: 'freeSpinResult';
   spin: number;
   wins: LineWin[];
   scatter: { count: number; amount: number } | null;
@@ -61,24 +61,24 @@ export interface FreeSpinResultEvent {
 }
 
 export interface LadderStepEvent {
-  type: "ladderStep";
+  type: 'ladderStep';
   globalMultiplier: number;
 }
 
 export interface FreeSpinRetriggerEvent {
-  type: "freeSpinRetrigger";
+  type: 'freeSpinRetrigger';
   scatters: number;
   awarded: number;
   spinsTotal: number;
 }
 
 export interface FreeSpinEndEvent {
-  type: "freeSpinEnd";
+  type: 'freeSpinEnd';
   totalWin: number;
 }
 
 export interface FinalWinEvent {
-  type: "finalWin";
+  type: 'finalWin';
   amount: number;
   wincap: boolean;
 }

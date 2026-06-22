@@ -1,8 +1,12 @@
 /**
- * @aetherspin/shared — shared types, game definitions and helpers.
+ * @aetherspin/shared — browser-safe entry: shared types + constants.
+ *
+ * Node-only filesystem helpers (loadGameDefinition / listGameIds) live in
+ * `./node.ts` so this barrel can be safely bundled into the browser frontend.
+ * In the browser, import game definitions directly as JSON instead:
+ *   import def from "@aetherspin/shared/games/novaforged/game-definition.json";
  */
-export * from "./types/index.js";
-export { loadGameDefinition, listGameIds } from "./loadDefinition.js";
+export * from './types/index.js';
 
 /** Amount conversion constants matching the RGS / book formats. */
 export const API_AMOUNT_MULTIPLIER = 1_000_000;

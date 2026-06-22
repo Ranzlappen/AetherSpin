@@ -4,10 +4,10 @@ This package holds the server-side, certifiable game math. It offers **two
 interchangeable paths** that share one source of truth
 (`shared/games/<game>/game-definition.json`):
 
-| Path | Location | Use it for |
-| --- | --- | --- |
-| **Standalone engine** | `math/simulator/` | Fast local dev, CI, RTP reporting, and generating RGS-compatible books — **stdlib only, no install**. |
-| **Official math-sdk** | `math/games/<game>/` (+ `scripts/setup-math.sh`) | Certified simulation, the Rust optimizer, and final submission. |
+| Path                  | Location                                         | Use it for                                                                                            |
+| --------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Standalone engine** | `math/simulator/`                                | Fast local dev, CI, RTP reporting, and generating RGS-compatible books — **stdlib only, no install**. |
+| **Official math-sdk** | `math/games/<game>/` (+ `scripts/setup-math.sh`) | Certified simulation, the Rust optimizer, and final submission.                                       |
 
 ## Quickstart (standalone — no dependencies)
 

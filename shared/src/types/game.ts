@@ -5,9 +5,9 @@
  * loader in math/simulator/definition.py.
  */
 
-export type SymbolKind = "wild" | "scatter" | "high" | "low" | "bonus";
-export type EngineType = "lines" | "ways" | "cluster" | "scatter";
-export type Volatility = "low" | "medium" | "high" | "very-high";
+export type SymbolKind = 'wild' | 'scatter' | 'high' | 'low' | 'bonus';
+export type EngineType = 'lines' | 'ways' | 'cluster' | 'scatter';
+export type Volatility = 'low' | 'medium' | 'high' | 'very-high';
 
 export interface GameSymbol {
   id: string;
