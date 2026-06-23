@@ -6,13 +6,13 @@
 # and richer reporting.
 
 # Numerical / data analysis (optional: PAR sheets, distribution analysis)
-numpy>=1.26
-pandas>=2.1
+numpy>=2.4.6
+pandas>=3.0.3
 
 # Testing & quality
-pytest>=8.0
-pytest-cov>=5.0
-ruff>=0.6
+pytest>=9.1.1
+pytest-cov>=7.1.0
+ruff>=0.15.18
 
 # TOML parsing for run_config.toml on Python <3.11 (3.11+ ships tomllib)
 tomli>=2.0; python_version < "3.11"

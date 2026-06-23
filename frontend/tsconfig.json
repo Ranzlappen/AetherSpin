@@ -17,9 +17,8 @@
     "moduleResolution": "bundler",
     "skipLibCheck": true,
     "types": ["vitest/globals", "svelte"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.svelte", "vite.config.ts"],
