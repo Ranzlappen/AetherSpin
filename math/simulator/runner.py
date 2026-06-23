@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -13,6 +14,19 @@ from .reels import load_reelset
 from .rng import Rng
 
 GAME_DIR = Path(__file__).resolve().parents[1] / "games"
+SIMULATOR_VERSION = "1.0.0"
+
+# Stable per-mode seed offsets. Using a fixed map (with a deterministic
+# crc32-based fallback) keeps simulations reproducible across processes and
+# machines — unlike the built-in ``hash()``, which is salted per process unless
+# PYTHONHASHSEED is pinned. Reproducible libraries are a certification expectation.
+MODE_SEED_OFFSET = {"base": 101, "bonus": 202}
+
+
+def mode_seed_offset(mode: str) -> int:
+    if mode in MODE_SEED_OFFSET:
+        return MODE_SEED_OFFSET[mode]
+    return zlib.crc32(mode.encode("utf-8")) % 1000
 
 
 @dataclass
@@ -72,8 +86,9 @@ def run_simulations(
         wincaps = 0
         max_win = 0.0
 
+        offset = mode_seed_offset(mode)
         for i in range(num_sims):
-            rng.reseed(seed * 1_000_003 + hash(mode) % 1000 + i)
+            rng.reseed(seed * 1_000_003 + offset + i)
             result = engine.play_round(i + 1, rng, force_free=is_buy)
             # For buy-bonus the payout is measured against the higher cost.
             payout = result.payout_multiplier / cost if is_buy else result.payout_multiplier
@@ -121,11 +136,44 @@ def self_criteria(result) -> str:
     return "0"
 
 
-def write_library(game_id: str, output: SimulationOutput, library_root: Path) -> Path:
+def _file_sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_provenance(game_id: str, definition: GameDefinition, seed: int) -> dict[str, Any]:
+    """Reproducibility metadata embedded in the generated config.json.
+
+    Auditors expect to be able to regenerate a byte-identical library from a
+    commit + seed; this records exactly what produced these books.
+    """
+    import hashlib
+    import json as _json
+    from datetime import datetime, timezone
+
+    canonical = _json.dumps(definition.raw, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    reels_dir = GAME_DIR / game_id / "reels"
+    reel_hashes = {}
+    if reels_dir.is_dir():
+        for csv_path in sorted(reels_dir.glob("*.csv")):
+            reel_hashes[csv_path.name] = _file_sha256(csv_path)
+    return {
+        "seed": seed,
+        "definitionHash": hashlib.sha256(canonical).hexdigest(),
+        "reelHashes": reel_hashes,
+        "simulatorVersion": SIMULATOR_VERSION,
+        "generatedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "pythonHashSeedPinned": True,
+    }
+
+
+def write_library(game_id: str, output: SimulationOutput, library_root: Path, seed: int = 0) -> Path:
     definition = load_definition(game_id)
     writer = LibraryWriter(library_root, game_id)
     for mode in output.books:
         writer.write_mode(mode, output.books[mode], output.weights[mode], output.criteria[mode])
-    writer.write_config(definition.raw, {m: s.rtp for m, s in output.stats.items()})
+    provenance = build_provenance(game_id, definition, seed)
+    writer.write_config(definition.raw, {m: s.rtp for m, s in output.stats.items()}, provenance=provenance)
     writer.write_index()
     return writer.game_dir

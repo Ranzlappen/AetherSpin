@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aetherspin.dev/schemas/book.schema.json",
+  "title": "AetherSpin Book",
+  "description": "A single simulated round uploaded to the RGS: an id, the total payoutMultiplier, and the ordered list of book events the frontend replays. The event union mirrors shared/src/types/events.ts and is the math<->frontend contract.",
+  "type": "object",
+  "required": ["id", "payoutMultiplier", "events"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "payoutMultiplier": { "type": "number", "minimum": 0 },
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/definitions/bookEvent" }
+    }
+  },
+  "definitions": {
+    "lineWin": {
+      "type": "object",
+      "required": ["line", "symbol", "count", "wildMultiplier", "amount"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 0 },
+        "symbol": { "type": "string" },
+        "count": { "type": "integer", "minimum": 1 },
+        "wildMultiplier": { "type": "number", "minimum": 1 },
+        "amount": { "type": "number", "minimum": 0 }
+      }
+    },
+    "bookEvent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "gameType", "board", "reelStops"],
+          "properties": {
+            "type": { "const": "reveal" },
+            "gameType": { "enum": ["base", "free"] },
+            "board": { "type": "array", "items": { "type": "array", "items": { "type": "string" } } },
+            "reelStops": { "type": "array", "items": { "type": "integer" } },
+            "spin": { "type": "integer" },
+            "spinsTotal": { "type": "integer" },
+            "globalMultiplier": { "type": "integer" },
+            "expandedReels": { "type": "array", "items": { "type": "integer" } }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "gameType", "wins", "amount"],
+          "properties": {
+            "type": { "const": "lineWins" },
+            "gameType": { "enum": ["base", "free"] },
+            "wins": { "type": "array", "items": { "$ref": "#/definitions/lineWin" } },
+            "amount": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "count", "amount"],
+          "properties": {
+            "type": { "const": "scatterWin" },
+            "count": { "type": "integer", "minimum": 0 },
+            "amount": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "scatters", "awarded", "startMultiplier"],
+          "properties": {
+            "type": { "const": "freeSpinTrigger" },
+            "scatters": { "type": "integer", "minimum": 0 },
+            "awarded": { "type": "integer", "minimum": 0 },
+            "startMultiplier": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "spin", "wins", "scatter", "globalMultiplier", "amount"],
+          "properties": {
+            "type": { "const": "freeSpinResult" },
+            "spin": { "type": "integer", "minimum": 1 },
+            "wins": { "type": "array", "items": { "$ref": "#/definitions/lineWin" } },
+            "scatter": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["count", "amount"],
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "amount": { "type": "number" }
+                  }
+                }
+              ]
+            },
+            "globalMultiplier": { "type": "integer", "minimum": 1 },
+            "amount": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "globalMultiplier"],
+          "properties": {
+            "type": { "const": "ladderStep" },
+            "globalMultiplier": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "scatters", "awarded", "spinsTotal"],
+          "properties": {
+            "type": { "const": "freeSpinRetrigger" },
+            "scatters": { "type": "integer", "minimum": 0 },
+            "awarded": { "type": "integer", "minimum": 0 },
+            "spinsTotal": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "totalWin"],
+          "properties": {
+            "type": { "const": "freeSpinEnd" },
+            "totalWin": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "amount", "wincap"],
+          "properties": {
+            "type": { "const": "finalWin" },
+            "amount": { "type": "number", "minimum": 0 },
+            "wincap": { "type": "boolean" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -75,6 +75,14 @@ def test_rtp_in_sane_range():
 
 
 def test_buy_bonus_not_player_positive():
-    # The buy must not be EV-positive for the player at scale.
-    out = run_simulations("novaforged", {"bonus": 20000}, seed=3)
-    assert out.stats["bonus"].rtp < 1.15
+    # The buy-bonus must never be EV-positive for the player: its RTP must sit at
+    # or below the game's RTP target (within a small tolerance), NOT merely below
+    # 100%+slack. Seeding is deterministic (PYTHONHASHSEED-independent), so this
+    # bound is reproducible rather than flaky. See SECURITY.md.
+    definition = load_definition("novaforged")
+    out = run_simulations("novaforged", {"bonus": 40000}, seed=3)
+    bonus_rtp = out.stats["bonus"].rtp
+    assert bonus_rtp <= definition.rtp_target + 0.03, (
+        f"buy-bonus RTP {bonus_rtp:.4f} exceeds target {definition.rtp_target:.4f} "
+        "+ tol — would be EV-positive / non-compliant"
+    )

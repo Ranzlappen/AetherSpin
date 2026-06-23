@@ -12,6 +12,29 @@ import type { GameDefinition, GameSymbol, BetMode } from '../../../shared/src/ty
 /** The fully-typed game definition. */
 export const gameDefinition = rawDef as unknown as GameDefinition;
 
+/**
+ * Fail-fast dev-time guard mirroring the key semantic invariants enforced
+ * server-side (`math/simulator/definition.py` / `scripts/validate_definitions.py`).
+ * Catches a corrupt/edited definition immediately in the browser during
+ * development; tree-shaken out of production builds via `import.meta.env.DEV`.
+ */
+function assertDefinitionValid(d: GameDefinition): void {
+  const symbolIds = new Set(d.symbols.map((s) => s.id));
+  const problems: string[] = [];
+  d.paylines.forEach((line, i) => {
+    if (line.length !== d.engine.numReels) problems.push(`payline ${i} length != numReels`);
+    if (line.some((r) => r < 0 || r >= d.engine.numRows)) problems.push(`payline ${i} row out of range`);
+  });
+  if (d.bet.defaultLevelIndex < 0 || d.bet.defaultLevelIndex >= d.bet.levels.length)
+    problems.push('defaultLevelIndex out of range');
+  for (const sym of Object.keys(d.paytable))
+    if (!symbolIds.has(sym)) problems.push(`paytable symbol ${sym} unknown`);
+  if (!symbolIds.has(d.scatter.symbol)) problems.push(`scatter symbol ${d.scatter.symbol} unknown`);
+  if (problems.length) throw new Error(`Invalid game-definition.json:\n  - ${problems.join('\n  - ')}`);
+}
+
+if (import.meta.env.DEV) assertDefinitionValid(gameDefinition);
+
 /** Number of reels (columns) on the board. */
 export const NUM_REELS = gameDefinition.engine.numReels;
 /** Number of rows visible per reel. */

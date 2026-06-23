@@ -32,6 +32,7 @@ class GameStateOverride(GameExecutables, GeneralGameState):
         self.in_freegame = True
         self.fs = 0
         self.global_multiplier = self.config.ladder_start
+        self.free_total = 0.0
 
     def end_freespin(self):
         self.in_freegame = False
