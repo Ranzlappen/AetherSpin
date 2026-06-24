@@ -40,7 +40,19 @@
             "spin": { "type": "integer" },
             "spinsTotal": { "type": "integer" },
             "globalMultiplier": { "type": "integer" },
-            "expandedReels": { "type": "array", "items": { "type": "integer" } }
+            "expandedReels": { "type": "array", "items": { "type": "integer" } },
+            "multiplierWilds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["reel", "row", "value"],
+                "properties": {
+                  "reel": { "type": "integer", "minimum": 0 },
+                  "row": { "type": "integer", "minimum": 0 },
+                  "value": { "type": "integer", "minimum": 1 }
+                }
+              }
+            }
           }
         },
         {

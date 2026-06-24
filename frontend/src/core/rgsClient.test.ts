@@ -87,7 +87,14 @@ describe('RgsClient', () => {
             betID: 7,
             state: 'placed',
             payoutMultiplier: 3,
-            book: { id: 7, payoutMultiplier: 3, events: [] },
+            book: {
+              id: 7,
+              payoutMultiplier: 3,
+              events: [
+                { type: 'reveal', gameType: 'base', board: [['L1']], reelStops: [0] },
+                { type: 'finalWin', amount: 3, wincap: false },
+              ],
+            },
           },
         }),
         { status: 200 }
@@ -113,8 +120,134 @@ describe('RgsClient', () => {
     const fetchImpl = vi.fn(async () => {
       throw new Error('offline');
     }) as unknown as typeof fetch;
-    const client = new RgsClient({ params, fetchImpl });
+    const client = new RgsClient({ params, fetchImpl, maxRetries: 1 });
     await expect(client.authenticate()).rejects.toBeInstanceOf(RgsError);
+  });
+
+  const noSleep = async () => {};
+
+  it('retries idempotent authenticate on transient transport errors', async () => {
+    let calls = 0;
+    const fetchImpl = vi.fn(async () => {
+      calls += 1;
+      if (calls < 3) throw new Error('flaky network');
+      return new Response(JSON.stringify({ status: { statusCode: 'SUCCESS' }, balance: { amount: 0 } }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+    const client = new RgsClient({ params, fetchImpl, maxRetries: 3, sleepImpl: noSleep });
+    await client.authenticate();
+    expect(calls).toBe(3);
+  });
+
+  it('does NOT retry a non-idempotent play (single attempt)', async () => {
+    let calls = 0;
+    const fetchImpl = vi.fn(async () => {
+      calls += 1;
+      throw new Error('offline');
+    }) as unknown as typeof fetch;
+    const client = new RgsClient({ params, fetchImpl, maxRetries: 3, sleepImpl: noSleep });
+    await expect(client.play(1, 'base')).rejects.toBeInstanceOf(RgsError);
+    expect(calls).toBe(1);
+  });
+
+  it('re-authenticates once and retries play on ERR_IS', async () => {
+    let playCalls = 0;
+    let authCalls = 0;
+    const fetchImpl = vi.fn(async (url: string) => {
+      if (url.includes('/wallet/authenticate')) {
+        authCalls += 1;
+        return new Response(JSON.stringify({ status: { statusCode: 'SUCCESS' }, balance: { amount: 0 } }), {
+          status: 200,
+        });
+      }
+      // /wallet/play: first call fails with an expired session, second succeeds.
+      playCalls += 1;
+      if (playCalls === 1) {
+        return new Response(JSON.stringify({ status: { statusCode: 'ERR_IS' } }), { status: 200 });
+      }
+      return new Response(
+        JSON.stringify({
+          status: { statusCode: 'SUCCESS' },
+          balance: { amount: 0 },
+          round: {
+            betID: 1,
+            state: 'placed',
+            payoutMultiplier: 0,
+            book: {
+              id: 1,
+              payoutMultiplier: 0,
+              events: [
+                { type: 'reveal', gameType: 'base', board: [['L1']], reelStops: [0] },
+                { type: 'finalWin', amount: 0, wincap: false },
+              ],
+            },
+          },
+        }),
+        { status: 200 }
+      );
+    }) as unknown as typeof fetch;
+    const client = new RgsClient({ params, fetchImpl, sleepImpl: noSleep });
+    const res = await client.play(1, 'base');
+    expect(res.round.betID).toBe(1);
+    expect(authCalls).toBe(1);
+    expect(playCalls).toBe(2);
+  });
+
+  it('times out a hung request as ERR_UE', async () => {
+    const fetchImpl = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () =>
+            reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+          );
+        })
+    ) as unknown as typeof fetch;
+    const client = new RgsClient({ params, fetchImpl, timeoutMs: 10, maxRetries: 1 });
+    await expect(client.authenticate()).rejects.toMatchObject({ code: 'ERR_UE' });
+  });
+
+  it('refuses a non-HTTPS rgsUrl', async () => {
+    const client = new RgsClient({
+      params: { ...params, rgsUrl: 'http://evil.example/api' },
+      fetchImpl: mockFetch({ status: { statusCode: 'SUCCESS' } }),
+    });
+    await expect(client.authenticate()).rejects.toMatchObject({ code: 'ERR_VAL' });
+  });
+
+  it('rejects a malformed book before replay', async () => {
+    const fetchImpl = mockFetch({
+      status: { statusCode: 'SUCCESS' },
+      balance: { amount: 0 },
+      round: {
+        betID: 9,
+        state: 'placed',
+        payoutMultiplier: 0,
+        book: { id: 9, payoutMultiplier: 0, events: [] },
+      },
+    });
+    const client = new RgsClient({ params, fetchImpl });
+    await expect(client.play(1, 'base')).rejects.toMatchObject({ code: 'ERR_VAL' });
+  });
+});
+
+describe('isValidBook', () => {
+  it('accepts a well-formed book and rejects malformed ones', async () => {
+    const { isValidBook } = await import('./rgsClient');
+    const good = {
+      id: 1,
+      payoutMultiplier: 0,
+      events: [
+        { type: 'reveal', gameType: 'base', board: [['L1']], reelStops: [0] },
+        { type: 'finalWin', amount: 0, wincap: false },
+      ],
+    };
+    expect(isValidBook(good)).toBe(true);
+    expect(isValidBook({ id: 1, payoutMultiplier: 0, events: [] })).toBe(false);
+    expect(
+      isValidBook({ id: 1, payoutMultiplier: 0, events: [{ type: 'bogus' }, { type: 'finalWin' }] })
+    ).toBe(false);
+    expect(isValidBook(null)).toBe(false);
   });
 });
 
