@@ -25,6 +25,17 @@ from simulator.definition import load_definition  # noqa: E402
 from simulator.runner import run_simulations  # noqa: E402
 
 
+def bonus_upper_bound(target: float, tol: float) -> float:
+    """Upper RTP bound the buy-bonus mode must satisfy.
+
+    The buy-bonus must never be EV-positive for the player (see SECURITY.md), so
+    the bound is clamped at break-even (1.0) even when ``target + tol`` would
+    exceed it. The tolerance only absorbs sampling noise *below* break-even; it
+    never licenses an EV-positive buy.
+    """
+    return min(target + tol, 1.0)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate RTP against target (base + buy-bonus)")
     parser.add_argument("--game", default="novaforged")
@@ -56,11 +67,11 @@ def main() -> int:
         bonus_sims = min(args.sims, 50_000)
         out = run_simulations(args.game, {"bonus": bonus_sims}, seed=args.seed)
         rtp = out.stats["bonus"].rtp
-        upper = target + args.tol
+        upper = bonus_upper_bound(target, args.tol)
         ok = rtp <= upper
         failures += 0 if ok else 1
         print(f"[{'PASS' if ok else 'FAIL'}] {args.game} buy-bonus RTP = {rtp*100:.3f}% "
-              f"(must be <= target+tol = {upper*100:.2f}%, n={bonus_sims:,})")
+              f"(must be <= min(target+tol, 100%) = {upper*100:.2f}%, n={bonus_sims:,})")
         if not ok:
             print("  buy-bonus is EV-positive / non-compliant. Lower features.freeSpins.winScale.")
 

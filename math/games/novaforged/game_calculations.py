@@ -52,14 +52,21 @@ class GameCalculations(Lines):
         return None
 
     def apply_expanding_wilds(self):
-        """Expand any wild on the middle reels to a full wild reel (free game only)."""
+        """Expand any wild on the middle reels to a full wild reel (free game only).
+
+        Returns the list of reels that expanded so the reveal event can report
+        ``expandedReels`` in lock-step with the standalone engine.
+        """
+        expanded = []
         if not self.in_freegame or not self.config.expanding_wilds:
-            return
+            return expanded
         wild = self.config.wild_symbol
         for r in self.EXPANDING_REELS:
             if any(cell.name == wild for cell in self.board[r]):
                 for cell in self.board[r]:
                     cell.name = wild
+                expanded.append(r)
+        return expanded
 
     def count_special_symbol(self, board, symbol) -> int:
         return sum(1 for col in board for cell in col if cell.name == symbol)
