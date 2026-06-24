@@ -51,6 +51,26 @@ button:disabled {
   opacity: 0.45;
 }
 
+/* Keyboard focus ring — visible for keyboard users, hidden for mouse/touch. */
+:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Visually hidden but exposed to assistive tech (ARIA live region, labels). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .neon-text {
   text-shadow:
     0 0 6px currentColor,
@@ -119,5 +139,18 @@ button:disabled {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Respect the OS "reduce motion" setting: drop non-essential CSS animation and
+ * transitions. The renderer mirrors this via Stage.setReducedMotion(). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

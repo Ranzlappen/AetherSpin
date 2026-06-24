@@ -2,6 +2,7 @@
   /** Toggles global mute via the sound manager and the `muted` store. */
   import { muted } from '../core/gameState';
   import { sound } from '../core/sound';
+  import { t } from '../core/i18n';
 
   function toggle(): void {
     muted.update((m) => {
@@ -12,7 +13,7 @@
   }
 </script>
 
-<button class="sound-toggle" aria-label="Toggle sound" aria-pressed={$muted} on:click={toggle}>
+<button class="sound-toggle" aria-label={$t('sound.toggle')} aria-pressed={$muted} on:click={toggle}>
   {$muted ? '🔇' : '🔊'}
 </button>
 

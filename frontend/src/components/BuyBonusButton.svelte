@@ -3,6 +3,7 @@
   import { buyBonusMode } from '../config/gameConfig';
   import { currentBet, balance, isSpinning, gameMode, currency } from '../core/gameState';
   import { formatCurrency } from '../config/gameConfig';
+  import { t, localeTag } from '../core/i18n';
   import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ buy: void }>();
@@ -26,21 +27,23 @@
 
 {#if buyBonusMode}
   <button class="buy panel" {disabled} on:click={request}>
-    <span class="title neon-text">Buy Free Spins</span>
-    <span class="price">{formatCurrency(cost, $currency)}</span>
+    <span class="title neon-text">{$t('buyBonus.label')}</span>
+    <span class="price">{formatCurrency(cost, $currency, $localeTag)}</span>
   </button>
 
   {#if confirming}
     <div class="overlay" role="dialog" aria-modal="true">
       <div class="dialog panel">
-        <h3>Buy Free Spins?</h3>
+        <h3>{$t('buyBonus.confirmTitle')}</h3>
         <p>
-          Purchase the bonus for <strong>{formatCurrency(cost, $currency)}</strong>
-          ({costMultiplier}× your bet).
+          {$t('buyBonus.confirmBody', {
+            cost: formatCurrency(cost, $currency, $localeTag),
+            multiplier: costMultiplier,
+          })}
         </p>
         <div class="actions">
-          <button class="btn" on:click={() => (confirming = false)}>Cancel</button>
-          <button class="btn btn-primary" on:click={confirm}>Confirm</button>
+          <button class="btn" on:click={() => (confirming = false)}>{$t('common.cancel')}</button>
+          <button class="btn btn-primary" on:click={confirm}>{$t('common.confirm')}</button>
         </div>
       </div>
     </div>

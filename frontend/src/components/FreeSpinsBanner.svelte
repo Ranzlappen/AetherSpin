@@ -2,6 +2,7 @@
   /** Shows free-spins progress and the global multiplier ladder during the feature. */
   import { gameMode, freeSpins, currency } from '../core/gameState';
   import { ladderConfig, formatCurrency } from '../config/gameConfig';
+  import { t, localeTag } from '../core/i18n';
 
   // Derived purely from a module constant, so it is intentionally not reactive.
   const ladderSteps = Array.from(
@@ -13,7 +14,7 @@
 {#if $gameMode === 'free'}
   <div class="banner panel" role="status">
     <div class="row">
-      <span class="title neon-text">FREE SPINS</span>
+      <span class="title neon-text">{$t('hud.freeSpins')}</span>
       <span class="count">
         {$freeSpins.total - $freeSpins.remaining} / {$freeSpins.total}
       </span>
@@ -26,7 +27,7 @@
       {/each}
     </div>
     <div class="accumulated">
-      Won {formatCurrency($freeSpins.accumulated, $currency)}
+      {$t('freeSpins.won', { amount: formatCurrency($freeSpins.accumulated, $currency, $localeTag) })}
     </div>
   </div>
 {/if}

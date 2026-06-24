@@ -3,6 +3,7 @@
   import { betLevelIndex, currentBetLabel, increaseBet, decreaseBet, isSpinning } from '../core/gameState';
   import { betLevels } from '../config/gameConfig';
   import { sound } from '../core/sound';
+  import { t } from '../core/i18n';
 
   $: atMin = $betLevelIndex <= 0;
   $: atMax = $betLevelIndex >= betLevels.length - 1;
@@ -18,11 +19,15 @@
 </script>
 
 <div class="bet panel">
-  <span class="label">Bet</span>
+  <span class="label">{$t('hud.bet')}</span>
   <div class="stepper">
-    <button class="step" aria-label="Decrease bet" on:click={dec} disabled={atMin || $isSpinning}>−</button>
+    <button class="step" aria-label={$t('bet.decrease')} on:click={dec} disabled={atMin || $isSpinning}>
+      −
+    </button>
     <span class="value neon-text">{$currentBetLabel}</span>
-    <button class="step" aria-label="Increase bet" on:click={inc} disabled={atMax || $isSpinning}>+</button>
+    <button class="step" aria-label={$t('bet.increase')} on:click={inc} disabled={atMax || $isSpinning}>
+      +
+    </button>
   </div>
 </div>
 

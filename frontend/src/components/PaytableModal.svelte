@@ -12,6 +12,7 @@
     NUM_ROWS,
     formatMultiplier,
   } from '../config/gameConfig';
+  import { t } from '../core/i18n';
 
   export let open = false;
   import { createEventDispatcher } from 'svelte';
@@ -39,22 +40,22 @@
 </script>
 
 {#if open}
-  <div class="overlay" role="dialog" aria-modal="true" aria-label="Paytable">
-    <button class="backdrop" aria-label="Close paytable" on:click={close}></button>
+  <div class="overlay" role="dialog" aria-modal="true" aria-label={$t('paytable.open')}>
+    <button class="backdrop" aria-label={$t('paytable.close')} on:click={close}></button>
     <div class="modal panel">
       <header>
-        <h2 class="neon-text">{gameDefinition.displayName} — Paytable</h2>
-        <button class="close" aria-label="Close" on:click={close}>✕</button>
+        <h2 class="neon-text">{gameDefinition.displayName} — {$t('paytable.open')}</h2>
+        <button class="close" aria-label={$t('common.close')} on:click={close}>✕</button>
       </header>
 
       <div class="content">
         <p class="desc">{gameDefinition.description}</p>
 
         <section>
-          <h3>Symbol Payouts</h3>
-          <p class="sub">Values shown are multiples of the total bet for a winning line.</p>
+          <h3>{$t('paytable.title')}</h3>
+          <p class="sub">{$t('paytable.subtitle')}</p>
           <div class="pay-grid">
-            <div class="pay-head">Symbol</div>
+            <div class="pay-head">{$t('paytable.symbol')}</div>
             {#each counts as c (c)}<div class="pay-head">{c} of a kind</div>{/each}
             {#each paySymbols as sym (sym.id)}
               <div class="sym">
@@ -88,7 +89,7 @@
         </section>
 
         <section>
-          <h3>Features</h3>
+          <h3>{$t('paytable.features')}</h3>
           <ul class="rules">
             <li>
               <strong>Free Spins:</strong> Land {scatter.minToTrigger}+ scatters to win

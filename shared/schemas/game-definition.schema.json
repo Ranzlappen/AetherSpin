@@ -104,6 +104,15 @@
         "pays": { "type": "object", "additionalProperties": { "type": "number" } }
       }
     },
-    "features": { "type": "object" }
+    "features": { "type": "object" },
+    "responsibleGaming": {
+      "type": "object",
+      "description": "Optional operator-compliance UX policy shipped with the game (reality-check cadence, help resources).",
+      "additionalProperties": false,
+      "properties": {
+        "realityCheckMinutes": { "type": "integer", "minimum": 1 },
+        "helpUrl": { "type": "string" }
+      }
+    }
   }
 }

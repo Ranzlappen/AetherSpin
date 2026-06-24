@@ -57,3 +57,22 @@ test('opens the paytable / rules modal', async ({ page }) => {
   await page.getByRole('button', { name: 'Paytable' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
 });
+
+test('a11y: exposes a polite live region and spins via the keyboard', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
+
+  // The canvas is opaque to assistive tech, so outcomes are mirrored here.
+  const liveRegion = page.locator('[aria-live="polite"]');
+  await expect(liveRegion).toBeAttached();
+
+  // Keyboard operability: Space triggers a spin when no control owns focus.
+  const spin = spinButton(page);
+  await expect(spin).toBeEnabled();
+  await page.locator('body').press('Space');
+  await expect(spin).toBeDisabled();
+
+  // The round resolves and the live region announces an outcome.
+  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  await expect(liveRegion).not.toBeEmpty({ timeout: 30_000 });
+});
