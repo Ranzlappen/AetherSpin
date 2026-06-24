@@ -54,3 +54,6 @@ storybook-static/
 playwright-report/
 test-results/
 .playwright/
+
+# Generated PAR sheets (single-seed estimates; see docs/par-sheets/README.md)
+docs/par-sheets/*-par-sheet.md

@@ -54,6 +54,22 @@ jobs:
           python math/scripts/generate_books.py --game novaforged --sims 5000
           python math/scripts/validate_books.py --game novaforged
 
+      - name: Packaging smoke — submission manifest + checksums + SBOM
+        run: |
+          bash scripts/package-for-stake.sh novaforged --math-only
+          python3 - <<'PY'
+          import json, pathlib
+          b = pathlib.Path("dist-stake/novaforged")
+          for f in ("submission-manifest.json", "SHA256SUMS", "sbom.cdx.json"):
+              assert (b / f).is_file(), f"missing cert artifact: {f}"
+          m = json.loads((b / "submission-manifest.json").read_text())
+          assert m["gameId"] == "novaforged" and m["artifacts"], "bad manifest"
+          assert m["provenance"].get("gitCommit"), "manifest missing gitCommit"
+          s = json.loads((b / "sbom.cdx.json").read_text())
+          assert s["bomFormat"] == "CycloneDX" and s["components"], "bad sbom"
+          print(f"cert artifacts OK: {len(m['artifacts'])} files, {len(s['components'])} sbom components")
+          PY
+
   # ---------------------------------------------------------------------------
   # Structural JSON-Schema validation of all game definitions (ajv / Node).
   # ---------------------------------------------------------------------------
