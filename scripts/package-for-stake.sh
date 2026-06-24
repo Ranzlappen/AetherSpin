@@ -136,7 +136,16 @@ Stake Engine upload — $GAME_ID v$VERSION
 3. Under "Frontend files", upload the CONTENTS of the frontend/ folder
    (the built static bundle). [included: $FRONTEND_INCLUDED]
 4. Verify the configured bet modes and RTP match configs/config.json.
+5. Cross-check submission-manifest.json (gitCommit + per-file sha256) and
+   SHA256SUMS against the uploaded files; attach sbom.cdx.json for review.
 EOF
+
+# ---------------------------------------------------------------------------
+# 4b. Certification artifacts: checksums, submission manifest, SBOM.
+# ---------------------------------------------------------------------------
+echo "==> Writing certification artifacts (manifest, checksums, SBOM) ..."
+python3 "$ROOT/scripts/make_submission_artifacts.py" \
+  --bundle-dir "$OUT_DIR" --game "$GAME_ID" --version "$VERSION"
 
 # ---------------------------------------------------------------------------
 # 5. Zip it.

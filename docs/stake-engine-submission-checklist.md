@@ -127,12 +127,31 @@ The web client must present, at minimum:
 
 ### Quick gate (run before every submission)
 
+One command runs the whole math gate (schema → deterministic library → book
+integrity → RTP both modes → PAR → version/provenance sync) and prints a
+green/red mirror of this checklist:
+
 ```bash
-python -m pytest math/tests -q
-python3 math/scripts/validate_rtp.py --game <game> --sims 1000000 --tol 0.03
-python3 math/scripts/generate_par_sheet.py --game <game> --sims 500000 --out docs/<game>-par-sheet.md
+bash scripts/preflight.sh <game>            # add --quick for a fast (non-submission) check
+```
+
+Then the frontend + packaging:
+
+```bash
 pnpm --filter @aetherspin/frontend run check
 pnpm --filter @aetherspin/frontend test
+pnpm --filter @aetherspin/frontend e2e      # Playwright smoke (mock RGS)
 pnpm --filter @aetherspin/frontend build
-bash scripts/package-for-stake.sh <game>
+bash scripts/package-for-stake.sh <game>    # writes the bundle + cert artifacts below
 ```
+
+`package-for-stake.sh` emits, alongside the math + frontend files:
+
+- **`submission-manifest.json`** — game id/version, source `gitCommit`, the math
+  provenance stamp, engine parameters, and a SHA-256 for every artifact.
+- **`SHA256SUMS`** — checksums of every bundle file.
+- **`sbom.cdx.json`** — CycloneDX SBOM of the project's direct dependencies.
+
+Drift is guarded in CI: `math/tests/test_golden_books.py` fails if a math/
+definition/reel change alters generated outcomes (regenerate the fixture with
+`PYTHONHASHSEED=0 python3 math/tests/test_golden_books.py --update` when intended).

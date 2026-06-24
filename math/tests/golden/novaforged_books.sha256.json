@@ -1,0 +1,13 @@
+{
+  "game": "novaforged",
+  "seed": 20260624,
+  "numByMode": {
+    "base": 2000,
+    "bonus": 400
+  },
+  "note": "Regenerate with PYTHONHASHSEED=0 python3 math/tests/test_golden_books.py --update",
+  "hashes": {
+    "books_base.jsonl": "5e4dce0c9a4da89ee2a4e0fd7935aa78b7336698c41bdfff5f19f6c46c5b8e59",
+    "books_bonus.jsonl": "f1905cd452b2ad66624f6e752b219c3808c5d68e82bb55e10f963b13d9a26c0b"
+  }
+}
