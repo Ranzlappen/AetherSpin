@@ -7,6 +7,25 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.1.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.0.0...v1.1.0) (2026-06-24)
+
+
+### Features
+
+* **cert-readiness:** preflight gate, submission manifest + SBOM, golden-book guard ([b52a820](https://github.com/Ranzlappen/AetherSpin/commit/b52a82055d8f8acb0fe10e43d8c9886c72a58f04))
+* **engine:** add ways mechanic + a second game (Cosmic Ways) ([cdaf9ca](https://github.com/Ranzlappen/AetherSpin/commit/cdaf9ca661ac71eabecf402cb339a170365bbcc8))
+* **frontend:** multi-game registry + ways rendering (Track 4, batch 3) ([1176475](https://github.com/Ranzlappen/AetherSpin/commit/1176475fdca5c33b92afdfe3dbdf5a05097b6bbc))
+* **operator-compliance:** i18n, accessibility, and responsible-gaming UX ([21c05fd](https://github.com/Ranzlappen/AetherSpin/commit/21c05fd6892a396c20f78ffdb281c6dc80697318))
+* **quick-wins:** close A11 RNG provenance, add devcontainer + E2E scaffold ([18410e5](https://github.com/Ranzlappen/AetherSpin/commit/18410e59307e9f84b4b2ffe2b764cce555044a10))
+* **types:** contract-first codegen — generate TS types from the JSON schema ([028a6fb](https://github.com/Ranzlappen/AetherSpin/commit/028a6fb9e439baae50bf5cae816bfa0b1ea5831b))
+
+
+### Bug Fixes
+
+* **e2e:** make Playwright suite work headless + harden renderer boot ([8cd0798](https://github.com/Ranzlappen/AetherSpin/commit/8cd079870da4c70cdebf3cd0b376b99933db76c4))
+* **frontend:** duplicate-key each in PaytableModal + disambiguate E2E Spin locator ([e7350d9](https://github.com/Ranzlappen/AetherSpin/commit/e7350d94d1d474db0faaee552e2f2a865e60f1ba))
+* **frontend:** mount with Svelte 5 mount() — legacy new App() crashed prod bundle ([baca1ab](https://github.com/Ranzlappen/AetherSpin/commit/baca1ab1752fe8d2d151d93a0c4fec082e77f062))
+
 ## 1.0.0 (2026-06-24)
 
 Initial release of **AetherSpin** — a production-grade Stake Engine game-studio
