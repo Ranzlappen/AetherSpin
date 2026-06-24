@@ -119,6 +119,78 @@ class LinesMechanic(WinMechanic):
         return None
 
 
+class WaysMechanic(WinMechanic):
+    """All-ways (e.g. 243-ways) evaluation.
+
+    A symbol pays when it (or a wild) appears on consecutive reels from the
+    leftmost reel. The win counts *ways* — the product of the symbol's per-reel
+    occurrence counts across the matched reels — times the paytable value for
+    the run length. No fixed paylines; the definition carries ``paylines: []``.
+
+    Multiplier wilds (free game) contribute additively over the matched reels,
+    mirroring :class:`LinesMechanic` so volatility/RTP stay tractable.
+    """
+
+    win_event_type = "wayWins"
+
+    def __init__(self, definition: GameDefinition) -> None:
+        self.d = definition
+        self.wild = definition.wild
+        self.scatter = definition.scatter
+        self.paytable = definition.paytable
+        self.num_reels = definition.num_reels
+
+    def evaluate(
+        self, board: list[list[str]], mult_grid: list[list[int]] | None = None
+    ) -> tuple[float, list[dict[str, Any]]]:
+        total = 0.0
+        wins: list[dict[str, Any]] = []
+        for sym in self.paytable:
+            if sym == self.scatter:
+                continue
+            counts: list[int] = []
+            wild_per_reel: list[tuple[int, bool]] = []
+            for reel in range(self.num_reels):
+                c = 0
+                wsum = 0
+                has_wild = False
+                for row, s in enumerate(board[reel]):
+                    if s == sym or s == self.wild:
+                        c += 1
+                        if s == self.wild and mult_grid is not None:
+                            wsum += mult_grid[reel][row]
+                            has_wild = True
+                if c == 0:
+                    break
+                counts.append(c)
+                wild_per_reel.append((wsum, has_wild))
+            run = len(counts)
+            if run < 3:
+                continue
+            pays = self.paytable.get(sym, {})
+            pay_count = next((k for k in range(run, 2, -1) if k in pays), None)
+            if pay_count is None:
+                continue
+            ways = 1
+            for c in counts[:pay_count]:
+                ways *= c
+            wsum_total = sum(w for w, _ in wild_per_reel[:pay_count])
+            has_wild_any = any(h for _, h in wild_per_reel[:pay_count])
+            wild_mult = wsum_total if has_wild_any else 1
+            payout = pays[pay_count] * ways * wild_mult
+            total += payout
+            wins.append(
+                {
+                    "symbol": sym,
+                    "count": pay_count,
+                    "ways": ways,
+                    "wildMultiplier": wild_mult,
+                    "amount": round(payout, 6),
+                }
+            )
+        return total, wins
+
+
 # --- registry ---------------------------------------------------------------
 
 MechanicFactory = Callable[[GameDefinition], WinMechanic]
@@ -142,3 +214,4 @@ def build_mechanic(definition: GameDefinition) -> WinMechanic:
 
 
 register_mechanic("lines", LinesMechanic)
+register_mechanic("ways", WaysMechanic)

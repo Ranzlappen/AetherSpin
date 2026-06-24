@@ -47,12 +47,16 @@ jobs:
         run: python -m pytest math/tests -q --cov=simulator --cov-report=term-missing --cov-fail-under=70
 
       - name: Validate RTP — base + buy-bonus (gates the build)
-        run: python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05 --mode all
+        run: |
+          python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05 --mode all
+          python math/scripts/validate_rtp.py --game cosmicways --sims 150000 --tol 0.05 --mode all
 
-      - name: Generate + validate a book library (integrity gate)
+      - name: Generate + validate book libraries (integrity gate, both games)
         run: |
           python math/scripts/generate_books.py --game novaforged --sims 5000
           python math/scripts/validate_books.py --game novaforged
+          python math/scripts/generate_books.py --game cosmicways --sims 5000
+          python math/scripts/validate_books.py --game cosmicways
 
       - name: Packaging smoke — submission manifest + checksums + SBOM
         run: |

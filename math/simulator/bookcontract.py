@@ -15,6 +15,7 @@ from typing import Any
 EVENT_REQUIRED_FIELDS: dict[str, set[str]] = {
     "reveal": {"type", "gameType", "board", "reelStops"},
     "lineWins": {"type", "gameType", "wins", "amount"},
+    "wayWins": {"type", "gameType", "wins", "amount"},
     "scatterWin": {"type", "count", "amount"},
     "freeSpinTrigger": {"type", "scatters", "awarded", "startMultiplier"},
     "freeSpinResult": {"type", "spin", "wins", "scatter", "globalMultiplier", "amount"},
@@ -26,7 +27,10 @@ EVENT_REQUIRED_FIELDS: dict[str, set[str]] = {
 
 VALID_EVENT_TYPES = set(EVENT_REQUIRED_FIELDS)
 
-LINE_WIN_FIELDS = {"line", "symbol", "count", "wildMultiplier", "amount"}
+# Events that carry a ``wins`` list. Each entry must have these common fields;
+# the mechanic adds its own discriminator (``line`` for lines, ``ways`` for ways).
+WIN_EVENTS = ("lineWins", "wayWins", "freeSpinResult")
+WIN_ENTRY_FIELDS = {"symbol", "count", "wildMultiplier", "amount"}
 
 
 def validate_event(event: dict[str, Any]) -> list[str]:
@@ -38,9 +42,9 @@ def validate_event(event: dict[str, Any]) -> list[str]:
     missing = EVENT_REQUIRED_FIELDS[etype] - set(event)
     if missing:
         problems.append(f"{etype}: missing required field(s) {sorted(missing)}")
-    if etype in ("lineWins", "freeSpinResult"):
+    if etype in WIN_EVENTS:
         for w in event.get("wins", []):
-            wmissing = LINE_WIN_FIELDS - set(w)
+            wmissing = WIN_ENTRY_FIELDS - set(w)
             if wmissing:
                 problems.append(f"{etype}.wins entry missing {sorted(wmissing)}")
     return problems

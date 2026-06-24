@@ -1,0 +1,213 @@
+{
+  "$schema": "../../schemas/game-definition.schema.json",
+  "id": "cosmicways",
+  "displayName": "Cosmic Ways",
+  "version": "1.0.0",
+  "studio": "AetherSpin",
+  "theme": "ways-cosmic",
+  "description": "A 5x3, 243-ways neon-cosmic video slot. Symbols pay on any adjacent reels from the left, with scatter-triggered free spins. A lower-volatility companion to NovaForged demonstrating the engine's ways mechanic.",
+  "engine": {
+    "type": "ways",
+    "numReels": 5,
+    "numRows": 3,
+    "wincapMultiplier": 5000.0,
+    "rtpTarget": 0.965,
+    "volatility": "medium"
+  },
+  "currency": {
+    "default": "USD",
+    "apiAmountMultiplier": 1000000,
+    "bookAmountMultiplier": 100
+  },
+  "bet": {
+    "defaultLevelIndex": 2,
+    "levels": [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+    "minBet": 0.1,
+    "maxBet": 100.0,
+    "stepBet": 0.1
+  },
+  "betModes": [
+    {
+      "name": "base",
+      "cost": 1.0,
+      "label": "Base Game",
+      "isBuyBonus": false
+    },
+    {
+      "name": "bonus",
+      "cost": 100.0,
+      "label": "Buy Free Spins",
+      "isBuyBonus": true
+    }
+  ],
+  "symbols": [
+    {
+      "id": "W",
+      "name": "Aether Crystal (Wild)",
+      "kind": "wild",
+      "color": "#7df9ff",
+      "substitutes": ["H1", "H2", "H3", "H4", "L1", "L2", "L3", "L4", "L5"]
+    },
+    {
+      "id": "S",
+      "name": "Nova Sigil (Scatter)",
+      "kind": "scatter",
+      "color": "#ff45e0"
+    },
+    {
+      "id": "H1",
+      "name": "Nova Core",
+      "kind": "high",
+      "color": "#ffd166"
+    },
+    {
+      "id": "H2",
+      "name": "Starforge",
+      "kind": "high",
+      "color": "#ff7b54"
+    },
+    {
+      "id": "H3",
+      "name": "Pulsar",
+      "kind": "high",
+      "color": "#b388ff"
+    },
+    {
+      "id": "H4",
+      "name": "Comet",
+      "kind": "high",
+      "color": "#4dd0e1"
+    },
+    {
+      "id": "L1",
+      "name": "Cyan Shard",
+      "kind": "low",
+      "color": "#26c6da"
+    },
+    {
+      "id": "L2",
+      "name": "Violet Shard",
+      "kind": "low",
+      "color": "#7e57c2"
+    },
+    {
+      "id": "L3",
+      "name": "Amber Shard",
+      "kind": "low",
+      "color": "#ffb300"
+    },
+    {
+      "id": "L4",
+      "name": "Rose Shard",
+      "kind": "low",
+      "color": "#ec407a"
+    },
+    {
+      "id": "L5",
+      "name": "Lime Shard",
+      "kind": "low",
+      "color": "#9ccc65"
+    }
+  ],
+  "paytable": {
+    "W": {
+      "3": 0.476076,
+      "4": 2.380555,
+      "5": 11.686332
+    },
+    "H1": {
+      "3": 0.346262,
+      "4": 1.81785,
+      "5": 9.305775
+    },
+    "H2": {
+      "3": 0.277043,
+      "4": 1.428315,
+      "5": 5.886437
+    },
+    "H3": {
+      "3": 0.233684,
+      "4": 0.952239,
+      "5": 4.241676
+    },
+    "H4": {
+      "3": 0.190412,
+      "4": 0.692522,
+      "5": 2.813361
+    },
+    "L1": {
+      "3": 0.095249,
+      "4": 0.346262,
+      "5": 1.688033
+    },
+    "L2": {
+      "3": 0.095249,
+      "4": 0.346262,
+      "5": 1.688033
+    },
+    "L3": {
+      "3": 0.060598,
+      "4": 0.233684,
+      "5": 1.168598
+    },
+    "L4": {
+      "3": 0.060598,
+      "4": 0.233684,
+      "5": 1.168598
+    },
+    "L5": {
+      "3": 0.043272,
+      "4": 0.190412,
+      "5": 0.952239
+    }
+  },
+  "paylines": [],
+  "scatter": {
+    "symbol": "S",
+    "minToTrigger": 3,
+    "pays": {
+      "3": 2,
+      "4": 10,
+      "5": 50
+    }
+  },
+  "features": {
+    "freeSpins": {
+      "enabled": true,
+      "awards": {
+        "3": 8,
+        "4": 10,
+        "5": 12
+      },
+      "retrigger": false,
+      "winScale": 16.5325,
+      "multiplierLadder": {
+        "description": "No ladder (flat multiplier).",
+        "start": 1,
+        "step": 0,
+        "max": 1
+      }
+    },
+    "multiplierWilds": {
+      "enabled": false,
+      "appliesIn": ["free"],
+      "values": [1],
+      "weights": [1]
+    },
+    "expandingWilds": {
+      "enabled": false,
+      "appliesIn": ["free"],
+      "description": "Disabled for this game."
+    },
+    "bonusBuy": {
+      "enabled": true,
+      "mode": "bonus",
+      "costMultiplier": 100.0,
+      "description": "Instantly purchase entry into the free spins feature for 100x the base bet."
+    }
+  },
+  "responsibleGaming": {
+    "realityCheckMinutes": 60,
+    "helpUrl": "https://www.begambleaware.org/"
+  }
+}

@@ -11,13 +11,17 @@ MATH_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(MATH_ROOT / "simulator"))
 sys.path.insert(0, str(MATH_ROOT))
 
+from simulator.bookcontract import validate_book  # noqa: E402
 from simulator.definition import load_definition  # noqa: E402
 from simulator.mechanics import (  # noqa: E402
     LinesMechanic,
+    WaysMechanic,
     WinMechanic,
     build_mechanic,
     register_mechanic,
 )
+from simulator.rng import Rng  # noqa: E402
+from simulator.runner import build_engine  # noqa: E402
 
 
 def test_build_mechanic_resolves_lines_for_novaforged() -> None:
@@ -51,3 +55,41 @@ def test_registry_is_extensible() -> None:
     mechanic = build_mechanic(definition)
     assert isinstance(mechanic, DummyMechanic)
     assert mechanic.evaluate([], None) == (0.0, [])
+
+
+def test_ways_mechanic_counts_ways_as_product_of_per_reel_occurrences() -> None:
+    definition = load_definition("cosmicways")
+    assert definition.engine_type == "ways"
+    mechanic = build_mechanic(definition)
+    assert isinstance(mechanic, WaysMechanic)
+
+    # Pick a paying symbol that is neither wild nor scatter; fill with scatters
+    # so only the target symbol forms a left-aligned run.
+    target = next(s for s in definition.paytable if s not in (definition.wild, definition.scatter))
+    fill = definition.scatter
+    # 5×3 board, columns top→bottom. Target occurs 2× on reel0, 1× on reels 1–2,
+    # then absent → run length 3, ways = 2 × 1 × 1 = 2.
+    board = [
+        [target, target, fill],
+        [target, fill, fill],
+        [target, fill, fill],
+        [fill, fill, fill],
+        [fill, fill, fill],
+    ]
+    _total, wins = mechanic.evaluate(board, mult_grid=None)
+    win = next(w for w in wins if w["symbol"] == target)
+    assert win["count"] == 3
+    assert win["ways"] == 2
+    assert win["wildMultiplier"] == 1
+
+
+def test_cosmicways_simulates_to_valid_books() -> None:
+    """The second game runs end-to-end through the shared engine + book contract."""
+    definition = load_definition("cosmicways")
+    _, engine = build_engine("cosmicways")
+    rng = Rng(0)
+    for i in range(2000):
+        rng.reseed(i)
+        result = engine.play_round(i + 1, rng)
+        book = {"id": i + 1, "payoutMultiplier": result.payout_multiplier, "events": result.events}
+        assert not validate_book(book, wincap=definition.wincap), f"sim {i}"
