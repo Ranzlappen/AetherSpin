@@ -20,5 +20,8 @@ math/engine/
 pnpm-lock.yaml
 *.log
 
+# Release-please owns CHANGELOG formatting (Conventional-Commit style, not Prettier)
+CHANGELOG.md
+
 coverage
 **/coverage
