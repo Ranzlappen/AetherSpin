@@ -17,6 +17,11 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
+    // The game renders with PixiJS (WebGL). Headless CI has no GPU, so allow
+    // Chromium's software renderer (SwiftShader) — otherwise WebGL init can hang.
+    launchOptions: {
+      args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--use-gl=angle'],
+    },
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },

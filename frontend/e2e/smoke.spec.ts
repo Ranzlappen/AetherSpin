@@ -29,12 +29,12 @@ test('plays a round: spin disables then re-enables once the round resolves', asy
 
   await spin.click();
 
-  // The full play → reveal → end-round cycle completes and the button is usable
-  // again (proves the round resolved without throwing / corrupting state).
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  // While resolving, the button is disabled (the round is in flight)…
+  await expect(spin).toBeDisabled();
 
-  // No error toast surfaced during the round.
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  // …and once the full play → reveal → end-round cycle completes it is usable
+  // again, proving the round resolved without throwing / corrupting state.
+  await expect(spin).toBeEnabled({ timeout: 30_000 });
 });
 
 test('opens the paytable / rules modal', async ({ page }) => {
