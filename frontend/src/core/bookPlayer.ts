@@ -153,6 +153,37 @@ export class BookPlayer {
     }
   }
 
+  /**
+   * Resume an unfinished round reported by `authenticate` (its `round.book`):
+   * replay it and settle via `endRound`, WITHOUT placing a new bet. This honours
+   * the RGS contract that an in-progress round must be resumed, not re-played as a
+   * fresh spin (see SECURITY.md).
+   * @param round The round descriptor from `authenticate`.
+   * @param bet Stake in dollars (for display scaling).
+   */
+  async resume(round: RoundState, bet: number): Promise<void> {
+    const book = round.book;
+    if (!book) return;
+    isSpinning.set(true);
+    totalWin.set(0);
+    bus.emit('reels:spin', { gameType: 'base' });
+    try {
+      await this.replay(book, bet);
+      const end = await this.transport.endRound();
+      balance.set(end.balance.amount);
+      lastResult.set({
+        betID: round.betID,
+        win: get(totalWin),
+        payoutMultiplier: round.payoutMultiplier,
+        triggeredFeature: bookTriggersFeature(book),
+        wincap: round.payoutMultiplier >= WINCAP_MULTIPLIER,
+      });
+    } finally {
+      isSpinning.set(false);
+      gameMode.set('base');
+    }
+  }
+
   /** Replay every event of a book in order. `bet` is the stake in dollars. */
   private async replay(book: Book, bet: number): Promise<void> {
     let runningWin = 0;
@@ -172,11 +203,15 @@ export class BookPlayer {
     switch (event.type) {
       case 'reveal': {
         const expandedReels = event.expandedReels ?? [];
+        // Prefer the realized per-cell multipliers carried in the book (the math
+        // engine samples and commits them); only fall back to client-side
+        // detection for legacy books that don't include them.
+        const multiplierWilds = event.multiplierWilds ?? detectMultiplierWilds(event.board, event.gameType);
         bus.emit('board:reveal', {
           board: event.board,
           gameType: event.gameType,
           expandedReels,
-          multiplierWilds: detectMultiplierWilds(event.board, event.gameType),
+          multiplierWilds,
           anticipation: countScatters(event.board) >= 2,
         });
         if (event.gameType === 'free') {

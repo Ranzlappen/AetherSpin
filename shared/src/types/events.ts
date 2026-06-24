@@ -29,6 +29,8 @@ export interface RevealEvent {
   spinsTotal?: number;
   globalMultiplier?: number;
   expandedReels?: number[];
+  /** Realized per-cell wild multipliers for this board (free game only). */
+  multiplierWilds?: Array<{ reel: number; row: number; value: number }>;
 }
 
 export interface LineWinsEvent {

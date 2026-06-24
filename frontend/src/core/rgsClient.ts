@@ -10,7 +10,35 @@
  * to typed {@link RgsError}s. No Pixi or Svelte imports.
  */
 import { API_AMOUNT_MULTIPLIER, toApiAmount, fromApiAmount } from './amount';
-import type { Book } from '../../../shared/src/types/events';
+import type { Book, BookEvent } from '../../../shared/src/types/events';
+
+/** Valid book-event types (mirrors shared/schemas/book.schema.json). */
+const VALID_EVENT_TYPES = new Set([
+  'reveal',
+  'lineWins',
+  'scatterWin',
+  'freeSpinTrigger',
+  'freeSpinResult',
+  'ladderStep',
+  'freeSpinRetrigger',
+  'freeSpinEnd',
+  'finalWin',
+]);
+
+/**
+ * Validate a server-returned book's shape before the frontend replays it.
+ * Types do not protect against a malformed runtime payload; a bad book must be
+ * rejected (and the round surfaced as an error) rather than mis-rendered.
+ */
+export function isValidBook(book: unknown): book is Book {
+  if (!book || typeof book !== 'object') return false;
+  const b = book as { id?: unknown; payoutMultiplier?: unknown; events?: unknown };
+  if (typeof b.id !== 'number' || typeof b.payoutMultiplier !== 'number') return false;
+  if (!Array.isArray(b.events) || b.events.length < 2) return false;
+  const events = b.events as BookEvent[];
+  if (events[0]?.type !== 'reveal' || events[events.length - 1]?.type !== 'finalWin') return false;
+  return events.every((e) => e && typeof e.type === 'string' && VALID_EVENT_TYPES.has(e.type));
+}
 
 /** RGS status codes surfaced by the Stake Engine wallet API. */
 export type RgsStatusCode = 'SUCCESS' | 'ERR_IPB' | 'ERR_IS' | 'ERR_ATE' | 'ERR_VAL' | 'ERR_UE';
@@ -151,6 +179,23 @@ export interface RgsClientOptions {
   params: RgsParams;
   /** Injectable fetch (defaults to global `fetch`) — eases testing. */
   fetchImpl?: typeof fetch;
+  /** Per-request timeout in ms (default 15000). */
+  timeoutMs?: number;
+  /** Max attempts for idempotent requests on transport errors (default 3). */
+  maxRetries?: number;
+  /** Injectable sleep (eases testing of backoff). */
+  sleepImpl?: (ms: number) => Promise<void>;
+}
+
+/** True for an https URL, or a localhost http URL (dev only). */
+function isSecureRgsUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'https:') return true;
+    return u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1');
+  } catch {
+    return false;
+  }
 }
 
 /** Concrete RGS client talking to the live Stake Engine wallet API. */
@@ -158,32 +203,69 @@ export class RgsClient implements RgsTransport {
   readonly params: RgsParams;
   private readonly fetchImpl: typeof fetch;
   private readonly currency: string;
+  private readonly timeoutMs: number;
+  private readonly maxRetries: number;
+  private readonly sleep: (ms: number) => Promise<void>;
 
   constructor(options: RgsClientOptions) {
     this.params = options.params;
     this.fetchImpl =
       options.fetchImpl ?? (typeof fetch !== 'undefined' ? fetch.bind(globalThis) : undefined!);
     this.currency = options.params.currency ?? 'USD';
+    this.timeoutMs = options.timeoutMs ?? 15_000;
+    this.maxRetries = Math.max(1, options.maxRetries ?? 3);
+    this.sleep = options.sleepImpl ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   }
 
-  /** POST `body` to `path` on the configured RGS base URL and parse JSON. */
-  private async request<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  /**
+   * POST `body` to `path` and parse JSON.
+   * @param idempotent When true, transport failures (network/timeout/5xx) are
+   *   retried with bounded exponential backoff. Only safe for read-only/idempotent
+   *   calls (authenticate, balance) — never for play/end-round, which would risk a
+   *   double-settle without a server idempotency key.
+   */
+  private async request<T>(path: string, body: Record<string, unknown>, idempotent = false): Promise<T> {
     if (!this.params.rgsUrl) {
       throw new RgsError('ERR_ATE', 'No rgsUrl configured.');
     }
+    if (!isSecureRgsUrl(this.params.rgsUrl)) {
+      throw new RgsError('ERR_VAL', 'Refusing to use a non-HTTPS rgsUrl.');
+    }
     const base = this.params.rgsUrl.replace(/\/$/, '');
+    const attempts = idempotent ? this.maxRetries : 1;
+    let lastErr: RgsError = new RgsError('ERR_UE');
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      if (attempt > 0) await this.sleep(Math.min(2000, 250 * 2 ** (attempt - 1)));
+      try {
+        return await this.requestOnce<T>(base, path, body);
+      } catch (err) {
+        lastErr = err instanceof RgsError ? err : new RgsError('ERR_UE', String(err));
+        // Only transport/server errors (ERR_UE) are retryable; business errors
+        // (insufficient balance, invalid session, …) are returned immediately.
+        if (lastErr.code !== 'ERR_UE') throw lastErr;
+      }
+    }
+    throw lastErr;
+  }
+
+  private async requestOnce<T>(base: string, path: string, body: Record<string, unknown>): Promise<T> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     let res: Response;
     try {
       res = await this.fetchImpl(`${base}${path}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
     } catch (err) {
-      throw new RgsError('ERR_UE', `Network error: ${(err as Error).message}`);
+      const msg = (err as Error).name === 'AbortError' ? 'Request timed out' : (err as Error).message;
+      throw new RgsError('ERR_UE', `Network error: ${msg}`);
+    } finally {
+      clearTimeout(timer);
     }
     if (!res.ok) {
-      // Some RGS errors still return a JSON status; try to read it.
       try {
         const data = (await res.json()) as { status?: unknown };
         const code = readStatusCode(data.status);
@@ -202,11 +284,15 @@ export class RgsClient implements RgsTransport {
 
   /** Authenticate the session and fetch wallet config + balance. */
   async authenticate(): Promise<AuthenticateResult> {
-    const raw = await this.request<Record<string, unknown>>('/wallet/authenticate', {
-      sessionID: this.params.sessionID,
-      rgsUrl: this.params.rgsUrl,
-      language: this.params.lang,
-    });
+    const raw = await this.request<Record<string, unknown>>(
+      '/wallet/authenticate',
+      {
+        sessionID: this.params.sessionID,
+        rgsUrl: this.params.rgsUrl,
+        language: this.params.lang,
+      },
+      true // idempotent: safe to retry
+    );
     const statusCode = readStatusCode(raw.status);
     assertSuccess(statusCode);
     const balance = readBalance(raw.balance, this.currency);
@@ -229,20 +315,36 @@ export class RgsClient implements RgsTransport {
     };
   }
 
-  /** Place a bet and receive the round's book. */
+  /** Place a bet and receive the round's book.
+   *
+   * Not retried on transport errors (a bet is non-idempotent). On an expired
+   * session (`ERR_IS`) we re-authenticate once and retry the bet a single time. */
   async play(amount: number, mode: BetMode): Promise<PlayResult> {
-    const raw = await this.request<Record<string, unknown>>('/wallet/play', {
-      amount: toApiAmount(amount),
-      mode,
-      currency: this.currency,
-      sessionID: this.params.sessionID,
-      rgsUrl: this.params.rgsUrl,
-    });
-    const statusCode = readStatusCode(raw.status);
-    assertSuccess(statusCode);
+    const send = async () => {
+      const raw = await this.request<Record<string, unknown>>('/wallet/play', {
+        amount: toApiAmount(amount),
+        mode,
+        currency: this.currency,
+        sessionID: this.params.sessionID,
+        rgsUrl: this.params.rgsUrl,
+      });
+      assertSuccess(readStatusCode(raw.status)); // throws e.g. ERR_IS so it can be caught below
+      return raw;
+    };
+    let raw: Record<string, unknown>;
+    try {
+      raw = await send();
+    } catch (err) {
+      if (err instanceof RgsError && err.code === 'ERR_IS') {
+        await this.authenticate();
+        raw = await send();
+      } else {
+        throw err;
+      }
+    }
     const round = this.readRound(raw.round);
     if (!round) throw new RgsError('ERR_UE', 'play() returned no round.');
-    return { round, balance: readBalance(raw.balance, this.currency), statusCode };
+    return { round, balance: readBalance(raw.balance, this.currency), statusCode: 'SUCCESS' };
   }
 
   /** Settle and finalize the current round. */
@@ -258,10 +360,14 @@ export class RgsClient implements RgsTransport {
 
   /** Fetch the current wallet balance. */
   async getBalance(): Promise<Balance> {
-    const raw = await this.request<Record<string, unknown>>('/wallet/balance', {
-      sessionID: this.params.sessionID,
-      rgsUrl: this.params.rgsUrl,
-    });
+    const raw = await this.request<Record<string, unknown>>(
+      '/wallet/balance',
+      {
+        sessionID: this.params.sessionID,
+        rgsUrl: this.params.rgsUrl,
+      },
+      true // idempotent
+    );
     assertSuccess(readStatusCode(raw.status));
     return readBalance(raw.balance, this.currency);
   }
@@ -276,6 +382,10 @@ export class RgsClient implements RgsTransport {
       book?: Book;
     };
     if (r.betID === undefined) return null;
+    // Reject a malformed book before the frontend tries to replay it.
+    if (r.book !== undefined && r.book !== null && !isValidBook(r.book)) {
+      throw new RgsError('ERR_VAL', 'RGS returned a malformed book.');
+    }
     return {
       betID: r.betID,
       state: r.state ?? 'placed',

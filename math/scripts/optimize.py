@@ -47,26 +47,31 @@ def main() -> int:
 
     d = load_definition(args.game)
     target = d.rtp_target
+    # The buy-bonus is purchased for this multiple of the base bet; its RTP is the
+    # raw forced-free payout divided by that cost.
+    buy_cost = next((m["cost"] for m in d.bet_modes if m.get("isBuyBonus")), 100.0)
 
     print("Measuring reference quantities...")
     line_only = measure(args.game, args.sims, 1, disable_free=True)
     base_total = measure(args.game, args.sims, 2)
-    e_free = measure(args.game, args.sims, 3, force_free=True)  # cost-1 forced free == E[free]
+    e_free_raw = measure(args.game, args.sims, 3, force_free=True)  # avg forced-free payout (×bet)
+    e_free_rtp = e_free_raw / buy_cost  # buy-bonus RTP at the purchase cost
     free_contrib = base_total - line_only
     print(f"  base line-only : {line_only*100:.3f}%")
     print(f"  base total     : {base_total*100:.3f}%")
     print(f"  free contrib   : {free_contrib*100:.3f}%")
-    print(f"  E[free]        : {e_free*100:.3f}%  (buy rtp at 100x)")
+    print(f"  E[free] raw     : {e_free_raw:.3f}x  -> buy rtp at {buy_cost:g}x = {e_free_rtp*100:.3f}%")
 
-    # Solve: paytable scalar a, winScale b
-    #   bonus: e_free * a * b = target  -> a*b = K
+    # Solve two knobs so BOTH modes hit target:
+    #   paytable scalar a (scales base-line AND free), winScale b (free only).
+    #   bonus: e_free_rtp * a * b = target            -> a*b = K
     #   base : line_only*a + free_contrib*a*b = target
-    K = target / e_free
+    K = target / e_free_rtp
     a = (target - free_contrib * K) / line_only
     b = K / a
     print(f"\nSolution: paytable_scalar={a:.4f}  winScale_factor={b:.4f}")
     print(f"  predicted base  = {(line_only*a + free_contrib*a*b)*100:.2f}%")
-    print(f"  predicted bonus = {(e_free*a*b)*100:.2f}%")
+    print(f"  predicted bonus = {(e_free_rtp*a*b)*100:.2f}%")
 
     if not args.apply:
         print("\n(dry run — pass --apply to write changes)")
