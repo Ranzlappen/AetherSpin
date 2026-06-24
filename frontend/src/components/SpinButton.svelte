@@ -1,6 +1,7 @@
 <script lang="ts">
   /** The main spin button. Disabled while spinning or when funds are short. */
   import { isSpinning, insufficientFunds, autoplay } from '../core/gameState';
+  import { t } from '../core/i18n';
   import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ spin: void }>();
@@ -13,11 +14,17 @@
   }
 </script>
 
-<button class="spin-btn" class:spinning={$isSpinning} {disabled} aria-label="Spin" on:click={onClick}>
+<button
+  class="spin-btn"
+  class:spinning={$isSpinning}
+  {disabled}
+  aria-label={$t('spin.label')}
+  on:click={onClick}
+>
   <div class="ring"></div>
-  <span class="glyph">{$isSpinning ? '' : 'SPIN'}</span>
+  <span class="glyph">{$isSpinning ? '' : $t('spin.label')}</span>
   {#if $insufficientFunds && !$isSpinning}
-    <span class="hint">Low balance</span>
+    <span class="hint">{$t('spin.lowBalance')}</span>
   {/if}
 </button>
 
@@ -56,6 +63,7 @@
     font-weight: 900;
     font-size: 1.25rem;
     letter-spacing: 0.1em;
+    text-transform: uppercase;
     color: var(--text);
     text-shadow: 0 0 8px var(--neon-cyan);
   }

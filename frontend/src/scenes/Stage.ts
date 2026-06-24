@@ -19,6 +19,8 @@ export interface StageInitOptions {
   container: HTMLElement;
   /** Optional FPS monitor callback. */
   onFps?: FpsCallback;
+  /** Suppress non-essential celebration motion (OS "reduce motion"). */
+  reducedMotion?: boolean;
 }
 
 /** The top-level Pixi scene graph and lifecycle owner. */
@@ -33,6 +35,7 @@ export class Stage {
   private fpsFrames = 0;
   private resizeObserver: ResizeObserver | null = null;
   private celebrateOff: (() => void) | null = null;
+  private reducedMotion = false;
 
   /** Design resolution the scene is laid out against. */
   static readonly DESIGN_WIDTH = 1280;
@@ -41,6 +44,7 @@ export class Stage {
   /** Initialize the Pixi application and build the scene graph. */
   async init(options: StageInitOptions): Promise<void> {
     this.onFps = options.onFps;
+    this.reducedMotion = options.reducedMotion ?? false;
     const app = new Application();
     await app.init({
       antialias: true,
@@ -89,9 +93,16 @@ export class Stage {
     }
   }
 
+  /** Allow the host to follow OS "reduce motion" changes after init. */
+  setReducedMotion(reduced: boolean): void {
+    this.reducedMotion = reduced;
+  }
+
   /** Fire a particle burst sized to the win tier. */
   private onCelebrate(tier: WinTier): void {
     if (!this.particles || !this.reels) return;
+    // Reduced motion: skip non-essential celebratory particle bursts.
+    if (this.reducedMotion) return;
     const { width, height } = this.reels.boardSize;
     const scale = this.world.scale.x;
     const cx = this.world.x + (width / 2) * scale;

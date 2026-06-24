@@ -5,6 +5,7 @@
  */
 import { writable, derived, get, type Readable, type Writable } from 'svelte/store';
 import { betLevels, defaultBetLevelIndex, formatCurrency } from '../config/gameConfig';
+import { localeTag } from './i18n';
 
 /** High-level scene the player is currently in. */
 export type GameMode = 'base' | 'free';
@@ -88,19 +89,20 @@ export const errorMessage: Writable<string | null> = writable(null);
 
 /* ----------------------------- derived stores ----------------------------- */
 
-/** Balance formatted as a currency string. */
-export const balanceLabel: Readable<string> = derived([balance, currency], ([$b, $c]) =>
-  formatCurrency($b, $c)
+/** Balance formatted as a localized currency string. */
+export const balanceLabel: Readable<string> = derived([balance, currency, localeTag], ([$b, $c, $l]) =>
+  formatCurrency($b, $c, $l)
 );
 
-/** Current bet formatted as a currency string. */
-export const currentBetLabel: Readable<string> = derived([currentBet, currency], ([$bet, $c]) =>
-  formatCurrency($bet, $c)
+/** Current bet formatted as a localized currency string. */
+export const currentBetLabel: Readable<string> = derived(
+  [currentBet, currency, localeTag],
+  ([$bet, $c, $l]) => formatCurrency($bet, $c, $l)
 );
 
-/** Total win formatted as a currency string. */
-export const totalWinLabel: Readable<string> = derived([totalWin, currency], ([$w, $c]) =>
-  formatCurrency($w, $c)
+/** Total win formatted as a localized currency string. */
+export const totalWinLabel: Readable<string> = derived([totalWin, currency, localeTag], ([$w, $c, $l]) =>
+  formatCurrency($w, $c, $l)
 );
 
 /** True when the player cannot afford the current base bet. */

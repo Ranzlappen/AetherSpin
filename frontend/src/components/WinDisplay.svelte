@@ -2,6 +2,7 @@
   /** Animated count-up of the round win amount. */
   import { totalWin, currency } from '../core/gameState';
   import { formatCurrency } from '../config/gameConfig';
+  import { t, localeTag } from '../core/i18n';
   import { onDestroy } from 'svelte';
 
   let displayed = 0;
@@ -34,8 +35,8 @@
 
 {#if $totalWin > 0}
   <div class="win panel" role="status">
-    <span class="label">Win</span>
-    <span class="value neon-text">{formatCurrency(displayed, $currency)}</span>
+    <span class="label">{$t('hud.win')}</span>
+    <span class="value neon-text">{formatCurrency(displayed, $currency, $localeTag)}</span>
   </div>
 {/if}
 

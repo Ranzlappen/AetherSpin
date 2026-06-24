@@ -1,10 +1,11 @@
 <script lang="ts">
   /** Shows the player's wallet balance, formatted via the currency derived store. */
   import { balanceLabel } from '../core/gameState';
+  import { t } from '../core/i18n';
 </script>
 
 <div class="balance panel">
-  <span class="label">Balance</span>
+  <span class="label">{$t('hud.balance')}</span>
   <span class="value neon-text">{$balanceLabel}</span>
 </div>
 

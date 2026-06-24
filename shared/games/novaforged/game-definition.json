@@ -226,5 +226,9 @@
       "costMultiplier": 100.0,
       "description": "Instantly purchase entry into the free spins feature for 100x the base bet."
     }
+  },
+  "responsibleGaming": {
+    "realityCheckMinutes": 60,
+    "helpUrl": "https://www.begambleaware.org/"
   }
 }

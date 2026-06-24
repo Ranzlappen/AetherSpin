@@ -84,4 +84,13 @@ export interface GameDefinition {
   paylines: number[][];
   scatter: ScatterConfig;
   features: FeatureConfig;
+  responsibleGaming?: ResponsibleGamingConfig;
+}
+
+/** Optional operator-compliance UX policy shipped with the game. */
+export interface ResponsibleGamingConfig {
+  /** Minutes between reality-check reminders (omit/0 disables). */
+  realityCheckMinutes?: number;
+  /** URL to operator help / limit-setting resources. */
+  helpUrl?: string;
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
   /** Autoplay control: choose a count to start, or stop an active run. */
   import { autoplay, isSpinning, insufficientFunds } from '../core/gameState';
+  import { t } from '../core/i18n';
   import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ start: { count: number }; stop: void }>();
@@ -18,13 +19,17 @@
 
 <div class="autoplay">
   {#if $autoplay.active}
-    <button class="btn stop" on:click={stop}>
-      Stop
+    <button class="btn stop" aria-label={$t('autoplay.stop')} on:click={stop}>
+      {$t('autoplay.stopShort')}
       <span class="count">{$autoplay.remaining === Infinity ? '∞' : $autoplay.remaining}</span>
     </button>
   {:else}
-    <button class="btn" disabled={$isSpinning || $insufficientFunds} on:click={() => (open = !open)}
-      >Auto ▾</button
+    <button
+      class="btn"
+      aria-label={$t('autoplay.label')}
+      aria-expanded={open}
+      disabled={$isSpinning || $insufficientFunds}
+      on:click={() => (open = !open)}>{$t('autoplay.auto')} ▾</button
     >
     {#if open}
       <div class="menu panel">
