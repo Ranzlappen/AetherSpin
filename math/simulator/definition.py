@@ -112,9 +112,70 @@ class GameDefinition:
         return [s["id"] for s in self.raw["symbols"]]
 
 
-def load_definition(game_id: str, base_dir: Path | None = None) -> GameDefinition:
-    """Load ``<base_dir>/<game_id>/game-definition.json`` into a GameDefinition."""
+def semantic_problems(raw: dict[str, Any]) -> list[str]:
+    """Cross-field semantic checks the JSON Schema can't express (stdlib only).
+
+    Returns a list of human-readable problems (empty == valid). This is the
+    runtime guard that makes the 'single source of truth' real: the engine
+    refuses to load a structurally-valid-but-semantically-broken definition.
+    """
+    problems: list[str] = []
+    eng = raw.get("engine", {})
+    num_reels = int(eng.get("numReels", 0))
+    num_rows = int(eng.get("numRows", 0))
+    symbol_ids = [s["id"] for s in raw.get("symbols", [])]
+    sym_set = set(symbol_ids)
+
+    if len(symbol_ids) != len(sym_set):
+        problems.append("duplicate symbol ids")
+
+    for i, line in enumerate(raw.get("paylines", [])):
+        if len(line) != num_reels:
+            problems.append(f"payline {i} has {len(line)} cells, expected numReels={num_reels}")
+        for r in line:
+            if not (0 <= int(r) < num_rows):
+                problems.append(f"payline {i} row index {r} out of range [0,{num_rows})")
+
+    levels = raw.get("bet", {}).get("levels", [])
+    dli = raw.get("bet", {}).get("defaultLevelIndex", 0)
+    if levels and not (0 <= int(dli) < len(levels)):
+        problems.append(f"defaultLevelIndex {dli} out of range for {len(levels)} bet levels")
+
+    for sym in raw.get("paytable", {}):
+        if sym not in sym_set:
+            problems.append(f"paytable references unknown symbol {sym!r}")
+
+    scatter_sym = raw.get("scatter", {}).get("symbol")
+    if scatter_sym and scatter_sym not in sym_set:
+        problems.append(f"scatter symbol {scatter_sym!r} not in symbols")
+
+    for s in raw.get("symbols", []):
+        for sub in s.get("substitutes", []):
+            if sub not in sym_set:
+                problems.append(f"symbol {s['id']} substitutes unknown symbol {sub!r}")
+
+    mode_names = [m["name"] for m in raw.get("betModes", [])]
+    if len(mode_names) != len(set(mode_names)):
+        problems.append("duplicate betMode names")
+    buy_mode = raw.get("features", {}).get("bonusBuy", {}).get("mode")
+    if buy_mode and buy_mode not in mode_names:
+        problems.append(f"features.bonusBuy.mode {buy_mode!r} is not a defined betMode")
+
+    return problems
+
+
+def load_definition(game_id: str, base_dir: Path | None = None, validate: bool = True) -> GameDefinition:
+    """Load ``<base_dir>/<game_id>/game-definition.json`` into a GameDefinition.
+
+    Raises ``ValueError`` if the definition fails semantic validation (unless
+    ``validate=False``).
+    """
     base = base_dir or SHARED_GAMES_DIR
     path = Path(base) / game_id / "game-definition.json"
     with open(path, "r", encoding="utf-8") as f:
-        return GameDefinition(raw=json.load(f))
+        raw = json.load(f)
+    if validate:
+        problems = semantic_problems(raw)
+        if problems:
+            raise ValueError(f"Invalid game definition '{game_id}':\n  - " + "\n  - ".join(problems))
+    return GameDefinition(raw=raw)

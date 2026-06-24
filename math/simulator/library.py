@@ -60,7 +60,12 @@ class LibraryWriter:
             "count": len(books),
         }
 
-    def write_config(self, definition_raw: dict[str, Any], rtp_by_mode: dict[str, float]) -> None:
+    def write_config(
+        self,
+        definition_raw: dict[str, Any],
+        rtp_by_mode: dict[str, float],
+        provenance: dict[str, Any] | None = None,
+    ) -> None:
         config = {
             "gameId": self.game_id,
             "version": definition_raw.get("version", "1.0.0"),
@@ -78,6 +83,8 @@ class LibraryWriter:
                 for m in definition_raw["betModes"]
             ],
         }
+        if provenance is not None:
+            config["provenance"] = provenance
         with open(self.cfg_dir / "config.json", "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2)
 

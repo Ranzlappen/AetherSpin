@@ -11,15 +11,18 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Python math engine: unit tests + RTP gate (standalone simulator, stdlib only).
+  # Python math engine: unit tests, contract/definition validation, RTP gate,
+  # and generated-book integrity (standalone simulator, stdlib only).
   # ---------------------------------------------------------------------------
   math:
-    name: Math (tests + RTP gate)
+    name: Math (tests + contracts + RTP gate)
     runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0' # reproducible seeding (see math/simulator/runner.py)
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ['3.11']
     steps:
       - uses: actions/checkout@v7
 
@@ -33,11 +36,37 @@ jobs:
       - name: Install test dependencies
         run: pip install pytest
 
-      - name: Run unit tests
+      - name: Validate game definitions (semantic, all games)
+        run: python scripts/validate_definitions.py
+
+      - name: Run unit tests (engine + event contract)
         run: python -m pytest math/tests -q
 
-      - name: Validate RTP (gates the build)
-        run: python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05
+      - name: Validate RTP — base + buy-bonus (gates the build)
+        run: python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05 --mode all
+
+      - name: Generate + validate a book library (integrity gate)
+        run: |
+          python math/scripts/generate_books.py --game novaforged --sims 5000
+          python math/scripts/validate_books.py --game novaforged
+
+  # ---------------------------------------------------------------------------
+  # Structural JSON-Schema validation of all game definitions (ajv / Node).
+  # ---------------------------------------------------------------------------
+  contracts:
+    name: Contracts (schema validation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up Node 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Validate every game-definition against the schema
+        run: >
+          npx --yes ajv-cli@5 validate
+          -s shared/schemas/game-definition.schema.json
+          $(for f in shared/games/*/game-definition.json; do echo -n " -d $f"; done)
 
   # ---------------------------------------------------------------------------
   # Frontend workspace: type-check, test, build.
@@ -45,7 +74,6 @@ jobs:
   frontend:
     name: Frontend (check + test + build)
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v7
 
@@ -61,8 +89,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        # Tolerate an absent/out-of-date lockfile so CI works before one is committed.
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Type-check
         run: pnpm --filter @aetherspin/frontend run check
@@ -74,7 +101,7 @@ jobs:
         run: pnpm --filter @aetherspin/frontend build
 
   # ---------------------------------------------------------------------------
-  # Repo-wide lint: prettier + eslint over shared + frontend.
+  # Repo-wide lint: prettier (enforced) + eslint.
   # ---------------------------------------------------------------------------
   lint:
     name: Lint (prettier + eslint)
@@ -94,11 +121,13 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: Prettier check
+      - name: Prettier check (enforced)
         run: pnpm exec prettier --check "**/*.{ts,svelte,js,json,md}"
 
-      - name: ESLint
-        # Lint shared + frontend sources; do not fail if eslint is not wired up yet.
-        run: pnpm exec eslint "shared/**/*.{ts,svelte}" "frontend/**/*.{ts,svelte}" || echo "eslint not configured or no matching files; skipping"
+      - name: ESLint (non-blocking — pending flat-config migration for ESLint 10)
+        # ESLint 10 requires flat config (eslint.config.js); the repo's .eslintrc.cjs
+        # is not yet migrated, so this is intentionally non-blocking. Tracked in
+        # docs/IMPROVEMENT-PLAN.md (Phase B). Prettier is the enforced style gate.
+        run: pnpm exec eslint "shared/**/*.ts" "frontend/src/**/*.{ts,svelte}" || true

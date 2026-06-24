@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "simulator"))
 sys.path.insert(0, str(ROOT))
 
+from simulator.bookcontract import validate_book  # noqa: E402
+from simulator.definition import load_definition  # noqa: E402
 from simulator.runner import run_simulations, write_library  # noqa: E402
 
 
@@ -29,7 +31,21 @@ def main() -> int:
     num_by_mode = {"base": args.sims, "bonus": max(1, args.sims // 5)}
     print(f"Generating books for '{args.game}' :: {num_by_mode}")
     out = run_simulations(args.game, num_by_mode, seed=args.seed)
-    game_dir = write_library(args.game, out, Path(args.out))
+
+    # Fail closed: never write a library containing a malformed/over-cap book.
+    wincap = load_definition(args.game).wincap
+    problems: list[str] = []
+    for mode, books in out.books.items():
+        for book in books:
+            for p in validate_book(book, wincap=wincap):
+                problems.append(f"[{mode}] id={book.get('id')}: {p}")
+    if problems:
+        print(f"ERROR: {len(problems)} book-integrity problem(s); refusing to write library:")
+        for p in problems[:20]:
+            print(f"  - {p}")
+        return 1
+
+    game_dir = write_library(args.game, out, Path(args.out), seed=args.seed)
 
     print(f"\nLibrary written to: {game_dir}")
     for mode, s in out.stats.items():

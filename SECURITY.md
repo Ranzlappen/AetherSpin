@@ -43,7 +43,12 @@ Stake Engine game.
 - The math library is the certified artifact. Regenerate it deterministically
   (`generate_books.py` is seeded) and validate RTP before every submission.
 - Ensure the buy-bonus is **not EV-positive for the player** — this is both a
-  commercial and a compliance requirement. `math/tests/test_engine.py` guards it.
+  commercial and a compliance requirement. Concretely, the buy-bonus RTP must sit
+  at or below the game's RTP target (a small tolerance absorbs sampling noise, but
+  the gate is clamped at break-even — `min(target + tol, 1.0)` — so it can never
+  pass an EV-positive buy). This is enforced by `math/tests/test_engine.py`
+  (`bonus_rtp <= rtpTarget + 0.03`) and gated in CI for both bet modes by
+  `math/scripts/validate_rtp.py --mode all`.
 
 ## Reporting a vulnerability
 

@@ -18,7 +18,9 @@
     "scatter",
     "features"
   ],
+  "additionalProperties": false,
   "properties": {
+    "$schema": { "type": "string" },
     "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
     "displayName": { "type": "string" },
     "version": { "type": "string" },
@@ -27,6 +29,7 @@
     "description": { "type": "string" },
     "engine": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["type", "numReels", "numRows", "wincapMultiplier", "rtpTarget"],
       "properties": {
         "type": { "type": "string", "enum": ["lines", "ways", "cluster", "scatter"] },

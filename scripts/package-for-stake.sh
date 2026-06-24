@@ -11,12 +11,21 @@
 # Usage: scripts/package-for-stake.sh [gameId]   (default: novaforged)
 #
 set -euo pipefail
+export PYTHONHASHSEED=0  # reproducible library generation
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-GAME_ID="${1:-novaforged}"
+# Args: <gameId> [--math-only]. --math-only allows a bundle without a frontend.
+GAME_ID="novaforged"
+MATH_ONLY=0
+for arg in "$@"; do
+  case "$arg" in
+    --math-only) MATH_ONLY=1 ;;
+    *) GAME_ID="$arg" ;;
+  esac
+done
 
 LIBRARY_DIR="$ROOT/math/library/$GAME_ID"
 DEFINITION="$ROOT/shared/games/$GAME_ID/game-definition.json"
@@ -54,17 +63,22 @@ if [ ! -d "$LIBRARY_DIR" ]; then
   exit 1
 fi
 
+# Fail closed on book-integrity problems before assembling an upload bundle.
+echo "==> Validating generated books ..."
+python3 "$ROOT/math/scripts/validate_books.py" --game "$GAME_ID"
+
 # ---------------------------------------------------------------------------
-# 2. Build the frontend bundle.
+# 2. Build the frontend bundle (fatal unless --math-only).
 # ---------------------------------------------------------------------------
 echo "==> Building frontend ..."
-if command -v pnpm >/dev/null 2>&1; then
-  if ! pnpm --filter @aetherspin/frontend build; then
-    echo "WARNING: frontend build failed or is not yet wired up." >&2
-    echo "         The bundle will be produced without a frontend/ folder." >&2
-  fi
+if [ "$MATH_ONLY" -eq 1 ]; then
+  echo "    (--math-only: skipping frontend build)"
+elif command -v pnpm >/dev/null 2>&1; then
+  pnpm --filter @aetherspin/frontend build  # fail-closed: a failed build aborts packaging
 else
-  echo "WARNING: pnpm not found; skipping frontend build." >&2
+  echo "ERROR: pnpm not found; cannot build the frontend bundle." >&2
+  echo "       Re-run with --math-only to produce a math-only bundle deliberately." >&2
+  exit 1
 fi
 
 # ---------------------------------------------------------------------------

@@ -18,8 +18,7 @@ class GameState(GameStateOverride):
             self.reset_book()
             self.draw_board()  # base-game board using the active reel set
 
-            self.evaluate_lines_board()  # line wins with wild substitution
-            self.evaluate_scatters()     # scatter pays + free-spin trigger check
+            self.evaluate_base_board()  # batched line wins + scatter pays
 
             if self.check_freespin_entry():
                 self.run_freespin()
@@ -31,12 +30,6 @@ class GameState(GameStateOverride):
     def run_freespin(self):
         self.reset_fs_spin()
         while self.fs < self.tot_fs:
-            self.update_freespin()       # advance counter, emit update event
-            self.draw_board()
-            self.apply_expanding_wilds()  # middle-reel wilds expand
-            self.evaluate_lines_board(global_mult=self.global_multiplier)
-            self.evaluate_scatters()
-            self.update_multiplier_ladder()  # bump global multiplier on a win
-            self.check_freespin_retrigger()
-
+            self.run_free_spin()  # draw, expand wilds, evaluate, emit freeSpinResult
+        self.emit_freespin_end()
         self.end_freespin()

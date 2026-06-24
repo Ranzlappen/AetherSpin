@@ -146,8 +146,12 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
 
 ---
 
-## Housekeeping note
+## Status
 
-The seven source audits live at repo root as `Evaluation1–7.MD`. Recommend moving
-them to `docs/external-reviews/` (and adding this file as
-`docs/IMPROVEMENT-PLAN.md`) so the root stays clean. Not done automatically.
+The **Phase A first-PR batch** (A1, A3, A4, A5, A6) is implemented on branch
+`feat/p0-correctness-hardening`. The seven raw source audits (`Evaluation1–7.MD`)
+are retained only on the archived branch (`claude/stake-engine-monorepo-setup-2b2chu`
+/ `main`) and removed from the finished-repo branch. Remaining Phase A items
+(A2 realized multiplier wilds, A7 RGS resume/robustness) and Phases B–C are
+still open. ESLint un-masking (Phase B) requires a flat-config migration for
+ESLint 10 and is tracked separately.
