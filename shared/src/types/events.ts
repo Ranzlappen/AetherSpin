@@ -20,6 +20,18 @@ export interface LineWin {
   amount: number;
 }
 
+/** A single all-ways win (no fixed payline; carries the ways count). */
+export interface WayWin {
+  symbol: string;
+  count: number;
+  ways: number;
+  wildMultiplier: number;
+  amount: number;
+}
+
+/** Either mechanic's win descriptor (lines carry `line`, ways carry `ways`). */
+export type Win = LineWin | WayWin;
+
 export interface RevealEvent {
   type: 'reveal';
   gameType: GameType;
@@ -40,6 +52,13 @@ export interface LineWinsEvent {
   amount: number;
 }
 
+export interface WayWinsEvent {
+  type: 'wayWins';
+  gameType: GameType;
+  wins: WayWin[];
+  amount: number;
+}
+
 export interface ScatterWinEvent {
   type: 'scatterWin';
   count: number;
@@ -56,7 +75,8 @@ export interface FreeSpinTriggerEvent {
 export interface FreeSpinResultEvent {
   type: 'freeSpinResult';
   spin: number;
-  wins: LineWin[];
+  /** Wins for this free spin — line- or ways-shaped depending on the mechanic. */
+  wins: Win[];
   scatter: { count: number; amount: number } | null;
   globalMultiplier: number;
   amount: number;
@@ -88,6 +108,7 @@ export interface FinalWinEvent {
 export type BookEvent =
   | RevealEvent
   | LineWinsEvent
+  | WayWinsEvent
   | ScatterWinEvent
   | FreeSpinTriggerEvent
   | FreeSpinResultEvent

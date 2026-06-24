@@ -58,6 +58,21 @@ test('opens the paytable / rules modal', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
+test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({ page }) => {
+  await page.goto('/?game=cosmicways');
+  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
+
+  // The registry resolved the requested game and the switcher reflects it.
+  await expect(page.getByLabel('Switch game (demo)')).toHaveValue('cosmicways');
+
+  // A round plays end-to-end (the mock emits wayWins; the player handles them).
+  const spin = spinButton(page);
+  await expect(spin).toBeEnabled();
+  await spin.click();
+  await expect(spin).toBeDisabled();
+  await expect(spin).toBeEnabled({ timeout: 30_000 });
+});
+
 test('a11y: exposes a polite live region and spins via the keyboard', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });

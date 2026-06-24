@@ -6,11 +6,49 @@
  * frontend module re-parses the raw JSON shape. Nothing here imports Pixi or
  * Svelte — it is pure data/config logic.
  */
-import rawDef from '../../../shared/games/novaforged/game-definition.json';
 import type { GameDefinition, GameSymbol, BetMode } from '../../../shared/src/types/game';
 
-/** The fully-typed game definition. */
-export const gameDefinition = rawDef as unknown as GameDefinition;
+// Eagerly bundle every game definition so the client can mount any of them.
+const definitionModules = import.meta.glob('../../../shared/games/*/game-definition.json', {
+  eager: true,
+  import: 'default',
+}) as Record<string, GameDefinition>;
+
+/** id -> definition registry, built from the bundled definitions. */
+const registry: Record<string, GameDefinition> = {};
+for (const def of Object.values(definitionModules)) {
+  registry[def.id] = def;
+}
+
+/** The flagship game, used as the default. */
+const DEFAULT_GAME = 'novaforged';
+/** Scaffold-only games excluded from the player-facing game list. */
+const HIDDEN_GAMES = new Set(['template']);
+
+/** Game ids selectable by the player (scaffolds hidden), sorted. */
+export const availableGames: readonly string[] = Object.keys(registry)
+  .filter((id) => !HIDDEN_GAMES.has(id))
+  .sort();
+
+/** Resolve the active game id from the `?game=` URL param (falls back safely). */
+function resolveGameId(): string {
+  let requested: string | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      requested = new URLSearchParams(window.location.search).get('game');
+    } catch {
+      /* non-browser / malformed search — fall through to default */
+    }
+  }
+  if (requested && registry[requested]) return requested;
+  return registry[DEFAULT_GAME] ? DEFAULT_GAME : (availableGames[0] ?? Object.keys(registry)[0]);
+}
+
+/** The active game id for this session. */
+export const activeGameId = resolveGameId();
+
+/** The fully-typed active game definition. */
+export const gameDefinition: GameDefinition = registry[activeGameId];
 
 /**
  * Fail-fast dev-time guard mirroring the key semantic invariants enforced

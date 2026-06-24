@@ -11,7 +11,22 @@ import {
   NUM_REELS,
   NUM_ROWS,
   paylines,
+  availableGames,
+  activeGameId,
 } from './gameConfig';
+
+describe('gameConfig registry', () => {
+  it('bundles multiple games and hides scaffolds', () => {
+    expect(availableGames).toContain('novaforged');
+    expect(availableGames).toContain('cosmicways');
+    expect(availableGames).not.toContain('template'); // scaffold is hidden
+  });
+
+  it('defaults the active game to novaforged (no ?game= in the test env)', () => {
+    expect(activeGameId).toBe('novaforged');
+    expect(gameDefinition.id).toBe('novaforged');
+  });
+});
 
 describe('gameConfig', () => {
   it('exposes engine dimensions from the definition', () => {

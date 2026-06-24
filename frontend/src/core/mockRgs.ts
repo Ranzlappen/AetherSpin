@@ -13,7 +13,7 @@
  *
  * No Pixi or Svelte imports.
  */
-import type { Book, BookEvent, Board, LineWin, GameType } from '../../../shared/src/types/events';
+import type { Book, BookEvent, Board, LineWin, WayWin, GameType } from '../../../shared/src/types/events';
 import {
   gameDefinition,
   NUM_REELS,
@@ -199,6 +199,46 @@ function round4(n: number): number {
   return Math.round(n * 10000) / 10000;
 }
 
+/** True when the active game uses the all-ways mechanic. */
+const isWaysGame = gameDefinition.engine.type === 'ways';
+
+/**
+ * Evaluate all-ways wins (mirrors `simulator/mechanics.py::WaysMechanic`): a
+ * paytable symbol pays when it (or a wild) appears on adjacent reels from the
+ * left; the win counts ways = product of per-reel occurrences over the run.
+ */
+function evaluateWays(board: Board, wildMultiplier: number, betScale: number): WayWin[] {
+  const wins: WayWin[] = [];
+  for (const sym of Object.keys(gameDefinition.paytable)) {
+    if (sym === scatterSymbolId) continue;
+    const counts: number[] = [];
+    for (let reel = 0; reel < NUM_REELS; reel++) {
+      let c = 0;
+      for (let row = 0; row < NUM_ROWS; row++) {
+        const s = board[reel][row];
+        if (s === sym || s === wildSymbolId) c++;
+      }
+      if (c === 0) break;
+      counts.push(c);
+    }
+    const run = counts.length;
+    if (run < 3) continue;
+    let payCount = 0;
+    for (let k = run; k >= 3; k--) {
+      if (getPayout(sym, k) > 0) {
+        payCount = k;
+        break;
+      }
+    }
+    if (!payCount) continue;
+    let ways = 1;
+    for (let i = 0; i < payCount; i++) ways *= counts[i];
+    const amount = getPayout(sym, payCount) * ways * wildMultiplier * betScale;
+    wins.push({ symbol: sym, count: payCount, ways, wildMultiplier, amount: round4(amount) });
+  }
+  return wins;
+}
+
 /** Determine which middle-reel wilds expand (free spins, reels index 1-3). */
 function expandedReelsFor(board: Board): number[] {
   const out: number[] = [];
@@ -214,7 +254,8 @@ function expandedReelsFor(board: Board): number[] {
  */
 function generateBaseBook(id: number, rng: () => number, buyBonus: boolean): Book {
   const events: BookEvent[] = [];
-  const betScale = 1 / paylines.length;
+  // Ways games have no per-line division; the stake covers all ways.
+  const betScale = isWaysGame ? 1 : 1 / paylines.length;
 
   // Decide scatter count. Buy-bonus forces a trigger.
   let scatters: number;
@@ -229,11 +270,17 @@ function generateBaseBook(id: number, rng: () => number, buyBonus: boolean): Boo
   const reelStops = board.map(() => Math.floor(rng() * 64));
   events.push({ type: 'reveal', gameType: 'base', board, reelStops });
 
-  const baseWins = evaluateLines(board, 1, betScale);
+  const baseWins: Array<LineWin | WayWin> = isWaysGame
+    ? evaluateWays(board, 1, betScale)
+    : evaluateLines(board, 1, betScale);
   let runningTotal = 0;
   if (baseWins.length > 0) {
     const amount = round4(baseWins.reduce((a, w) => a + w.amount, 0));
-    events.push({ type: 'lineWins', gameType: 'base', wins: baseWins, amount });
+    if (isWaysGame) {
+      events.push({ type: 'wayWins', gameType: 'base', wins: baseWins as WayWin[], amount });
+    } else {
+      events.push({ type: 'lineWins', gameType: 'base', wins: baseWins as LineWin[], amount });
+    }
     runningTotal += amount;
   }
 
@@ -303,7 +350,7 @@ function generateFreeSpins(
 
     const board = makeBoard(rng, -1);
     const reelStops = board.map(() => Math.floor(rng() * 64));
-    const expandedReels = expandedReelsFor(board);
+    const expandedReels = gameDefinition.features.expandingWilds.enabled ? expandedReelsFor(board) : [];
     // Realized per-cell wild multipliers (carried in the book, like the math engine).
     const multiplierWilds: Array<{ reel: number; row: number; value: number }> = [];
     board.forEach((col, reel) =>
@@ -326,7 +373,9 @@ function generateFreeSpins(
 
     // Free-spin wild multiplier (weighted), scaled down so RTP stays sane.
     const wildMult = expandedReels.length > 0 ? pickWildMultiplier(rng) : 1;
-    const wins = evaluateLines(board, wildMult, betScale * winScale);
+    const wins: Array<LineWin | WayWin> = isWaysGame
+      ? evaluateWays(board, wildMult, betScale * winScale)
+      : evaluateLines(board, wildMult, betScale * winScale);
     if (wins.length > 0) {
       const amount = round4(wins.reduce((a, w) => a + w.amount, 0) * globalMultiplier);
       featureTotal += amount;

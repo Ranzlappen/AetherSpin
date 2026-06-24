@@ -16,6 +16,7 @@ import type { Book, BookEvent } from '../../../shared/src/types/events';
 const VALID_EVENT_TYPES = new Set([
   'reveal',
   'lineWins',
+  'wayWins',
   'scatterWin',
   'freeSpinTrigger',
   'freeSpinResult',

@@ -34,6 +34,16 @@ function validateEvent(e: BookEvent): void {
         expect(typeof w.amount).toBe('number');
       }
       break;
+    case 'wayWins':
+      expect(typeof e.amount).toBe('number');
+      for (const w of e.wins) {
+        expect(typeof w.symbol).toBe('string');
+        expect(w.count).toBeGreaterThanOrEqual(3);
+        expect(w.ways).toBeGreaterThanOrEqual(1);
+        expect(typeof w.wildMultiplier).toBe('number');
+        expect(typeof w.amount).toBe('number');
+      }
+      break;
     case 'scatterWin':
       expect(e.count).toBeGreaterThanOrEqual(3);
       expect(typeof e.amount).toBe('number');

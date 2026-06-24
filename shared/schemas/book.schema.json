@@ -27,6 +27,20 @@
         "amount": { "type": "number", "minimum": 0 }
       }
     },
+    "wayWin": {
+      "type": "object",
+      "required": ["symbol", "count", "ways", "wildMultiplier", "amount"],
+      "properties": {
+        "symbol": { "type": "string" },
+        "count": { "type": "integer", "minimum": 1 },
+        "ways": { "type": "integer", "minimum": 1 },
+        "wildMultiplier": { "type": "number", "minimum": 1 },
+        "amount": { "type": "number", "minimum": 0 }
+      }
+    },
+    "win": {
+      "oneOf": [{ "$ref": "#/definitions/lineWin" }, { "$ref": "#/definitions/wayWin" }]
+    },
     "bookEvent": {
       "oneOf": [
         {
@@ -67,6 +81,16 @@
         },
         {
           "type": "object",
+          "required": ["type", "gameType", "wins", "amount"],
+          "properties": {
+            "type": { "const": "wayWins" },
+            "gameType": { "enum": ["base", "free"] },
+            "wins": { "type": "array", "items": { "$ref": "#/definitions/wayWin" } },
+            "amount": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "count", "amount"],
           "properties": {
             "type": { "const": "scatterWin" },
@@ -90,7 +114,7 @@
           "properties": {
             "type": { "const": "freeSpinResult" },
             "spin": { "type": "integer", "minimum": 1 },
-            "wins": { "type": "array", "items": { "$ref": "#/definitions/lineWin" } },
+            "wins": { "type": "array", "items": { "$ref": "#/definitions/win" } },
             "scatter": {
               "oneOf": [
                 { "type": "null" },
