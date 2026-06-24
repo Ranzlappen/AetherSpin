@@ -3,8 +3,8 @@
 Thin orchestration that calls into ``game_calculations`` for the numbers and
 ``game_events`` for the payload shapes. The emission shape is kept identical to
 the standalone engine (``math/simulator/engine.py``): one batched ``lineWins`` per
-base board, and one ``freeSpinResult`` per free spin — so both math paths produce
-books the frontend can replay from the same ``BookEvent`` contract.
+base board, and one ``freeSpinResult`` per *winning* free spin — so both math
+paths produce books the frontend can replay from the same ``BookEvent`` contract.
 """
 
 from game_calculations import GameCalculations
@@ -62,17 +62,25 @@ class GameExecutables(GameCalculations):
         return False
 
     def run_free_spin(self):
-        """One free spin: draw, expand wilds, evaluate, emit a single freeSpinResult."""
+        """One free spin: draw, expand wilds, reveal the post-expansion board, then
+        evaluate and emit a ``freeSpinResult`` (only on a winning spin).
+
+        Ordering mirrors the standalone engine (``math/simulator/engine.py``): wilds
+        expand *before* the reveal so the reveal carries the final board and
+        ``expandedReels``, and an empty spin emits no ``freeSpinResult``.
+        """
         self.fs += 1
-        self.draw_board()
-        self.apply_expanding_wilds()
+        self.board, self.reel_positions = self.create_board_reelstrips()
+        expanded = self.apply_expanding_wilds()
+        self.book.add_event(reveal_event(self, expanded_reels=expanded))
         wins, line_total = self._line_wins(global_mult=1)
         count, samount = self._scatter()
         spin_win = (line_total + samount) * self.global_multiplier * self.config.free_win_scale
-        scatter_payload = {"count": count, "amount": round(samount, 6)} if samount > 0 else None
-        self.book.add_event(
-            freespin_result_event(self.fs, wins, scatter_payload, self.global_multiplier, spin_win)
-        )
+        if wins or samount > 0:
+            scatter_payload = {"count": count, "amount": round(samount, 6)} if samount > 0 else None
+            self.book.add_event(
+                freespin_result_event(self.fs, wins, scatter_payload, self.global_multiplier, spin_win)
+            )
         self.win_manager.update_spinwin(spin_win)
         self.free_total += spin_win
 

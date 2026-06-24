@@ -16,7 +16,13 @@ def _board(state):
     return [[cell.name for cell in col] for col in state.board]
 
 
-def reveal_event(state):
+def reveal_event(state, expanded_reels=None):
+    """Reveal the (post-expansion) board.
+
+    ``expanded_reels`` is the list of reels turned fully wild this spin; it is
+    emitted only for free-game reveals, matching the standalone engine so both
+    math paths produce byte-identical reveal events.
+    """
     evt = {
         "type": "reveal",
         "gameType": "free" if state.in_freegame else "base",
@@ -27,6 +33,8 @@ def reveal_event(state):
         evt["globalMultiplier"] = state.global_multiplier
         evt["spin"] = state.fs
         evt["spinsTotal"] = state.tot_fs
+        if expanded_reels:
+            evt["expandedReels"] = list(expanded_reels)
     return evt
 
 

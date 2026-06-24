@@ -1,14 +1,18 @@
 """Contract tests: the math output must conform to the BookEvent vocabulary.
 
-Two guards:
+Three guards:
 1. The official-SDK-path event factories (``games/novaforged/game_events.py``,
    which are pure) emit dicts that satisfy the shared contract.
 2. Every event the standalone engine emits over many seeds is a valid BookEvent,
    and every book is well-formed (ordering, wincap, required fields).
+3. The SDK ``run_free_spin`` orchestration (``test_sdk_executables.py``) is driven
+   over a tiny stubbed SDK base so the two math engines are checked for the same
+   free-spin behaviour (expand-before-reveal, ``expandedReels``, and a
+   ``freeSpinResult`` only on a winning spin) — catching math <-> math drift, not
+   just math <-> contract conformance.
 
-Together these are the runnable half of the golden-book parity guard — they make
-the math <-> frontend event drift (the #1 audit risk) a test failure, not a
-silent production bug.
+Together these make the math <-> frontend event drift (the #1 audit risk) a test
+failure, not a silent production bug.
 """
 
 import sys
@@ -66,6 +70,19 @@ def test_sdk_factories_match_contract():
         seen.add(evt["type"])
     # Every event type in the contract is produced by a factory.
     assert seen == VALID_EVENT_TYPES, f"factories miss types: {VALID_EVENT_TYPES - seen}"
+
+
+def test_freespin_reveal_carries_expanded_reels():
+    """A free-game reveal reports ``expandedReels`` (parity with the standalone
+    engine); the base reveal never does, and an un-expanded spin omits the field
+    rather than emitting an empty list."""
+    base = ge.reveal_event(_FakeState(free=False), expanded_reels=[1, 2])
+    assert "expandedReels" not in base  # base game has no expanding wilds
+    free = ge.reveal_event(_FakeState(free=True), expanded_reels=[1, 2, 3])
+    assert free["expandedReels"] == [1, 2, 3]
+    assert not validate_event(free)
+    free_none = ge.reveal_event(_FakeState(free=True), expanded_reels=[])
+    assert "expandedReels" not in free_none
 
 
 def test_standalone_engine_emits_only_valid_events():
