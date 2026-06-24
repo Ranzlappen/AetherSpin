@@ -122,8 +122,8 @@
               <div class="line-card">
                 <span class="line-no">#{i + 1}</span>
                 <div class="mini-grid" style:grid-template-columns={`repeat(${NUM_REELS}, 1fr)`}>
-                  {#each lineCells(line) as rowCells (rowCells)}
-                    {#each rowCells as on (on)}
+                  {#each lineCells(line) as rowCells, r (r)}
+                    {#each rowCells as on, c (c)}
                       <span class="dot" class:on></span>
                     {/each}
                   {/each}

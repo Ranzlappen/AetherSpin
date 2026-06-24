@@ -13,7 +13,9 @@
     "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p tsconfig.json",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
     "@aetherspin/shared": "workspace:*",
@@ -21,6 +23,7 @@
     "pixi.js": "^8.6.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@storybook/svelte": "^8.4.7",
     "@storybook/svelte-vite": "^8.4.7",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",

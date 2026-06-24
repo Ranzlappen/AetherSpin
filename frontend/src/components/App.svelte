@@ -53,10 +53,17 @@
     const params = parseRgsParams();
     usingMock = !params.rgsUrl || !params.sessionID;
 
-    // Build the stage first so the canvas is visible behind the loader.
+    // Build the stage first so the canvas is visible behind the loader. A stuck
+    // GPU/driver must never deadlock boot, so bound renderer init with a timeout:
+    // on failure we surface an error but still bring up the (DOM) HUD.
     stage = new Stage();
     try {
-      await stage.init({ container: canvasHost, onFps: (v) => (fps = v) });
+      await Promise.race([
+        stage.init({ container: canvasHost, onFps: (v) => (fps = v) }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('renderer init timed out')), 12000)
+        ),
+      ]);
     } catch (err) {
       errorMessage.set(`Renderer failed to start: ${(err as Error).message}`);
     }

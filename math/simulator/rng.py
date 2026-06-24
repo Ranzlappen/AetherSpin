@@ -3,6 +3,17 @@
 Wrapping :mod:`random` keeps the engine reproducible (every simulation index
 maps to a fixed seed) and gives us a single choke point should we later swap in
 a certified RNG source.
+
+PROVENANCE / SCOPE — read before assuming this drives money:
+    This RNG exists ONLY to pre-generate the simulation **library** (books +
+    lookup tables) offline, deterministically, for dev / CI / RTP analysis. It
+    is NOT a production randomness source. In production the **certified Stake
+    RGS** owns all randomness and outcome selection — it picks which pre-verified
+    book to serve. Neither this module nor any client code decides outcomes at
+    play time (see ``SECURITY.md`` and ``docs/rng-provenance.md``). Because it is
+    deterministically seeded (``PYTHONHASHSEED=0`` + fixed per-mode offsets), the
+    library is byte-reproducible from a commit + seed, which is exactly what an
+    auditor needs — and exactly why it must never be used as live entropy.
 """
 
 from __future__ import annotations

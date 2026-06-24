@@ -25,6 +25,9 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
 - [ ] `index.json` — manifest mapping each mode to its files
 - [ ] Every `payoutMultiplier` ≤ `wincapMultiplier` (the engine clamps; verify no book exceeds it)
 - [ ] Book ids are unique and contiguous; weights are present for every book
+- [ ] **Provenance stamped** in `config.json` — `gitCommit`, `seed`, `definitionHash`, per-reel
+      `reelHashes`, `simulatorVersion`. Re-running with the same commit + seed reproduces a
+      byte-identical library (see `docs/rng-provenance.md`)
 - [ ] **Certified** library produced by the official SDK (millions of spins + Rust optimizer) for
       the final submission — the standalone library is for dev/staging
 

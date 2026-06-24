@@ -2,6 +2,7 @@
  * Application entry point. Mounts the root Svelte component into `#app`.
  */
 import './styles/global.css';
+import { mount } from 'svelte';
 import App from './components/App.svelte';
 
 const target = document.getElementById('app');
@@ -9,6 +10,9 @@ if (!target) {
   throw new Error('Mount target "#app" not found in index.html.');
 }
 
-const app = new App({ target });
+// Svelte 5 mount API. The legacy `new App({ target })` class API leaves the
+// root reactive effects orphaned in a production build (`effect_orphan`), which
+// crashes the bundle on load — `mount()` establishes the proper effect root.
+const app = mount(App, { target });
 
 export default app;
