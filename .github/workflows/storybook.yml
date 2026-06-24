@@ -29,12 +29,16 @@ jobs:
           version: 10.5.0
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build Storybook
         run: pnpm --filter @aetherspin/frontend build-storybook
       - uses: actions/configure-pages@v5
+        # Provision the Pages site on first run so the deploy doesn't fail with
+        # "Get Pages site failed / Not Found" before Pages is enabled in settings.
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/storybook-static
