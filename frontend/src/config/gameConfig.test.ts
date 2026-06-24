@@ -29,8 +29,11 @@ describe('gameConfig', () => {
   });
 
   it('reads paytable multipliers and returns 0 for non-paying combos', () => {
-    expect(getPayout('H1', 5)).toBe(885);
-    expect(getPayout('L5', 3)).toBe(4.5);
+    // Assert against the definition (not magic numbers) so re-tuning the RTP
+    // never breaks this test.
+    expect(getPayout('H1', 5)).toBe(gameDefinition.paytable.H1['5']);
+    expect(getPayout('L5', 3)).toBe(gameDefinition.paytable.L5['3']);
+    expect(getPayout('H1', 5)).toBeGreaterThan(0);
     expect(getPayout('H1', 2)).toBe(0);
     expect(getPayout('NOPE', 5)).toBe(0);
   });

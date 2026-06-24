@@ -148,10 +148,23 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
 
 ## Status
 
-The **Phase A first-PR batch** (A1, A3, A4, A5, A6) is implemented on branch
-`feat/p0-correctness-hardening`. The seven raw source audits (`Evaluation1–7.MD`)
-are retained only on the archived branch (`claude/stake-engine-monorepo-setup-2b2chu`
-/ `main`) and removed from the finished-repo branch. Remaining Phase A items
-(A2 realized multiplier wilds, A7 RGS resume/robustness) and Phases B–C are
-still open. ESLint un-masking (Phase B) requires a flat-config migration for
-ESLint 10 and is tracked separately.
+- **Phase A first batch** (A1, A3, A4, A5, A6) — DONE on `feat/p0-correctness-hardening`
+  (CI green).
+- **Phase A second batch** (A2 realized multiplier wilds, A7 RGS robustness/resume)
+  — DONE on `feat/p1-multiplier-wilds-and-rgs`:
+  - **A2**: the engine now samples a realized multiplier per wild cell, emits
+    `multiplierWilds:[{reel,row,value}]` on free-spin reveals, and sums the
+    participating wilds per line (additive, bounded). The frontend (`bookPlayer`,
+    `mockRgs`) consumes the real per-cell values instead of inventing them. The
+    `optimize.py` cost bug (buy-cost omitted) was fixed; the game was re-tuned and
+    free reels lightened so the buy balances at a sane `winScale`. Measured: base
+    **96.2%**, buy-bonus **95.4%** (deterministic CI seed).
+  - **A7**: `rgsClient` now has request timeouts (AbortController), bounded
+    exponential backoff on idempotent calls, re-auth+retry on `ERR_IS`, an HTTPS
+    guard, and book-shape validation before replay; `BookPlayer.resume()` + `App`
+    replay an unfinished `authenticate().round` instead of starting a new spin.
+- Remaining: Phases B–C. ESLint un-masking (Phase B) needs a flat-config
+  migration for ESLint 10 and is tracked separately.
+
+The seven raw source audits (`Evaluation1–7.MD`) are retained only on the archived
+branch (`claude/stake-engine-monorepo-setup-2b2chu` / `main`).

@@ -304,6 +304,13 @@ function generateFreeSpins(
     const board = makeBoard(rng, -1);
     const reelStops = board.map(() => Math.floor(rng() * 64));
     const expandedReels = expandedReelsFor(board);
+    // Realized per-cell wild multipliers (carried in the book, like the math engine).
+    const multiplierWilds: Array<{ reel: number; row: number; value: number }> = [];
+    board.forEach((col, reel) =>
+      col.forEach((sym, row) => {
+        if (sym === wildSymbolId) multiplierWilds.push({ reel, row, value: pickWildMultiplier(rng) });
+      })
+    );
     const reveal: BookEvent = {
       type: 'reveal',
       gameType: 'free' as GameType,
@@ -313,6 +320,7 @@ function generateFreeSpins(
       spinsTotal,
       globalMultiplier,
       ...(expandedReels.length > 0 ? { expandedReels } : {}),
+      ...(multiplierWilds.length > 0 ? { multiplierWilds } : {}),
     };
     events.push(reveal);
 

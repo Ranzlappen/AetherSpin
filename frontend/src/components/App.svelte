@@ -84,6 +84,14 @@
       balance.set(auth.balance.amount);
       currency.set(auth.balance.currency);
       loading = false;
+      // Resume an unfinished round instead of starting a new one (RGS contract).
+      if (player && auth.round && auth.round.book && auth.round.state !== 'resolved') {
+        try {
+          await player.resume(auth.round, getCurrentBet());
+        } catch (err) {
+          handleSpinError(err);
+        }
+      }
     } catch (err) {
       const message = err instanceof RgsError ? err.message : 'Failed to connect to the game server.';
       errorMessage.set(message);
