@@ -169,8 +169,18 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
   pre-commit hooks (B5), and onboarding files — `CONTRIBUTING.md`,
   `.python-version`, `CHANGELOG.md` (B9). mypy/coverage/property tests are wired
   into CI.
-- Remaining: Phase B leftovers (E2E Playwright, Storybook deploy, release
-  automation, ESLint flat-config migration for ESLint 10) and all of Phase C.
+- **Phase B (second batch)** — DONE on `feat/phase-b-batch2-lint-e2e`:
+  - **ESLint flat-config migration** — migrated to `eslint.config.mjs` (ESLint 9 +
+    typescript-eslint 8 + eslint-plugin-svelte 3), removed the stale `.eslintrc.cjs`
+    files and the obsolete per-workspace eslint deps, centralized linting at the
+    root, and made the CI lint job **blocking** (was masked). Lints clean.
+  - **Storybook deploy** — `.github/workflows/storybook.yml` builds Storybook and
+    publishes it to GitHub Pages on `main`.
+  - **Release automation** — `.github/workflows/release-please.yml` (release-please,
+    simple mode) maintains a release PR + tags from Conventional Commits.
+- Remaining: **E2E Playwright** (deferred — the sandbox blocks Playwright browser
+  downloads, so it can't be verified green here; should be added where browsers
+  install) and all of Phase C.
 
 The seven raw source audits (`Evaluation1–7.MD`) are retained only on the archived
 branch (`claude/stake-engine-monorepo-setup-2b2chu` / `main`).

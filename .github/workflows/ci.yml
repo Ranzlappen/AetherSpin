@@ -130,8 +130,5 @@ jobs:
       - name: Prettier check (enforced)
         run: pnpm exec prettier --check "**/*.{ts,svelte,js,json,md}"
 
-      - name: ESLint (non-blocking — pending flat-config migration for ESLint 10)
-        # ESLint 10 requires flat config (eslint.config.js); the repo's .eslintrc.cjs
-        # is not yet migrated, so this is intentionally non-blocking. Tracked in
-        # docs/IMPROVEMENT-PLAN.md (Phase B). Prettier is the enforced style gate.
-        run: pnpm exec eslint "shared/**/*.ts" "frontend/src/**/*.{ts,svelte}" || true
+      - name: ESLint (enforced — flat config, eslint.config.mjs)
+        run: pnpm exec eslint "shared/**/*.ts" "frontend/src/**/*.{ts,svelte}"
