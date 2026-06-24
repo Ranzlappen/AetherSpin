@@ -79,8 +79,11 @@ def main() -> int:
 
     path = Path(SHARED_GAMES_DIR) / args.game / "game-definition.json"
     raw = json.loads(path.read_text())
+    # 6 decimals: 2 is enough for lines-scale paytables (scalar ~1) but loses all
+    # precision for ways games whose per-way values are tiny (scalar << 1), which
+    # would make the applied RTP diverge wildly from the solved prediction.
     for sym in raw["paytable"]:
-        raw["paytable"][sym] = {k: round(v * a, 2) for k, v in raw["paytable"][sym].items()}
+        raw["paytable"][sym] = {k: round(v * a, 6) for k, v in raw["paytable"][sym].items()}
     cur_scale = float(raw["features"]["freeSpins"].get("winScale", 1.0))
     raw["features"]["freeSpins"]["winScale"] = round(cur_scale * b, 4)
     path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")

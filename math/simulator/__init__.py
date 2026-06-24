@@ -15,7 +15,13 @@ This engine is intentionally written to produce the same library output shape
 
 from .definition import GameDefinition, load_definition
 from .engine import LinesEngine, SlotEngine, SpinResult
-from .mechanics import LinesMechanic, WinMechanic, build_mechanic, register_mechanic
+from .mechanics import (
+    LinesMechanic,
+    WaysMechanic,
+    WinMechanic,
+    build_mechanic,
+    register_mechanic,
+)
 from .reels import ReelSet, load_reelset
 
 __all__ = [
@@ -26,6 +32,7 @@ __all__ = [
     "SpinResult",
     "WinMechanic",
     "LinesMechanic",
+    "WaysMechanic",
     "build_mechanic",
     "register_mechanic",
     "ReelSet",

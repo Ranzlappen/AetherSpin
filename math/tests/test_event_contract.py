@@ -68,8 +68,10 @@ def test_sdk_factories_match_contract():
         problems = validate_event(evt)
         assert not problems, f"{evt.get('type')}: {problems}"
         seen.add(evt["type"])
-    # Every event type in the contract is produced by a factory.
-    assert seen == VALID_EVENT_TYPES, f"factories miss types: {VALID_EVENT_TYPES - seen}"
+    # The lines factories must cover every contract event type except those that
+    # belong to other mechanics (``wayWins`` is emitted by the ways game).
+    lines_event_types = VALID_EVENT_TYPES - {"wayWins"}
+    assert seen == lines_event_types, f"factories miss types: {lines_event_types - seen}"
 
 
 def test_freespin_reveal_carries_expanded_reels():
