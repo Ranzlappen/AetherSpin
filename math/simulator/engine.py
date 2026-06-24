@@ -1,9 +1,15 @@
-"""NovaForged lines-game evaluation engine.
+"""Slot round-evaluation engine.
 
 Produces, for a single simulated round, a ``payoutMultiplier`` (in units of the
 total bet) and an ordered list of ``events`` that the frontend replays to drive
 the visuals. The same event vocabulary is documented in
 ``docs/architecture.md`` and mirrored by the TypeScript ``bookEvents`` types.
+
+The engine owns everything generic to a slot round — board draws, scatters, the
+free game, expanding/multiplier wilds, and the win cap — and delegates *how a
+board maps to wins* to a pluggable :class:`~simulator.mechanics.WinMechanic`
+resolved from the definition's ``engine.type``. ``lines`` ships today; other
+mechanics (``ways``, ``cluster``) plug in without touching this orchestration.
 """
 
 from __future__ import annotations
@@ -12,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .definition import GameDefinition
+from .mechanics import WinMechanic, build_mechanic
 from .reels import ReelSet
 from .rng import Rng
 
@@ -27,17 +34,22 @@ class SpinResult:
     hit_wincap: bool
 
 
-class LinesEngine:
-    def __init__(self, definition: GameDefinition, base_reels: ReelSet, free_reels: ReelSet) -> None:
+class SlotEngine:
+    def __init__(
+        self,
+        definition: GameDefinition,
+        base_reels: ReelSet,
+        free_reels: ReelSet,
+        mechanic: WinMechanic | None = None,
+    ) -> None:
         self.d = definition
         self.base_reels = base_reels
         self.free_reels = free_reels
         self.wild = definition.wild
         self.scatter = definition.scatter
-        self.paytable = definition.paytable
-        self.paylines = definition.paylines
-        self.num_lines = definition.num_paylines
         self.free_win_scale = definition.free_win_scale
+        # The win mechanic is resolved from ``engine.type`` unless injected (tests).
+        self.mechanic = mechanic if mechanic is not None else build_mechanic(definition)
 
     # ---- board construction -------------------------------------------------
     def _draw_board(self, reels: ReelSet, rng: Rng) -> tuple[list[list[str]], list[int]]:
@@ -59,75 +71,6 @@ class LinesEngine:
         return expanded
 
     # ---- evaluation ---------------------------------------------------------
-    def _evaluate_lines(
-        self, board: list[list[str]], mult_grid: list[list[int]] | None = None
-    ) -> tuple[float, list[dict[str, Any]]]:
-        """Evaluate all paylines. ``mult_grid`` (free game only) carries the
-        realized per-cell wild multiplier; ``None`` means no wild multipliers."""
-        total = 0.0
-        wins: list[dict[str, Any]] = []
-        for line_idx, pattern in enumerate(self.paylines):
-            positions = [(reel, pattern[reel]) for reel in range(self.d.num_reels)]
-            symbols = [board[reel][row] for reel, row in positions]
-            win = self._evaluate_single_line(symbols, positions, mult_grid)
-            if win is None:
-                continue
-            sym, count, line_value, mult = win
-            payout = (line_value / self.num_lines) * mult
-            total += payout
-            wins.append(
-                {
-                    "line": line_idx,
-                    "symbol": sym,
-                    "count": count,
-                    "wildMultiplier": mult,
-                    "amount": round(payout, 6),
-                }
-            )
-        return total, wins
-
-    def _evaluate_single_line(self, symbols, positions, mult_grid):
-        """Left-aligned line win. Returns (symbol, count, base_value, wild_mult).
-
-        In the free game the line's wild multiplier is the SUM of the realized
-        multipliers of the wild cells participating in the winning run
-        (additive multiplier wilds). Sum (rather than product) keeps volatility
-        bounded and the RTP tractable while still using the real, player-visible
-        per-cell values.
-        """
-        pay_symbol = None
-        for s in symbols:
-            if s == self.scatter:
-                break
-            if s != self.wild:
-                pay_symbol = s
-                break
-        if pay_symbol is None:
-            pay_symbol = self.wild
-
-        count = 0
-        wild_sum = 0
-        has_wild = False
-        for idx, s in enumerate(symbols):
-            if s == pay_symbol or s == self.wild:
-                count += 1
-                if s == self.wild and mult_grid is not None:
-                    reel, row = positions[idx]
-                    wild_sum += mult_grid[reel][row]
-                    has_wild = True
-            else:
-                break
-        wild_mult = wild_sum if has_wild else 1
-
-        pays = self.paytable.get(pay_symbol, {})
-        if count in pays:
-            return pay_symbol, count, pays[count], wild_mult
-        # try shorter matches that still pay (e.g. 5 wilds but symbol only pays 3)
-        for c in range(count, 2, -1):
-            if c in pays:
-                return pay_symbol, c, pays[c], wild_mult
-        return None
-
     def _sample_multiplier_grid(self, board: list[list[str]], rng: Rng):
         """Sample a realized multiplier for every wild cell (free game).
 
@@ -163,9 +106,16 @@ class LinesEngine:
         events.append({"type": "reveal", "gameType": "base", "board": board, "reelStops": stops})
 
         # Base game has no multiplier wilds (free-game feature only).
-        line_total, line_wins = self._evaluate_lines(board, mult_grid=None)
+        line_total, line_wins = self.mechanic.evaluate(board, mult_grid=None)
         if line_wins:
-            events.append({"type": "lineWins", "gameType": "base", "wins": line_wins, "amount": round(line_total, 6)})
+            events.append(
+                {
+                    "type": self.mechanic.win_event_type,
+                    "gameType": "base",
+                    "wins": line_wins,
+                    "amount": round(line_total, 6),
+                }
+            )
         scatter_total, scatter_count = self._evaluate_scatter(board)
         if scatter_total > 0:
             events.append({"type": "scatterWin", "count": scatter_count, "amount": scatter_total})
@@ -212,7 +162,7 @@ class LinesEngine:
                 reveal["multiplierWilds"] = mult_wilds
             events.append(reveal)
 
-            line_total, line_wins = self._evaluate_lines(board, mult_grid=mult_grid)
+            line_total, line_wins = self.mechanic.evaluate(board, mult_grid=mult_grid)
             scatter_total, scatter_count2 = self._evaluate_scatter(board)
             spin_win = (line_total + scatter_total) * global_mult * self.free_win_scale
             if line_wins or scatter_total > 0:
@@ -257,3 +207,8 @@ class LinesEngine:
             board[r][0] = self.scatter
             placed += 1
         return board
+
+
+# Backwards-compatible alias: the engine was lines-specific before the mechanic
+# seam was extracted. Existing imports of ``LinesEngine`` keep working.
+LinesEngine = SlotEngine
