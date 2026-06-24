@@ -31,6 +31,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/core/**', 'src/config/**'],
+      // Modest floors on the pure-logic layer; raise as suites grow.
+      thresholds: { statements: 75, branches: 65, functions: 75, lines: 75 },
     },
   },
 });

@@ -19,3 +19,6 @@ math/engine/
 # Misc
 pnpm-lock.yaml
 *.log
+
+coverage
+**/coverage

@@ -163,8 +163,14 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
     exponential backoff on idempotent calls, re-auth+retry on `ERR_IS`, an HTTPS
     guard, and book-shape validation before replay; `BookPlayer.resume()` + `App`
     replay an unfinished `authenticate().round` instead of starting a new spin.
-- Remaining: Phases B–C. ESLint un-masking (Phase B) needs a flat-config
-  migration for ESLint 10 and is tracked separately.
+- **Phase B (first batch)** — DONE on `feat/phase-b-quality-hardening`: mypy on
+  the engine (B1), hypothesis property tests (B2), coverage thresholds for both
+  Python and frontend (B4), CodeQL + gitleaks + dependency-review workflows (B6),
+  pre-commit hooks (B5), and onboarding files — `CONTRIBUTING.md`,
+  `.python-version`, `CHANGELOG.md` (B9). mypy/coverage/property tests are wired
+  into CI.
+- Remaining: Phase B leftovers (E2E Playwright, Storybook deploy, release
+  automation, ESLint flat-config migration for ESLint 10) and all of Phase C.
 
 The seven raw source audits (`Evaluation1–7.MD`) are retained only on the archived
 branch (`claude/stake-engine-monorepo-setup-2b2chu` / `main`).

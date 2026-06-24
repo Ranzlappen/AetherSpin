@@ -1,0 +1,40 @@
+name: Security
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Secret scanning across full history (catches committed credentials).
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Flags vulnerable / disallowed-license dependencies introduced by a PR.
+  # NOTE: non-blocking until the repo's Dependency Graph is enabled
+  # (Settings → Code security → Dependency graph). The action errors with
+  # "Dependency review is not supported on this repository" while it's off, so we
+  # don't gate PRs on it yet; Dependabot (see .github/dependabot.yml) is the
+  # active dependency-security mechanism in the meantime. Flip to blocking by
+  # removing `continue-on-error` once the graph is enabled.
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v4
+        continue-on-error: true # see note above; non-blocking until Dependency Graph is on
+        with:
+          fail-on-severity: high

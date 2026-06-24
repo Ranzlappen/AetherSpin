@@ -1,0 +1,26 @@
+# Local quality gates mirroring CI. Install with: pipx install pre-commit && pre-commit install
+# JS/TS/Svelte formatting is enforced via a local pnpm hook so versions match the repo.
+minimum_pre_commit_version: '3.5.0'
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.18
+    hooks:
+      - id: ruff
+        files: ^math/
+        args: [--fix]
+      - id: ruff-format
+        files: ^math/
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier (write)
+        entry: pnpm exec prettier --write
+        language: system
+        files: \.(ts|svelte|js|json|md)$
+        exclude: ^(math/library|frontend/dist|.*\.csv|.*\.jsonl)
+      - id: validate-definitions
+        name: validate game definitions
+        entry: python3 scripts/validate_definitions.py
+        language: system
+        pass_filenames: false
+        files: ^shared/games/.*/game-definition\.json$

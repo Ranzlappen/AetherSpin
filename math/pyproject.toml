@@ -18,3 +18,13 @@ extend-exclude = ["engine", "library"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]
+
+# Static typing for the standalone engine (the certifiable math core). The
+# games/<id> files target the official SDK (src.* imports) and are excluded.
+[tool.mypy]
+python_version = "3.11"
+files = ["simulator"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+no_implicit_optional = true
