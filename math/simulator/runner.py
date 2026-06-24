@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .definition import GameDefinition, load_definition
-from .engine import LinesEngine
+from .engine import SlotEngine
 from .library import LibraryWriter
 from .reels import load_reelset
 from .rng import Rng
@@ -49,12 +49,12 @@ class SimulationOutput:
     criteria: dict[str, list[str]]
 
 
-def build_engine(game_id: str) -> tuple[GameDefinition, LinesEngine]:
+def build_engine(game_id: str) -> tuple[GameDefinition, SlotEngine]:
     definition = load_definition(game_id)
     reels_dir = GAME_DIR / game_id / "reels"
     base = load_reelset("BR0", reels_dir / "BR0.csv")
     free = load_reelset("FR0", reels_dir / "FR0.csv")
-    return definition, LinesEngine(definition, base, free)
+    return definition, SlotEngine(definition, base, free)
 
 
 def run_simulations(

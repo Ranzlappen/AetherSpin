@@ -43,6 +43,12 @@ class GameDefinition:
         return float(self.raw["engine"]["rtpTarget"])
 
     @property
+    def engine_type(self) -> str:
+        """Win-evaluation mechanic id (``lines``, ``ways``, …) — selects the
+        :class:`~simulator.mechanics.WinMechanic` the engine delegates to."""
+        return str(self.raw["engine"]["type"])
+
+    @property
     def paylines(self) -> list[list[int]]:
         return [list(map(int, line)) for line in self.raw["paylines"]]
 
