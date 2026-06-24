@@ -50,6 +50,22 @@ Stake Engine game.
   (`bonus_rtp <= rtpTarget + 0.03`) and gated in CI for both bet modes by
   `math/scripts/validate_rtp.py --mode all`.
 
+## RNG provenance
+
+- **The bundled RNG is not a production entropy source.** `math/simulator/rng.py`
+  exists solely to pre-generate the simulation library (books + lookup tables)
+  offline, deterministically, for dev / CI / RTP analysis. At play time the
+  **certified Stake RGS owns all randomness** and simply selects which
+  pre-verified book to serve — neither the simulator nor any client code draws
+  live entropy.
+- **Reproducible by construction.** Generation is seeded with `PYTHONHASHSEED=0`
+  plus fixed per-mode offsets, so the same commit + seed yields a byte-identical
+  library. Each `config.json` is stamped with provenance — `gitCommit`, `seed`,
+  `definitionHash`, per-reel `reelHashes`, `simulatorVersion`, and
+  `generatedAt` — so an auditor can regenerate and diff the exact artifact.
+- See `docs/rng-provenance.md` for the full chain of custody and the
+  regenerate-and-verify procedure.
+
 ## Reporting a vulnerability
 
 Please open a private security advisory or email the studio maintainers rather

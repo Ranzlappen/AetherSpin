@@ -142,6 +142,35 @@ def _file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _git_commit() -> str:
+    """Best-effort source revision that produced this library.
+
+    Prefers ``GITHUB_SHA`` (set in CI) so the stamp is correct even when the
+    working tree is a shallow/detached checkout; otherwise falls back to a local
+    ``git rev-parse``. Returns ``"unknown"`` when neither is available (e.g. a
+    source tarball with no VCS), which keeps generation working off-VCS.
+    """
+    import os
+    import subprocess
+
+    env_sha = os.environ.get("GITHUB_SHA")
+    if env_sha:
+        return env_sha
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(Path(__file__).resolve().parent),
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return out.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "unknown"
+
+
 def build_provenance(game_id: str, definition: GameDefinition, seed: int) -> dict[str, Any]:
     """Reproducibility metadata embedded in the generated config.json.
 
@@ -160,6 +189,7 @@ def build_provenance(game_id: str, definition: GameDefinition, seed: int) -> dic
             reel_hashes[csv_path.name] = _file_sha256(csv_path)
     return {
         "seed": seed,
+        "gitCommit": _git_commit(),
         "definitionHash": hashlib.sha256(canonical).hexdigest(),
         "reelHashes": reel_hashes,
         "simulatorVersion": SIMULATOR_VERSION,
