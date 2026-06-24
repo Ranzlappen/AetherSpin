@@ -8,7 +8,7 @@
  * the shared event bus.
  */
 import { Container, Graphics, Text, TextStyle, Texture, Sprite, type Renderer, type Ticker } from 'pixi.js';
-import type { Board, LineWin } from '../../../shared/src/types/events';
+import type { Board, Win } from '../../../shared/src/types/events';
 import {
   NUM_REELS,
   NUM_ROWS,
@@ -292,22 +292,35 @@ export class ReelEngine {
     }
   }
 
-  /** Highlight winning paylines and pulse the winning cells. */
-  highlightWins(wins: LineWin[]): void {
+  /** Highlight wins: draw the payline for lines games, or pulse every matching
+   * symbol cell across the winning reels for ways games. */
+  highlightWins(wins: Win[]): void {
     this.lineOverlay.clear();
     for (const win of wins) {
-      const line = paylines[win.line];
-      if (!line) continue;
-      const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
-      const points: number[] = [];
-      for (let reel = 0; reel < win.count; reel++) {
-        const row = line[reel];
-        points.push(reel * REEL_WIDTH + CELL / 2, row * CELL + CELL / 2);
-        // Pulse the cell.
-        const cell = this.reels[reel]?.cells[row + 1];
-        if (cell) cell.container.scale.set(1.12);
+      if ('line' in win) {
+        const line = paylines[win.line];
+        if (!line) continue;
+        const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
+        const points: number[] = [];
+        for (let reel = 0; reel < win.count; reel++) {
+          const row = line[reel];
+          points.push(reel * REEL_WIDTH + CELL / 2, row * CELL + CELL / 2);
+          const cell = this.reels[reel]?.cells[row + 1];
+          if (cell) cell.container.scale.set(1.12);
+        }
+        this.lineOverlay.poly(points, false).stroke({ color, width: 5, alpha: 0.85 });
+      } else {
+        // Ways win: pulse all matching (or wild) cells on the first `count` reels.
+        for (let reel = 0; reel < win.count && reel < this.board.length; reel++) {
+          for (let row = 0; row < NUM_ROWS; row++) {
+            const sym = this.board[reel]?.[row];
+            if (sym === win.symbol || sym === wildSymbolId) {
+              const cell = this.reels[reel]?.cells[row + 1];
+              if (cell) cell.container.scale.set(1.12);
+            }
+          }
+        }
       }
-      this.lineOverlay.poly(points, false).stroke({ color, width: 5, alpha: 0.85 });
     }
   }
 

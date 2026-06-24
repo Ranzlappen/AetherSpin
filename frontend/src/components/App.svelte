@@ -21,7 +21,7 @@
     lastResult,
   } from '../core/gameState';
   import { sound } from '../core/sound';
-  import { buyBonusMode, formatCurrency } from '../config/gameConfig';
+  import { buyBonusMode, formatCurrency, availableGames, activeGameId } from '../config/gameConfig';
   import { t, tn, setLocale, localeTag } from '../core/i18n';
   import { announce, announcement, prefersReducedMotion } from '../core/a11y';
   import { startSession, stopSession } from '../core/session';
@@ -218,6 +218,15 @@
   function dismissError(): void {
     errorMessage.set(null);
   }
+
+  /** Demo-only: reload the client mounting a different game (?game=<id>). */
+  function switchGame(event: Event): void {
+    const id = (event.target as HTMLSelectElement).value;
+    if (id === activeGameId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('game', id);
+    window.location.href = url.toString();
+  }
 </script>
 
 <svelte:window on:keydown={onGlobalKeydown} />
@@ -236,6 +245,13 @@
         <FreeSpinsBanner />
       </div>
       <div class="top-right">
+        {#if usingMock && availableGames.length > 1}
+          <select class="game-select" aria-label="Switch game (demo)" on:change={switchGame}>
+            {#each availableGames as id (id)}
+              <option value={id} selected={id === activeGameId}>{id}</option>
+            {/each}
+          </select>
+        {/if}
         <SoundToggle />
         <button class="icon-btn" aria-label={$t('paytable.open')} on:click={() => (paytableOpen = true)}>
           i
@@ -324,6 +340,16 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
+  }
+  .game-select {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(125, 249, 255, 0.35);
+    background: rgba(12, 6, 34, 0.6);
+    color: var(--neon-cyan);
+    font-family: inherit;
+    font-weight: 700;
+    padding: 0 0.5rem;
   }
   .icon-btn {
     width: 40px;

@@ -3,7 +3,7 @@
  * logic (`bookPlayer`) from the Pixi presentation layer (`scenes/`). Core emits
  * presentation intents; scenes subscribe. No Pixi or Svelte imports here.
  */
-import type { Board, LineWin } from '../../../shared/src/types/events';
+import type { Board, Win } from '../../../shared/src/types/events';
 
 /** Map of event name -> payload type carried on the bus. */
 export interface GameEventMap {
@@ -16,8 +16,8 @@ export interface GameEventMap {
     multiplierWilds: Array<{ reel: number; row: number; value: number }>;
     anticipation: boolean;
   };
-  /** Highlight winning paylines. */
-  'wins:lines': { wins: LineWin[]; betPerLine: number };
+  /** Highlight winning lines (lines games) or ways symbols (ways games). */
+  'wins:lines': { wins: Win[]; betPerLine: number };
   /** Show a scatter win celebration. */
   'wins:scatter': { count: number; amount: number };
   /** A win celebration of the given magnitude should play. */
