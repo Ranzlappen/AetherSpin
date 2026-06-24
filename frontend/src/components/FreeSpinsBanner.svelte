@@ -3,7 +3,8 @@
   import { gameMode, freeSpins, currency } from '../core/gameState';
   import { ladderConfig, formatCurrency } from '../config/gameConfig';
 
-  $: ladderSteps = Array.from(
+  // Derived purely from a module constant, so it is intentionally not reactive.
+  const ladderSteps = Array.from(
     { length: ladderConfig.max },
     (_, i) => ladderConfig.start + i * ladderConfig.step
   );

@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint \"shared/**/*.ts\" \"frontend/src/**/*.{ts,svelte}\"",
     "test": "turbo run test",
     "format": "prettier --write \"**/*.{ts,svelte,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,svelte,js,json,md}\"",
@@ -27,9 +27,14 @@
     "setup:math": "bash scripts/setup-math.sh"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "eslint-plugin-svelte": "^3.3.3",
+    "globals": "^15.14.0",
     "prettier": "^3.3.3",
     "prettier-plugin-svelte": "^3.2.6",
-    "turbo": "^2.1.0"
+    "turbo": "^2.1.0",
+    "typescript-eslint": "^8.20.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
