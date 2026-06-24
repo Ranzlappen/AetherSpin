@@ -4,6 +4,13 @@ All notable changes to AetherSpin are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project aims to use
 semantic versioning per game (`shared/games/<id>/game-definition.json`).
 
+## 1.0.0 (2026-06-24)
+
+
+### Bug Fixes
+
+* **ci:** provision GitHub Pages in Storybook deploy + bump Node 20 → 22 ([#19](https://github.com/Ranzlappen/AetherSpin/issues/19)) ([d0ea595](https://github.com/Ranzlappen/AetherSpin/commit/d0ea5959d8de2fd816b96097a54db9faba23949d))
+
 ## [Unreleased]
 
 ### Added
