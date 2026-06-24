@@ -4,6 +4,7 @@
  * (paytable, bet levels, symbol metadata) and validated against the Python
  * loader in math/simulator/definition.py.
  */
+import type { AetherSpinGameDefinition } from './game.generated';
 
 export type SymbolKind = 'wild' | 'scatter' | 'high' | 'low' | 'bonus';
 export type EngineType = 'lines' | 'ways' | 'cluster' | 'scatter';
@@ -94,3 +95,22 @@ export interface ResponsibleGamingConfig {
   /** URL to operator help / limit-setting resources. */
   helpUrl?: string;
 }
+
+/* ----------------------------- schema conformance ----------------------------
+ * The JSON Schema (game-definition.schema.json) is the structural contract;
+ * `game.generated.d.ts` is its committed TypeScript projection (drift-guarded in
+ * CI). These hand-written types are the richer authoring layer over it. The
+ * assertion below fails to compile if they drift from the schema on any field it
+ * fully specifies. `features`/`paytable` are intentionally left open by the
+ * schema (refined here), and `bet` differs only by the schema's minItems:1 tuple
+ * for `levels`; all three are excluded from the check.
+ */
+
+type SchemaSpecified = Omit<AetherSpinGameDefinition, 'features' | 'paytable' | 'bet'>;
+
+/** `true` when the hand-written types satisfy the schema; otherwise `never`. */
+export type GameDefinitionConformsToSchema = GameDefinition extends SchemaSpecified ? true : never;
+
+// A compile error on this line means game.ts drifted from the schema — run
+// `pnpm gen:types` and reconcile the hand-written types.
+export const __assertGameDefinitionConformsToSchema: GameDefinitionConformsToSchema = true;

@@ -12,6 +12,9 @@ dist-stake/
 math/library/
 math/engine/
 
+# Generated TypeScript projection of the JSON Schema (owned by scripts/gen-types.mjs)
+shared/src/types/game.generated.d.ts
+
 # Data files (machine-generated, not hand-formatted)
 *.csv
 *.jsonl

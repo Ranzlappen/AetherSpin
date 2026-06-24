@@ -115,6 +115,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Schema → types drift guard (generated types must match the schema)
+        run: |
+          pnpm gen:types
+          git diff --exit-code shared/src/types/game.generated.d.ts \
+            || { echo "::error::shared/src/types/game.generated.d.ts is out of sync with the schema. Run 'pnpm gen:types' and commit."; exit 1; }
+
       - name: Type-check
         run: pnpm --filter @aetherspin/frontend run check
 
