@@ -8,6 +8,10 @@ a certified RNG source.
 from __future__ import annotations
 
 import random
+from collections.abc import Sequence
+from typing import TypeVar
+
+T = TypeVar("T")
 
 
 class Rng:
@@ -24,5 +28,5 @@ class Rng:
     def random(self) -> float:
         return self._random.random()
 
-    def weighted_choice(self, items: list, weights: list[int]) -> object:
-        return self._random.choices(items, weights=weights, k=1)[0]
+    def weighted_choice(self, items: Sequence[T], weights: Sequence[int]) -> T:
+        return self._random.choices(list(items), weights=list(weights), k=1)[0]

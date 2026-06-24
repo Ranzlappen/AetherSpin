@@ -41,3 +41,10 @@ dist-stake/
 !.vscode/extensions.json
 !.vscode/settings.json
 *.log
+
+# Coverage reports
+coverage/
+**/coverage/
+.coverage
+.coverage.*
+htmlcov/

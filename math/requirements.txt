@@ -12,6 +12,8 @@ pandas>=3.0.3
 # Testing & quality
 pytest>=9.1.1
 pytest-cov>=7.1.0
+hypothesis>=6.100
+mypy>=1.11
 ruff>=0.15.18
 
 # TOML parsing for run_config.toml on Python <3.11 (3.11+ ships tomllib)

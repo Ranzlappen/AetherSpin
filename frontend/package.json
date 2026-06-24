@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "check": "svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p tsconfig.json",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@aetherspin/shared": "workspace:*",
@@ -21,13 +22,14 @@
     "pixi.js": "^8.6.6"
   },
   "devDependencies": {
-    "@storybook/svelte-vite": "^8.4.7",
     "@storybook/svelte": "^8.4.7",
+    "@storybook/svelte-vite": "^8.4.7",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@tsconfig/svelte": "^5.0.4",
     "@types/howler": "^2.2.12",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^8.57.1",
     "eslint-plugin-svelte": "^2.46.1",
     "jsdom": "^25.0.1",

@@ -34,13 +34,17 @@ jobs:
           cache: pip
 
       - name: Install test dependencies
-        run: pip install pytest
+        run: pip install pytest pytest-cov hypothesis mypy
 
       - name: Validate game definitions (semantic, all games)
         run: python scripts/validate_definitions.py
 
-      - name: Run unit tests (engine + event contract)
-        run: python -m pytest math/tests -q
+      - name: Type-check the engine (mypy)
+        working-directory: math
+        run: python -m mypy
+
+      - name: Run unit + property tests with coverage
+        run: python -m pytest math/tests -q --cov=simulator --cov-report=term-missing --cov-fail-under=70
 
       - name: Validate RTP — base + buy-bonus (gates the build)
         run: python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05 --mode all
@@ -94,8 +98,8 @@ jobs:
       - name: Type-check
         run: pnpm --filter @aetherspin/frontend run check
 
-      - name: Test
-        run: pnpm --filter @aetherspin/frontend test
+      - name: Test (with coverage thresholds)
+        run: pnpm --filter @aetherspin/frontend run test:coverage
 
       - name: Build
         run: pnpm --filter @aetherspin/frontend build
