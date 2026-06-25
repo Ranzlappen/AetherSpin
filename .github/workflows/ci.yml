@@ -58,6 +58,12 @@ jobs:
           python math/scripts/generate_books.py --game cosmicways --sims 5000
           python math/scripts/validate_books.py --game cosmicways
 
+      - name: Golden-book corpus drift guard (math↔client parity fixtures)
+        run: |
+          python math/scripts/gen_golden_corpus.py
+          git diff --exit-code shared/fixtures/books/ \
+            || { echo "::error::golden-book corpus is out of sync with the engine. Run 'PYTHONHASHSEED=0 python3 math/scripts/gen_golden_corpus.py' and commit."; exit 1; }
+
       - name: Packaging smoke — submission manifest + checksums + SBOM
         run: |
           bash scripts/package-for-stake.sh novaforged --math-only
