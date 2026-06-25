@@ -7,6 +7,13 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.2.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.1.0...v1.2.0) (2026-06-25)
+
+
+### Features
+
+* roll up post-1.1.0 hardening into v1.2.0 ([#34](https://github.com/Ranzlappen/AetherSpin/issues/34)) ([39d5dd2](https://github.com/Ranzlappen/AetherSpin/commit/39d5dd26ca44c00c6c3345d7a1fd0d113d94e51c))
+
 ## [1.1.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.0.0...v1.1.0) (2026-06-24)
 
 
