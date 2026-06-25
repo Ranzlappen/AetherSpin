@@ -1,0 +1,235 @@
+{
+  "$schema": "../../schemas/game-definition.schema.json",
+  "id": "stellarclusters",
+  "displayName": "Stellar Clusters",
+  "version": "1.0.0",
+  "studio": "AetherSpin",
+  "theme": "cluster-cosmic",
+  "description": "A 5x3 cluster-pays neon-cosmic slot: orthogonally-connected groups of a symbol (wilds substitute) pay by size, with scatter-triggered free spins. Third mechanic demonstrating the engine's pluggable cluster evaluation.",
+  "engine": {
+    "type": "cluster",
+    "numReels": 5,
+    "numRows": 3,
+    "wincapMultiplier": 5000.0,
+    "rtpTarget": 0.965,
+    "volatility": "medium"
+  },
+  "currency": {
+    "default": "USD",
+    "apiAmountMultiplier": 1000000,
+    "bookAmountMultiplier": 100
+  },
+  "bet": {
+    "defaultLevelIndex": 2,
+    "levels": [0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0],
+    "minBet": 0.1,
+    "maxBet": 100.0,
+    "stepBet": 0.1
+  },
+  "betModes": [
+    {
+      "name": "base",
+      "cost": 1.0,
+      "label": "Base Game",
+      "isBuyBonus": false
+    },
+    {
+      "name": "bonus",
+      "cost": 100.0,
+      "label": "Buy Free Spins",
+      "isBuyBonus": true
+    }
+  ],
+  "symbols": [
+    {
+      "id": "W",
+      "name": "Aether Crystal (Wild)",
+      "kind": "wild",
+      "color": "#7df9ff",
+      "substitutes": ["H1", "H2", "H3", "H4", "L1", "L2", "L3", "L4", "L5"]
+    },
+    {
+      "id": "S",
+      "name": "Nova Sigil (Scatter)",
+      "kind": "scatter",
+      "color": "#ff45e0"
+    },
+    {
+      "id": "H1",
+      "name": "Nova Core",
+      "kind": "high",
+      "color": "#ffd166"
+    },
+    {
+      "id": "H2",
+      "name": "Starforge",
+      "kind": "high",
+      "color": "#ff7b54"
+    },
+    {
+      "id": "H3",
+      "name": "Pulsar",
+      "kind": "high",
+      "color": "#b388ff"
+    },
+    {
+      "id": "H4",
+      "name": "Comet",
+      "kind": "high",
+      "color": "#4dd0e1"
+    },
+    {
+      "id": "L1",
+      "name": "Cyan Shard",
+      "kind": "low",
+      "color": "#26c6da"
+    },
+    {
+      "id": "L2",
+      "name": "Violet Shard",
+      "kind": "low",
+      "color": "#7e57c2"
+    },
+    {
+      "id": "L3",
+      "name": "Amber Shard",
+      "kind": "low",
+      "color": "#ffb300"
+    },
+    {
+      "id": "L4",
+      "name": "Rose Shard",
+      "kind": "low",
+      "color": "#ec407a"
+    },
+    {
+      "id": "L5",
+      "name": "Lime Shard",
+      "kind": "low",
+      "color": "#9ccc65"
+    }
+  ],
+  "paytable": {
+    "H1": {
+      "3": 2.853154,
+      "4": 6.27694,
+      "5": 12.839195,
+      "6": 25.67839,
+      "7": 51.356779,
+      "8": 114.126176
+    },
+    "H2": {
+      "3": 2.139866,
+      "4": 4.707705,
+      "5": 9.629396,
+      "6": 19.258792,
+      "7": 38.517584,
+      "8": 85.594632
+    },
+    "H3": {
+      "3": 1.521682,
+      "4": 3.347701,
+      "5": 6.847571,
+      "6": 13.695141,
+      "7": 27.390282,
+      "8": 60.867294
+    },
+    "H4": {
+      "3": 1.046157,
+      "4": 2.301545,
+      "5": 4.707705,
+      "6": 9.41541,
+      "7": 18.830819,
+      "8": 41.846264
+    },
+    "L1": {
+      "3": 0.665736,
+      "4": 1.464619,
+      "5": 2.995812,
+      "6": 5.991624,
+      "7": 11.983248,
+      "8": 26.629441
+    },
+    "L2": {
+      "3": 0.570631,
+      "4": 1.255388,
+      "5": 2.567839,
+      "6": 5.135678,
+      "7": 10.271356,
+      "8": 22.825235
+    },
+    "L3": {
+      "3": 0.475526,
+      "4": 1.046157,
+      "5": 2.139866,
+      "6": 4.279732,
+      "7": 8.559463,
+      "8": 19.021029
+    },
+    "L4": {
+      "3": 0.404197,
+      "4": 0.889233,
+      "5": 1.818886,
+      "6": 3.637772,
+      "7": 7.275544,
+      "8": 16.167875
+    },
+    "L5": {
+      "3": 0.332868,
+      "4": 0.73231,
+      "5": 1.497906,
+      "6": 2.995812,
+      "7": 5.991624,
+      "8": 13.314721
+    }
+  },
+  "paylines": [],
+  "scatter": {
+    "symbol": "S",
+    "minToTrigger": 3,
+    "pays": {
+      "3": 2,
+      "4": 10,
+      "5": 50
+    }
+  },
+  "features": {
+    "freeSpins": {
+      "enabled": true,
+      "awards": {
+        "3": 8,
+        "4": 10,
+        "5": 12
+      },
+      "retrigger": false,
+      "winScale": 9.9827,
+      "multiplierLadder": {
+        "description": "No ladder (flat multiplier).",
+        "start": 1,
+        "step": 0,
+        "max": 1
+      }
+    },
+    "multiplierWilds": {
+      "enabled": false,
+      "appliesIn": ["free"],
+      "values": [1],
+      "weights": [1]
+    },
+    "expandingWilds": {
+      "enabled": false,
+      "appliesIn": ["free"],
+      "description": "Disabled for this game."
+    },
+    "bonusBuy": {
+      "enabled": true,
+      "mode": "bonus",
+      "costMultiplier": 100.0,
+      "description": "Instantly purchase entry into the free spins feature for 100x the base bet."
+    }
+  },
+  "responsibleGaming": {
+    "realityCheckMinutes": 60,
+    "helpUrl": "https://www.begambleaware.org/"
+  }
+}

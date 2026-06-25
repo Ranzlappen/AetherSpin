@@ -191,6 +191,84 @@ class WaysMechanic(WinMechanic):
         return total, wins
 
 
+class ClusterMechanic(WinMechanic):
+    """Cluster-pays: orthogonally-connected groups of the same symbol (wilds
+    substitute) pay by group size. No paylines/reels-from-left — a symbol pays
+    once per connected cluster of >= 3 cells, valued by ``paytable[symbol][size]``
+    (capped at the largest size the paytable defines). Multiplier wilds (free
+    game) contribute additively over the cluster, mirroring the other mechanics.
+    """
+
+    win_event_type = "clusterWins"
+
+    def __init__(self, definition: GameDefinition) -> None:
+        self.d = definition
+        self.wild = definition.wild
+        self.scatter = definition.scatter
+        self.paytable = definition.paytable
+        self.num_reels = definition.num_reels
+        self.num_rows = definition.num_rows
+
+    def evaluate(
+        self, board: list[list[str]], mult_grid: list[list[int]] | None = None
+    ) -> tuple[float, list[dict[str, Any]]]:
+        total = 0.0
+        wins: list[dict[str, Any]] = []
+        for sym in self.paytable:
+            if sym == self.scatter:
+                continue
+            pays = self.paytable.get(sym, {})
+            if not pays:
+                continue
+            max_size = max(pays)
+            seen: set[tuple[int, int]] = set()
+            for r0 in range(self.num_reels):
+                for c0 in range(self.num_rows):
+                    if (r0, c0) in seen:
+                        continue
+                    cell = board[r0][c0]
+                    if cell != sym and cell != self.wild:
+                        continue
+                    # Flood-fill the connected (sym-or-wild) component.
+                    comp: list[tuple[int, int]] = []
+                    stack = [(r0, c0)]
+                    while stack:
+                        x, y = stack.pop()
+                        if (x, y) in seen:
+                            continue
+                        if not (0 <= x < self.num_reels and 0 <= y < self.num_rows):
+                            continue
+                        if board[x][y] != sym and board[x][y] != self.wild:
+                            continue
+                        seen.add((x, y))
+                        comp.append((x, y))
+                        stack += [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+                    # An all-wild blob doesn't pay as every symbol — require a real one.
+                    if not any(board[x][y] == sym for x, y in comp):
+                        continue
+                    size = len(comp)
+                    pay_size = next((k for k in range(min(size, max_size), 2, -1) if k in pays), None)
+                    if pay_size is None:
+                        continue
+                    if mult_grid is not None:
+                        wsum = sum(mult_grid[x][y] for x, y in comp if board[x][y] == self.wild)
+                        wild_mult = wsum if wsum > 0 else 1
+                    else:
+                        wild_mult = 1
+                    payout = pays[pay_size] * wild_mult
+                    total += payout
+                    wins.append(
+                        {
+                            "symbol": sym,
+                            "count": size,
+                            "wildMultiplier": wild_mult,
+                            "amount": round(payout, 6),
+                            "cells": [{"reel": x, "row": y} for x, y in comp],
+                        }
+                    )
+        return total, wins
+
+
 # --- registry ---------------------------------------------------------------
 
 MechanicFactory = Callable[[GameDefinition], WinMechanic]
@@ -215,3 +293,4 @@ def build_mechanic(definition: GameDefinition) -> WinMechanic:
 
 register_mechanic("lines", LinesMechanic)
 register_mechanic("ways", WaysMechanic)
+register_mechanic("cluster", ClusterMechanic)

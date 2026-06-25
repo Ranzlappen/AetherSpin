@@ -16,6 +16,7 @@ EVENT_REQUIRED_FIELDS: dict[str, set[str]] = {
     "reveal": {"type", "gameType", "board", "reelStops"},
     "lineWins": {"type", "gameType", "wins", "amount"},
     "wayWins": {"type", "gameType", "wins", "amount"},
+    "clusterWins": {"type", "gameType", "wins", "amount"},
     "scatterWin": {"type", "count", "amount"},
     "freeSpinTrigger": {"type", "scatters", "awarded", "startMultiplier"},
     "freeSpinResult": {"type", "spin", "wins", "scatter", "globalMultiplier", "amount"},
@@ -28,8 +29,8 @@ EVENT_REQUIRED_FIELDS: dict[str, set[str]] = {
 VALID_EVENT_TYPES = set(EVENT_REQUIRED_FIELDS)
 
 # Events that carry a ``wins`` list. Each entry must have these common fields;
-# the mechanic adds its own discriminator (``line`` for lines, ``ways`` for ways).
-WIN_EVENTS = ("lineWins", "wayWins", "freeSpinResult")
+# the mechanic adds its own discriminator (``line``/``ways``/``cells``).
+WIN_EVENTS = ("lineWins", "wayWins", "clusterWins", "freeSpinResult")
 WIN_ENTRY_FIELDS = {"symbol", "count", "wildMultiplier", "amount"}
 
 
