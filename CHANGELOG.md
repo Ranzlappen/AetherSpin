@@ -7,6 +7,14 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.4.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.3.0...v1.4.0) (2026-06-25)
+
+
+### Features
+
+* **frontend:** render cluster-pays wins and unhide Stellar Clusters ([#41](https://github.com/Ranzlappen/AetherSpin/issues/41)) ([eb026bd](https://github.com/Ranzlappen/AetherSpin/commit/eb026bd12ad2267131c6f3807a7f1c56ac4d8941))
+* **math:** add the official-SDK module for Stellar Clusters ([#44](https://github.com/Ranzlappen/AetherSpin/issues/44)) ([ca2c1a6](https://github.com/Ranzlappen/AetherSpin/commit/ca2c1a621e8feafa546e3ea84fc96f2e18fd3479))
+
 ## [1.3.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.2.0...v1.3.0) (2026-06-25)
 
 
