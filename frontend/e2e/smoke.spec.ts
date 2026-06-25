@@ -73,6 +73,22 @@ test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({
   await expect(spin).toBeEnabled({ timeout: 30_000 });
 });
 
+test('QA replay viewer: ?replay=base serves the committed corpus deterministically', async ({ page }) => {
+  await page.goto('/?replay=base');
+  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
+
+  // The replay badge shows progress through the corpus.
+  const badge = page.getByText(/REPLAY · base/i);
+  await expect(badge).toBeVisible();
+  await expect(badge).toContainText('0/');
+
+  // Each spin advances deterministically through the reference books.
+  const spin = spinButton(page);
+  await spin.click();
+  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  await expect(badge).toContainText('1/');
+});
+
 test('a11y: exposes a polite live region and spins via the keyboard', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });

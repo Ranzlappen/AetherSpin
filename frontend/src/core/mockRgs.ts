@@ -408,6 +408,11 @@ export interface MockRgsOptions {
   startingBalance?: number;
   /** RNG seed for reproducible sessions (default time-based). */
   seed?: number;
+  /**
+   * Override book selection (e.g. the QA replay viewer serves a fixed corpus).
+   * Receives the buy-bonus flag and the next book id; returns the book to play.
+   */
+  bookProvider?: (buyBonus: boolean, id: number) => Book;
 }
 
 /**
@@ -424,6 +429,7 @@ export class MockRgsClient implements RgsTransport {
   /** Pending payout (dollars) awaiting `endRound` settlement. */
   private pendingPayout = 0;
   private readonly betLevels: number[];
+  private readonly bookProvider?: (buyBonus: boolean, id: number) => Book;
 
   constructor(options: MockRgsOptions) {
     this.params = options.params;
@@ -431,6 +437,7 @@ export class MockRgsClient implements RgsTransport {
     this.currency = options.params.currency ?? gameDefinition.currency.default;
     this.rng = makeRng(options.seed ?? Date.now() & 0xffffffff);
     this.betLevels = [...gameDefinition.bet.levels];
+    this.bookProvider = options.bookProvider;
   }
 
   /** Resolve mock authentication immediately. */
@@ -494,8 +501,9 @@ export class MockRgsClient implements RgsTransport {
     return { amount: round4(this.balance), currency: this.currency };
   }
 
-  /** Use a real loaded book when available, otherwise generate one. */
+  /** Pick a book: an injected provider (replay) wins, else a loaded book, else generate. */
   private pickOrGenerateBook(buyBonus: boolean): Book {
+    if (this.bookProvider) return { ...this.bookProvider(buyBonus, this.bookCounter), id: this.bookCounter };
     const key = buyBonus ? 'bonus' : 'base';
     const pool = loadedBooks[key];
     if (pool && pool.length > 0) {
