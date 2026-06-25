@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "math"))
 from simulator.runner import run_simulations  # noqa: E402
 
 OUT_DIR = ROOT / "shared" / "fixtures" / "books"
-GAMES = ("novaforged", "cosmicways")
+GAMES = ("novaforged", "cosmicways", "stellarclusters")
 # Small but feature-covering: base draws naturally trigger some free games; the
 # bonus mode forces the free-spin feature on every book.
 NUM_BY_MODE = {"base": 60, "bonus": 20}
