@@ -46,7 +46,15 @@ export function resolveLocale(hint?: string | null): LocaleCode {
 
 /** Set the active locale from a language hint. */
 export function setLocale(hint?: string | null): void {
-  locale.set(resolveLocale(hint));
+  const code = resolveLocale(hint);
+  locale.set(code);
+  // Keep the document language in sync so assistive tech announces the UI chrome
+  // in the right language and `:lang()` rules resolve correctly. The static
+  // `lang="en"` in index.html is the pre-boot default; this reflects the
+  // resolved locale once the RGS `lang` / `navigator.language` hint is known.
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = LOCALE_TAGS[code];
+  }
 }
 
 function interpolate(template: string, params?: TranslationParams): string {

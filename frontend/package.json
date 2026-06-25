@@ -23,6 +23,7 @@
     "pixi.js": "^8.6.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.49.1",
     "@storybook/svelte": "^8.4.7",
     "@storybook/svelte-vite": "^8.4.7",
