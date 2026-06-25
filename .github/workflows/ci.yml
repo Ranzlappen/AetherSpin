@@ -69,6 +69,17 @@ jobs:
         # must stay syntactically valid so they don't rot between SDK runs.
         run: python -m py_compile math/games/*/*.py
 
+      - name: Scaffolder smoke — new-game.sh produces a runnable game (reusability)
+        run: |
+          set -e
+          cleanup() { rm -rf shared/games/scaffoldsmoke math/games/scaffoldsmoke math/library/scaffoldsmoke; }
+          trap cleanup EXIT
+          bash scripts/new-game.sh scaffoldsmoke --mechanic ways
+          python scripts/validate_definitions.py
+          python math/scripts/generate_books.py --game scaffoldsmoke --sims 1000
+          python math/scripts/validate_books.py --game scaffoldsmoke
+          python -m py_compile math/games/scaffoldsmoke/*.py
+
       - name: Packaging smoke — submission manifest + checksums + SBOM
         run: |
           bash scripts/package-for-stake.sh novaforged --math-only

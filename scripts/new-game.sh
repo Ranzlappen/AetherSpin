@@ -1,15 +1,18 @@
 #!/usr/bin/env bash
 #
-# new-game.sh — scaffold a new game from the template + novaforged reference.
+# new-game.sh — scaffold a new game from a declared MECHANIC, not a fixed clone.
 #
-# Creates:
-#   shared/games/<id>/game-definition.json   (from template, id set)
-#   math/games/<id>/*.py + run_config.toml   (from novaforged, "novaforged" -> <id>)
-#   math/games/<id>/reels/*.csv              (copied from novaforged)
+#   --mechanic lines  -> seeds from NovaForged  (fixed paylines)
+#   --mechanic ways   -> seeds from Cosmic Ways  (all-ways, no paylines)
 #
-# Refuses to overwrite existing targets (idempotent-safe).
+# Creates a complete, immediately-runnable game (you then retune it):
+#   shared/games/<id>/game-definition.json   (reference def, id/name rewritten)
+#   math/games/<id>/*.py + run_config.toml   (reference SDK module, id rewritten)
+#   math/games/<id>/reels/*.csv              (reference reels)
 #
-# Usage: scripts/new-game.sh <new-game-id>
+# Refuses to overwrite existing targets.
+#
+# Usage: scripts/new-game.sh <new-game-id> [--mechanic lines|ways]
 #
 set -euo pipefail
 
@@ -17,57 +20,68 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-if [ $# -lt 1 ] || [ -z "${1:-}" ]; then
-  echo "Usage: scripts/new-game.sh <new-game-id>" >&2
+GAME_ID=""
+MECHANIC="lines"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --mechanic) MECHANIC="${2:-}"; shift 2 ;;
+    --mechanic=*) MECHANIC="${1#*=}"; shift ;;
+    -*) echo "Unknown option: $1" >&2; exit 1 ;;
+    *) GAME_ID="$1"; shift ;;
+  esac
+done
+
+if [ -z "$GAME_ID" ]; then
+  echo "Usage: scripts/new-game.sh <new-game-id> [--mechanic lines|ways]" >&2
   exit 1
 fi
 
-GAME_ID="$1"
-
-# Validate the id: lowercase letters, digits, hyphen/underscore.
+# Validate the id: lowercase letters, digits, hyphen/underscore, start with a letter.
 if ! printf '%s' "$GAME_ID" | grep -Eq '^[a-z][a-z0-9_-]*$'; then
-  echo "ERROR: game id '$GAME_ID' is invalid." >&2
-  echo "       Use lowercase letters/digits/_/- and start with a letter." >&2
+  echo "ERROR: game id '$GAME_ID' is invalid (use [a-z][a-z0-9_-]*)." >&2
   exit 1
 fi
 
-TEMPLATE_DEF="$ROOT/shared/games/template/game-definition.json"
-REF_MATH="$ROOT/math/games/novaforged"
+# Map the mechanic to its reference game (which already encodes engine.type,
+# paylines, and a matching SDK module + reels for that mechanic).
+case "$MECHANIC" in
+  lines) REF_ID="novaforged" ;;
+  ways)  REF_ID="cosmicways" ;;
+  *) echo "ERROR: unknown mechanic '$MECHANIC' (use 'lines' or 'ways')." >&2; exit 1 ;;
+esac
 
+REF_DEF="$ROOT/shared/games/$REF_ID/game-definition.json"
+REF_MATH="$ROOT/math/games/$REF_ID"
 SHARED_TARGET="$ROOT/shared/games/$GAME_ID"
 MATH_TARGET="$ROOT/math/games/$GAME_ID"
 
-echo "==> Scaffolding new game: $GAME_ID"
+echo "==> Scaffolding new game '$GAME_ID' (mechanic: $MECHANIC, seeded from $REF_ID)"
 
-# Refuse if either target already exists.
-if [ -e "$SHARED_TARGET" ]; then
-  echo "ERROR: $SHARED_TARGET already exists. Refusing to overwrite." >&2
-  exit 1
-fi
-if [ -e "$MATH_TARGET" ]; then
-  echo "ERROR: $MATH_TARGET already exists. Refusing to overwrite." >&2
-  exit 1
-fi
-if [ ! -f "$TEMPLATE_DEF" ]; then
-  echo "ERROR: template definition missing: $TEMPLATE_DEF" >&2
-  exit 1
-fi
-if [ ! -d "$REF_MATH" ]; then
-  echo "ERROR: reference math game missing: $REF_MATH" >&2
-  exit 1
-fi
+for target in "$SHARED_TARGET" "$MATH_TARGET"; do
+  if [ -e "$target" ]; then
+    echo "ERROR: $target already exists. Refusing to overwrite." >&2
+    exit 1
+  fi
+done
+[ -f "$REF_DEF" ] || { echo "ERROR: reference definition missing: $REF_DEF" >&2; exit 1; }
+[ -d "$REF_MATH" ] || { echo "ERROR: reference math game missing: $REF_MATH" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
-# 1. shared/games/<id>/game-definition.json from the template, id replaced.
+# 1. shared/games/<id>/game-definition.json from the reference, identity rewritten.
+#    engine.type + paylines are inherited from the reference (already correct
+#    for the chosen mechanic), so the scaffold is valid out of the box.
 # ---------------------------------------------------------------------------
 mkdir -p "$SHARED_TARGET"
-python3 - "$TEMPLATE_DEF" "$SHARED_TARGET/game-definition.json" "$GAME_ID" <<'PY'
+python3 - "$REF_DEF" "$SHARED_TARGET/game-definition.json" "$GAME_ID" "$MECHANIC" <<'PY'
 import json, sys
-src, dst, game_id = sys.argv[1], sys.argv[2], sys.argv[3]
+src, dst, game_id, mechanic = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 with open(src, encoding="utf-8") as f:
     data = json.load(f)
+name = game_id.replace("-", " ").replace("_", " ").title()
 data["id"] = game_id
-data["displayName"] = game_id.replace("-", " ").replace("_", " ").title()
+data["displayName"] = name
+data["theme"] = f"{mechanic}-custom"
+data["description"] = f"Scaffolded {mechanic} game ({name}). Retune paytable, reels, RTP target, and features."
 with open(dst, "w", encoding="utf-8") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
@@ -75,39 +89,32 @@ PY
 echo "==> wrote shared/games/$GAME_ID/game-definition.json"
 
 # ---------------------------------------------------------------------------
-# 2. math/games/<id>/ from novaforged, replacing the game_id string.
+# 2. math/games/<id>/ from the reference SDK module, reference id -> new id.
 # ---------------------------------------------------------------------------
 mkdir -p "$MATH_TARGET"
-# Copy python entry points + run_config.toml, substituting "novaforged" -> <id>.
 for src in "$REF_MATH"/*.py "$REF_MATH"/*.toml; do
   [ -f "$src" ] || continue
-  base="$(basename "$src")"
-  sed "s/novaforged/$GAME_ID/g" "$src" > "$MATH_TARGET/$base"
+  sed "s/$REF_ID/$GAME_ID/g" "$src" > "$MATH_TARGET/$(basename "$src")"
 done
-echo "==> wrote math/games/$GAME_ID/ python entry points (game_id -> $GAME_ID)"
+echo "==> wrote math/games/$GAME_ID/ SDK module ($REF_ID -> $GAME_ID)"
 
-# Copy the config/ dir verbatim if present.
-if [ -d "$REF_MATH/config" ]; then
-  cp -R "$REF_MATH/config" "$MATH_TARGET/config"
-  echo "==> copied math/games/$GAME_ID/config/"
-fi
+[ -d "$REF_MATH/config" ] && cp -R "$REF_MATH/config" "$MATH_TARGET/config"
+cp -R "$REF_MATH/reels" "$MATH_TARGET/reels"
+echo "==> copied reels into math/games/$GAME_ID/reels/"
 
-# Copy reels.
-if [ -d "$REF_MATH/reels" ]; then
-  cp -R "$REF_MATH/reels" "$MATH_TARGET/reels"
-  echo "==> copied template reels into math/games/$GAME_ID/reels/"
-fi
+cat <<EOF
 
-echo ""
-echo "==> New game '$GAME_ID' scaffolded."
-echo ""
-echo "Next steps:"
-echo "  1. Tune the math in shared/games/$GAME_ID/game-definition.json"
-echo "     (paytable, paylines, RTP target, volatility, features)."
-echo "  2. Tune the reel strips in math/games/$GAME_ID/reels/*.csv."
-echo "  3. Simulate / validate RTP:"
-echo "       python math/scripts/validate_rtp.py --game $GAME_ID --sims 200000 --tol 0.05"
-echo "  4. Generate the library:"
-echo "       python math/scripts/generate_books.py --game $GAME_ID --sims 100000"
-echo "  5. Package for Stake Engine:"
-echo "       scripts/package-for-stake.sh $GAME_ID"
+==> New '$MECHANIC' game '$GAME_ID' scaffolded (a runnable clone of $REF_ID).
+
+Next steps:
+  1. Retune shared/games/$GAME_ID/game-definition.json (paytable, features, RTP).
+  2. Replace the reel strips in math/games/$GAME_ID/reels/*.csv.
+  3. Auto-tune + gate the RTP:
+       python math/scripts/optimize.py --game $GAME_ID --sims 200000 --apply
+       python math/scripts/validate_rtp.py --game $GAME_ID --sims 150000 --tol 0.05 --mode all
+  4. Generate + validate the library:
+       python math/scripts/generate_books.py --game $GAME_ID --sims 100000
+       python math/scripts/validate_books.py --game $GAME_ID
+  5. Play it locally:  pnpm --filter @aetherspin/frontend dev  (then ?game=$GAME_ID)
+  6. Package:          scripts/package-for-stake.sh $GAME_ID
+EOF
