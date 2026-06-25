@@ -22,8 +22,10 @@ for (const def of Object.values(definitionModules)) {
 
 /** The flagship game, used as the default. */
 const DEFAULT_GAME = 'novaforged';
-/** Scaffold-only games excluded from the player-facing game list. */
-const HIDDEN_GAMES = new Set(['template']);
+/** Games excluded from the player-facing list: scaffolds, and games that are
+ * math-complete but not yet renderable client-side (stellarclusters emits
+ * `clusterWins`, which the bookPlayer doesn't handle yet — math ships first). */
+const HIDDEN_GAMES = new Set(['template', 'stellarclusters']);
 
 /** Game ids selectable by the player (scaffolds hidden), sorted. */
 export const availableGames: readonly string[] = Object.keys(registry)

@@ -16,6 +16,7 @@ This engine is intentionally written to produce the same library output shape
 from .definition import GameDefinition, load_definition
 from .engine import LinesEngine, SlotEngine, SpinResult
 from .mechanics import (
+    ClusterMechanic,
     LinesMechanic,
     WaysMechanic,
     WinMechanic,
@@ -33,6 +34,7 @@ __all__ = [
     "WinMechanic",
     "LinesMechanic",
     "WaysMechanic",
+    "ClusterMechanic",
     "build_mechanic",
     "register_mechanic",
     "ReelSet",

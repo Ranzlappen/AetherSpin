@@ -69,8 +69,9 @@ def test_sdk_factories_match_contract():
         assert not problems, f"{evt.get('type')}: {problems}"
         seen.add(evt["type"])
     # The lines factories must cover every contract event type except those that
-    # belong to other mechanics (``wayWins`` is emitted by the ways game).
-    lines_event_types = VALID_EVENT_TYPES - {"wayWins"}
+    # belong to other mechanics (``wayWins``/``clusterWins`` are emitted by the
+    # ways/cluster games).
+    lines_event_types = VALID_EVENT_TYPES - {"wayWins", "clusterWins"}
     assert seen == lines_event_types, f"factories miss types: {lines_event_types - seen}"
 
 
