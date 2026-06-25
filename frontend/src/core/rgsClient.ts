@@ -17,6 +17,7 @@ const VALID_EVENT_TYPES = new Set([
   'reveal',
   'lineWins',
   'wayWins',
+  'clusterWins',
   'scatterWin',
   'freeSpinTrigger',
   'freeSpinResult',

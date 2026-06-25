@@ -38,6 +38,9 @@ const blockingViolations = (violations: Awaited<ReturnType<AxeBuilder['analyze']
   violations.filter((v) => BLOCKING_IMPACTS.has(v.impact ?? ''));
 
 test('a11y: the booted HUD has no serious/critical axe violations', async ({ page }) => {
+  // axe's in-page DOM walk is heavy and competes with the software WebGL render
+  // loop on CI; give it the extra headroom rather than risk a spurious timeout.
+  test.slow();
   await bootMock(page);
 
   const results = await audit(page).analyze();
@@ -52,6 +55,7 @@ test('a11y: the booted HUD has no serious/critical axe violations', async ({ pag
 });
 
 test('a11y: the open paytable dialog has no serious/critical axe violations', async ({ page }) => {
+  test.slow(); // see note above — axe analyze under software WebGL is slow on CI.
   await bootMock(page);
 
   await page.getByRole('button', { name: 'Paytable' }).click();

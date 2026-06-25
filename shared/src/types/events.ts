@@ -29,8 +29,18 @@ export interface WayWin {
   amount: number;
 }
 
-/** Either mechanic's win descriptor (lines carry `line`, ways carry `ways`). */
-export type Win = LineWin | WayWin;
+/** A single cluster-pays win: a connected group of one symbol (wilds
+ * substitute). `count` is the group size; `cells` are its board positions. */
+export interface ClusterWin {
+  symbol: string;
+  count: number;
+  wildMultiplier: number;
+  amount: number;
+  cells: Array<{ reel: number; row: number }>;
+}
+
+/** Any mechanic's win descriptor (lines carry `line`, ways `ways`, clusters `cells`). */
+export type Win = LineWin | WayWin | ClusterWin;
 
 export interface RevealEvent {
   type: 'reveal';
@@ -59,6 +69,13 @@ export interface WayWinsEvent {
   amount: number;
 }
 
+export interface ClusterWinsEvent {
+  type: 'clusterWins';
+  gameType: GameType;
+  wins: ClusterWin[];
+  amount: number;
+}
+
 export interface ScatterWinEvent {
   type: 'scatterWin';
   count: number;
@@ -75,7 +92,7 @@ export interface FreeSpinTriggerEvent {
 export interface FreeSpinResultEvent {
   type: 'freeSpinResult';
   spin: number;
-  /** Wins for this free spin — line- or ways-shaped depending on the mechanic. */
+  /** Wins for this free spin — line-, ways- or cluster-shaped per the mechanic. */
   wins: Win[];
   scatter: { count: number; amount: number } | null;
   globalMultiplier: number;
@@ -109,6 +126,7 @@ export type BookEvent =
   | RevealEvent
   | LineWinsEvent
   | WayWinsEvent
+  | ClusterWinsEvent
   | ScatterWinEvent
   | FreeSpinTriggerEvent
   | FreeSpinResultEvent

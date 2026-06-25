@@ -292,8 +292,9 @@ export class ReelEngine {
     }
   }
 
-  /** Highlight wins: draw the payline for lines games, or pulse every matching
-   * symbol cell across the winning reels for ways games. */
+  /** Highlight wins: draw the payline for lines games, pulse the matching cells
+   * across the winning reels for ways games, or pulse the exact connected cluster
+   * cells for cluster games. */
   highlightWins(wins: Win[]): void {
     this.lineOverlay.clear();
     for (const win of wins) {
@@ -309,6 +310,12 @@ export class ReelEngine {
           if (cell) cell.container.scale.set(1.12);
         }
         this.lineOverlay.poly(points, false).stroke({ color, width: 5, alpha: 0.85 });
+      } else if ('cells' in win) {
+        // Cluster win: pulse exactly the connected cells the math reported.
+        for (const { reel, row } of win.cells) {
+          const cell = this.reels[reel]?.cells[row + 1];
+          if (cell) cell.container.scale.set(1.12);
+        }
       } else {
         // Ways win: pulse all matching (or wild) cells on the first `count` reels.
         for (let reel = 0; reel < win.count && reel < this.board.length; reel++) {

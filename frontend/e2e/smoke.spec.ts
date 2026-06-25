@@ -73,6 +73,21 @@ test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({
   await expect(spin).toBeEnabled({ timeout: 30_000 });
 });
 
+test('multi-game: mounts and plays the cluster game via ?game=stellarclusters', async ({ page }) => {
+  await page.goto('/?game=stellarclusters');
+  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
+
+  // The registry resolved the requested game and the switcher reflects it.
+  await expect(page.getByLabel('Switch game (demo)')).toHaveValue('stellarclusters');
+
+  // A round plays end-to-end (the mock emits clusterWins; the player handles them).
+  const spin = spinButton(page);
+  await expect(spin).toBeEnabled();
+  await spin.click();
+  await expect(spin).toBeDisabled();
+  await expect(spin).toBeEnabled({ timeout: 30_000 });
+});
+
 test('QA replay viewer: ?replay=base serves the committed corpus deterministically', async ({ page }) => {
   await page.goto('/?replay=base');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });

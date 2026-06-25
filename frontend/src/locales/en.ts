@@ -47,7 +47,7 @@ export const en = {
   'paytable.open': 'Paytable',
   'paytable.close': 'Close paytable',
   'paytable.title': 'Symbol Payouts',
-  'paytable.subtitle': 'Values shown are multiples of the total bet for a winning line.',
+  'paytable.subtitle': 'Values shown are multiples of the total bet for a winning combination.',
   'paytable.symbol': 'Symbol',
   'paytable.features': 'Features',
   'paytable.scrollRegion': 'Paytable details, scrollable',
