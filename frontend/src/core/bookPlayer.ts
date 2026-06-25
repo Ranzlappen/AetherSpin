@@ -258,6 +258,19 @@ export class BookPlayer {
         return runningWin;
       }
 
+      case 'clusterWins': {
+        if (event.wins.length > 0) {
+          bus.emit('wins:lines', { wins: event.wins, betPerLine });
+          runningWin += event.amount * bet;
+          totalWin.set(round2(runningWin));
+          const tier = classifyWin(event.amount);
+          bus.emit('celebrate', { tier, amount: event.amount * bet });
+          sound.play(tier === 'small' ? 'win' : 'bigWin');
+          await this.wait(this.timings.lineWins);
+        }
+        return runningWin;
+      }
+
       case 'scatterWin': {
         bus.emit('wins:scatter', { count: event.count, amount: event.amount });
         runningWin += event.amount * bet;

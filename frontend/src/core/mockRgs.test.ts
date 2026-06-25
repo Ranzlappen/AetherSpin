@@ -44,6 +44,21 @@ function validateEvent(e: BookEvent): void {
         expect(typeof w.amount).toBe('number');
       }
       break;
+    case 'clusterWins':
+      expect(typeof e.amount).toBe('number');
+      for (const w of e.wins) {
+        expect(typeof w.symbol).toBe('string');
+        expect(w.count).toBeGreaterThanOrEqual(3);
+        expect(Array.isArray(w.cells)).toBe(true);
+        expect(w.cells.length).toBe(w.count);
+        for (const c of w.cells) {
+          expect(typeof c.reel).toBe('number');
+          expect(typeof c.row).toBe('number');
+        }
+        expect(typeof w.wildMultiplier).toBe('number');
+        expect(typeof w.amount).toBe('number');
+      }
+      break;
     case 'scatterWin':
       expect(e.count).toBeGreaterThanOrEqual(3);
       expect(typeof e.amount).toBe('number');

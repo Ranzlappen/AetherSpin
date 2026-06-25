@@ -13,7 +13,15 @@
  *
  * No Pixi or Svelte imports.
  */
-import type { Book, BookEvent, Board, LineWin, WayWin, GameType } from '../../../shared/src/types/events';
+import type {
+  Book,
+  BookEvent,
+  Board,
+  LineWin,
+  WayWin,
+  ClusterWin,
+  GameType,
+} from '../../../shared/src/types/events';
 import {
   gameDefinition,
   NUM_REELS,
@@ -199,8 +207,15 @@ function round4(n: number): number {
   return Math.round(n * 10000) / 10000;
 }
 
+/** The active game's win mechanic. */
+const engineType = gameDefinition.engine.type;
 /** True when the active game uses the all-ways mechanic. */
-const isWaysGame = gameDefinition.engine.type === 'ways';
+const isWaysGame = engineType === 'ways';
+/** True when the active game uses the cluster-pays mechanic. */
+const isClusterGame = engineType === 'cluster';
+
+/** Any mechanic's win descriptor. */
+type MechWin = LineWin | WayWin | ClusterWin;
 
 /**
  * Evaluate all-ways wins (mirrors `simulator/mechanics.py::WaysMechanic`): a
@@ -239,6 +254,69 @@ function evaluateWays(board: Board, wildMultiplier: number, betScale: number): W
   return wins;
 }
 
+/**
+ * Evaluate cluster-pays wins (mirrors `simulator/mechanics.py::ClusterMechanic`):
+ * each orthogonally-connected group of one symbol (wilds substitute) of size >= 3
+ * pays `paytable[symbol][size]`, capped at the largest defined size.
+ */
+function evaluateClusters(board: Board, wildMultiplier: number, betScale: number): ClusterWin[] {
+  const wins: ClusterWin[] = [];
+  for (const sym of Object.keys(gameDefinition.paytable)) {
+    if (sym === scatterSymbolId) continue;
+    const sizes = Object.keys(gameDefinition.paytable[sym]).map(Number);
+    if (sizes.length === 0) continue;
+    const maxSize = Math.max(...sizes);
+    const seen = new Set<string>();
+    for (let r0 = 0; r0 < NUM_REELS; r0++) {
+      for (let c0 = 0; c0 < NUM_ROWS; c0++) {
+        if (seen.has(`${r0},${c0}`)) continue;
+        const cell0 = board[r0][c0];
+        if (cell0 !== sym && cell0 !== wildSymbolId) continue;
+        // Flood-fill the connected (sym-or-wild) component.
+        const comp: Array<{ reel: number; row: number }> = [];
+        const stack: Array<[number, number]> = [[r0, c0]];
+        while (stack.length) {
+          const [x, y] = stack.pop()!;
+          if (x < 0 || x >= NUM_REELS || y < 0 || y >= NUM_ROWS) continue;
+          if (seen.has(`${x},${y}`)) continue;
+          if (board[x][y] !== sym && board[x][y] !== wildSymbolId) continue;
+          seen.add(`${x},${y}`);
+          comp.push({ reel: x, row: y });
+          stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+        // An all-wild blob doesn't pay as every symbol — require a real one.
+        if (!comp.some((p) => board[p.reel][p.row] === sym)) continue;
+        const size = comp.length;
+        let paySize = 0;
+        for (let k = Math.min(size, maxSize); k >= 3; k--) {
+          if (getPayout(sym, k) > 0) {
+            paySize = k;
+            break;
+          }
+        }
+        if (!paySize) continue;
+        const amount = getPayout(sym, paySize) * wildMultiplier * betScale;
+        wins.push({ symbol: sym, count: size, wildMultiplier, amount: round4(amount), cells: comp });
+      }
+    }
+  }
+  return wins;
+}
+
+/** Evaluate the active mechanic's wins for a board. */
+function evaluateBoard(board: Board, wildMultiplier: number, betScale: number): MechWin[] {
+  if (isWaysGame) return evaluateWays(board, wildMultiplier, betScale);
+  if (isClusterGame) return evaluateClusters(board, wildMultiplier, betScale);
+  return evaluateLines(board, wildMultiplier, betScale);
+}
+
+/** The win-event `type` the active mechanic emits. */
+const winEventType: 'lineWins' | 'wayWins' | 'clusterWins' = isWaysGame
+  ? 'wayWins'
+  : isClusterGame
+    ? 'clusterWins'
+    : 'lineWins';
+
 /** Determine which middle-reel wilds expand (free spins, reels index 1-3). */
 function expandedReelsFor(board: Board): number[] {
   const out: number[] = [];
@@ -254,8 +332,9 @@ function expandedReelsFor(board: Board): number[] {
  */
 function generateBaseBook(id: number, rng: () => number, buyBonus: boolean): Book {
   const events: BookEvent[] = [];
-  // Ways games have no per-line division; the stake covers all ways.
-  const betScale = isWaysGame ? 1 : 1 / paylines.length;
+  // Only line games divide the stake across paylines; ways/cluster stakes cover
+  // the whole board (and have `paylines: []`, so guard against /0).
+  const betScale = engineType === 'lines' ? 1 / paylines.length : 1;
 
   // Decide scatter count. Buy-bonus forces a trigger.
   let scatters: number;
@@ -270,17 +349,11 @@ function generateBaseBook(id: number, rng: () => number, buyBonus: boolean): Boo
   const reelStops = board.map(() => Math.floor(rng() * 64));
   events.push({ type: 'reveal', gameType: 'base', board, reelStops });
 
-  const baseWins: Array<LineWin | WayWin> = isWaysGame
-    ? evaluateWays(board, 1, betScale)
-    : evaluateLines(board, 1, betScale);
+  const baseWins: MechWin[] = evaluateBoard(board, 1, betScale);
   let runningTotal = 0;
   if (baseWins.length > 0) {
     const amount = round4(baseWins.reduce((a, w) => a + w.amount, 0));
-    if (isWaysGame) {
-      events.push({ type: 'wayWins', gameType: 'base', wins: baseWins as WayWin[], amount });
-    } else {
-      events.push({ type: 'lineWins', gameType: 'base', wins: baseWins as LineWin[], amount });
-    }
+    events.push({ type: winEventType, gameType: 'base', wins: baseWins, amount } as BookEvent);
     runningTotal += amount;
   }
 
@@ -373,9 +446,7 @@ function generateFreeSpins(
 
     // Free-spin wild multiplier (weighted), scaled down so RTP stays sane.
     const wildMult = expandedReels.length > 0 ? pickWildMultiplier(rng) : 1;
-    const wins: Array<LineWin | WayWin> = isWaysGame
-      ? evaluateWays(board, wildMult, betScale * winScale)
-      : evaluateLines(board, wildMult, betScale * winScale);
+    const wins: MechWin[] = evaluateBoard(board, wildMult, betScale * winScale);
     if (wins.length > 0) {
       const amount = round4(wins.reduce((a, w) => a + w.amount, 0) * globalMultiplier);
       featureTotal += amount;

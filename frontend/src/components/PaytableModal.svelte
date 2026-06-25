@@ -23,7 +23,16 @@
   }
 
   const paySymbols = gameDefinition.symbols.filter((s) => gameDefinition.paytable[s.id] !== undefined);
-  const counts = ['3', '4', '5'];
+  const mechanic = gameDefinition.engine.type;
+  // Column buckets are the union of payout sizes across the paytable, sorted
+  // ascending — `3–5` for line/ways games, the full group-size range (e.g. `3–8`)
+  // for cluster games — so every paying size is shown rather than a hard-coded set.
+  const counts = Array.from(new Set(paySymbols.flatMap((s) => Object.keys(gameDefinition.paytable[s.id]))))
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map(String);
+  // Lines/ways pay N-of-a-kind on a run; cluster pays a connected group of N.
+  const countHeader = (c: string): string => (mechanic === 'cluster' ? c : `${c} of a kind`);
   const scatter = gameDefinition.scatter;
   const features = gameDefinition.features;
 
@@ -57,9 +66,9 @@
         <section>
           <h3>{$t('paytable.title')}</h3>
           <p class="sub">{$t('paytable.subtitle')}</p>
-          <div class="pay-grid">
+          <div class="pay-grid" style:grid-template-columns={`2fr ${'1fr '.repeat(counts.length)}`}>
             <div class="pay-head">{$t('paytable.symbol')}</div>
-            {#each counts as c (c)}<div class="pay-head">{c} of a kind</div>{/each}
+            {#each counts as c (c)}<div class="pay-head">{countHeader(c)}</div>{/each}
             {#each paySymbols as sym (sym.id)}
               <div class="sym">
                 <span class="chip" style:background={getSymbolColor(sym.id)}></span>
@@ -119,23 +128,25 @@
           </ul>
         </section>
 
-        <section>
-          <h3>Paylines ({paylines.length})</h3>
-          <div class="lines">
-            {#each paylines as line, i (i)}
-              <div class="line-card">
-                <span class="line-no">#{i + 1}</span>
-                <div class="mini-grid" style:grid-template-columns={`repeat(${NUM_REELS}, 1fr)`}>
-                  {#each lineCells(line) as rowCells, r (r)}
-                    {#each rowCells as on, c (c)}
-                      <span class="dot" class:on></span>
+        {#if paylines.length > 0}
+          <section>
+            <h3>Paylines ({paylines.length})</h3>
+            <div class="lines">
+              {#each paylines as line, i (i)}
+                <div class="line-card">
+                  <span class="line-no">#{i + 1}</span>
+                  <div class="mini-grid" style:grid-template-columns={`repeat(${NUM_REELS}, 1fr)`}>
+                    {#each lineCells(line) as rowCells, r (r)}
+                      {#each rowCells as on, c (c)}
+                        <span class="dot" class:on></span>
+                      {/each}
                     {/each}
-                  {/each}
+                  </div>
                 </div>
-              </div>
-            {/each}
-          </div>
-        </section>
+              {/each}
+            </div>
+          </section>
+        {/if}
 
         <p class="rtp">
           Theoretical RTP: {(gameDefinition.engine.rtpTarget * 100).toFixed(2)}% · Max win: {gameDefinition.engine.wincapMultiplier.toLocaleString()}×
@@ -218,8 +229,8 @@
     margin: 0 0 0.6rem;
   }
   .pay-grid {
+    /* grid-template-columns is set inline from the paytable's size buckets. */
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 0.3rem 0.6rem;
     align-items: center;
   }

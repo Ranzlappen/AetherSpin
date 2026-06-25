@@ -19,8 +19,8 @@ describe('gameConfig registry', () => {
   it('bundles multiple games and hides scaffolds', () => {
     expect(availableGames).toContain('novaforged');
     expect(availableGames).toContain('cosmicways');
+    expect(availableGames).toContain('stellarclusters'); // cluster-pays, now client-renderable
     expect(availableGames).not.toContain('template'); // scaffold is hidden
-    expect(availableGames).not.toContain('stellarclusters'); // math-only (no client cluster render yet)
   });
 
   it('defaults the active game to novaforged (no ?game= in the test env)', () => {
