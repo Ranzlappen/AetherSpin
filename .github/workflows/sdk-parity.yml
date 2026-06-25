@@ -1,0 +1,44 @@
+name: SDK Parity
+
+# Compares the certified math-sdk output to the standalone engine (ADR 0005).
+# Not a PR gate: the math-sdk isn't vendored and needs network + Rust, so this
+# runs on demand and nightly. check-sdk-parity.sh is fail-soft — it SKIPs where
+# the SDK can't be fetched and only fails on a real, measured mismatch.
+on:
+  workflow_dispatch:
+    inputs:
+      game:
+        description: Game id to check (blank = all)
+        required: false
+        default: ''
+  schedule:
+    - cron: '0 5 * * *' # nightly, 05:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    name: SDK ↔ standalone parity
+    runs-on: ubuntu-latest
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Compare SDK output to the standalone (fail-soft on SDK unavailability)
+        run: |
+          set -e
+          if [ -n "${{ inputs.game }}" ]; then
+            games="${{ inputs.game }}"
+          else
+            games="$(ls shared/games | tr '\n' ' ')"
+          fi
+          for g in $games; do
+            [ -f "shared/games/$g/game-definition.json" ] || continue
+            echo "::group::sdk-parity $g"
+            bash scripts/check-sdk-parity.sh "$g"
+            echo "::endgroup::"
+          done

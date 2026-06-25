@@ -30,6 +30,11 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
       byte-identical library (see `docs/rng-provenance.md`)
 - [ ] **Certified** library produced by the official SDK (millions of spins + Rust optimizer) for
       the final submission — the standalone library is for dev/staging
+- [ ] **SDK ↔ standalone parity verified** in an SDK-capable environment:
+      `bash scripts/check-sdk-parity.sh <game>` is green (not SKIP). This proves the
+      certified books match what was validated standalone. See `docs/adr/0005` —
+      note the known NovaForged multiplier-wild divergence that must be reconciled
+      there first
 
 ---
 
