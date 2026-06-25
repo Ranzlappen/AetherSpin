@@ -7,6 +7,15 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.3.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.2.0...v1.3.0) (2026-06-25)
+
+
+### Features
+
+* **engine:** add cluster mechanic and a third game (Stellar Clusters) ([#39](https://github.com/Ranzlappen/AetherSpin/issues/39)) ([6103003](https://github.com/Ranzlappen/AetherSpin/commit/610300375db3ee604a660146c9cd584daeb0c086))
+* **frontend:** add automated accessibility and boot-perf audit to e2e ([#40](https://github.com/Ranzlappen/AetherSpin/issues/40)) ([14c383e](https://github.com/Ranzlappen/AetherSpin/commit/14c383e26f4e38c71a35592e5cc6b8e9c3e70e50))
+* **math:** SDK↔standalone parity gate + document the known divergence ([#37](https://github.com/Ranzlappen/AetherSpin/issues/37)) ([d9e0893](https://github.com/Ranzlappen/AetherSpin/commit/d9e0893964bb4697821d7ef77546d808cff4e88e))
+
 ## [1.2.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.1.0...v1.2.0) (2026-06-25)
 
 
