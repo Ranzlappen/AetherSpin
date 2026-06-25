@@ -13,6 +13,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
+  // Each test boots a full PixiJS/WebGL app. On CI there is no GPU, so the
+  // software renderer (SwiftShader) is CPU-bound; running too many in parallel
+  // starves the page and causes spurious 30s timeouts (incl. axe's in-page DOM
+  // walk). Cap workers on CI to keep render contention sane — wall time stays
+  // well under the 20-minute job budget.
+  workers: isCI ? 2 : undefined,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
