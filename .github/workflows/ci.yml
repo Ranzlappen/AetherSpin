@@ -64,6 +64,11 @@ jobs:
           git diff --exit-code shared/fixtures/books/ \
             || { echo "::error::golden-book corpus is out of sync with the engine. Run 'PYTHONHASHSEED=0 python3 math/scripts/gen_golden_corpus.py' and commit."; exit 1; }
 
+      - name: Compile official-SDK game modules (syntax gate, every game)
+        # The certified math-sdk isn't vendored in CI, but the per-game modules
+        # must stay syntactically valid so they don't rot between SDK runs.
+        run: python -m py_compile math/games/*/*.py
+
       - name: Packaging smoke — submission manifest + checksums + SBOM
         run: |
           bash scripts/package-for-stake.sh novaforged --math-only
