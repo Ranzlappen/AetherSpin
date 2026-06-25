@@ -48,7 +48,10 @@
         <button class="close" aria-label={$t('common.close')} on:click={close}>✕</button>
       </header>
 
-      <div class="content">
+      <!-- The content scrolls; expose it as a focusable region so keyboard-only
+           users can scroll it (WCAG 2.1.1 — scrollable-region-focusable). -->
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+      <div class="content" role="group" aria-label={$t('paytable.scrollRegion')} tabindex="0">
         <p class="desc">{gameDefinition.description}</p>
 
         <section>
@@ -192,6 +195,10 @@
   .content {
     overflow-y: auto;
     padding: 1.2rem;
+  }
+  .content:focus-visible {
+    outline: 2px solid var(--neon-cyan);
+    outline-offset: -2px;
   }
   .desc {
     color: var(--text-dim);
