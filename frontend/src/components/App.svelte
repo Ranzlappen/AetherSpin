@@ -8,6 +8,7 @@
   import { Stage } from '../scenes/Stage';
   import { parseRgsParams, RgsClient, RgsError, type RgsTransport } from '../core/rgsClient';
   import { MockRgsClient } from '../core/mockRgs';
+  import { parseReplayMode, loadReplayBooks, makeReplayProvider, replayStatus } from '../core/replayRgs';
   import { BookPlayer } from '../core/bookPlayer';
   import {
     balance,
@@ -80,7 +81,24 @@
     // Follow OS reduce-motion changes mid-session.
     reducedMotionOff = prefersReducedMotion.subscribe((v) => stage?.setReducedMotion(v));
 
-    transport = usingMock ? new MockRgsClient({ params, startingBalance: 1000 }) : new RgsClient({ params });
+    if (usingMock) {
+      // QA replay viewer: ?replay=base|bonus serves the committed golden-book
+      // corpus deterministically (one book per spin) for the active game.
+      const replayMode = parseReplayMode(new URLSearchParams(window.location.search).get('replay'));
+      if (replayMode) {
+        const books = await loadReplayBooks(activeGameId, replayMode);
+        if (books.length > 0) {
+          transport = new MockRgsClient({
+            params,
+            startingBalance: 1000,
+            bookProvider: makeReplayProvider(books, replayMode),
+          });
+        }
+      }
+      transport ??= new MockRgsClient({ params, startingBalance: 1000 });
+    } else {
+      transport = new RgsClient({ params });
+    }
     player = new BookPlayer({ transport });
 
     if (params.currency) currency.set(params.currency);
@@ -284,6 +302,12 @@
         {$t('hud.demoBadge', { fps: fps.toFixed(0) })}
       </div>
     {/if}
+
+    {#if $replayStatus}
+      <div class="replay-badge" role="status">
+        REPLAY · {$replayStatus.mode} · {$replayStatus.index}/{$replayStatus.total}
+      </div>
+    {/if}
   {/if}
 
   {#if loading}
@@ -406,6 +430,22 @@
     color: var(--text-dim);
     opacity: 0.6;
     pointer-events: none;
+  }
+  .replay-badge {
+    position: absolute;
+    top: 4.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--neon-gold);
+    background: rgba(12, 6, 34, 0.8);
+    color: var(--neon-gold);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+    z-index: 80;
   }
   .toast {
     position: absolute;
