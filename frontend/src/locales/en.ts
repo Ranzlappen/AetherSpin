@@ -50,6 +50,7 @@ export const en = {
   'paytable.subtitle': 'Values shown are multiples of the total bet for a winning line.',
   'paytable.symbol': 'Symbol',
   'paytable.features': 'Features',
+  'paytable.scrollRegion': 'Paytable details, scrollable',
 
   'common.dismiss': 'Dismiss',
   'common.close': 'Close',

@@ -48,6 +48,7 @@ export const de: Partial<Translations> = {
   'paytable.subtitle': 'Werte sind Vielfache des Gesamteinsatzes für eine Gewinnlinie.',
   'paytable.symbol': 'Symbol',
   'paytable.features': 'Funktionen',
+  'paytable.scrollRegion': 'Gewinntabellen-Details, scrollbar',
 
   'common.dismiss': 'Schließen',
   'common.close': 'Schließen',

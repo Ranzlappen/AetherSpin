@@ -25,6 +25,13 @@ describe('i18n', () => {
     expect(get(localeTag)).toBe('de-DE');
   });
 
+  it('setLocale reflects the resolved locale onto <html lang>', () => {
+    setLocale('de');
+    expect(document.documentElement.lang).toBe('de-DE');
+    setLocale('fr'); // unsupported → English
+    expect(document.documentElement.lang).toBe('en-US');
+  });
+
   it('translates using the active locale', () => {
     setLocale('de');
     expect(get(t)('hud.balance')).toBe('Guthaben');
