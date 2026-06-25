@@ -8,6 +8,7 @@ import { Background } from './Background';
 import { ReelEngine } from './ReelEngine';
 import { Particles } from './Particles';
 import { bus, type WinTier } from '../core/eventBus';
+import { track } from '../core/telemetry';
 import { TARGET_FPS } from '../config/gameConfig';
 
 /** Callback invoked roughly once per second with the measured FPS. */
@@ -21,6 +22,10 @@ export interface StageInitOptions {
   onFps?: FpsCallback;
   /** Suppress non-essential celebration motion (OS "reduce motion"). */
   reducedMotion?: boolean;
+  /** Called when the WebGL context is lost (GPU reset / tab backgrounding). */
+  onContextLost?: () => void;
+  /** Called when the WebGL context is restored. */
+  onContextRestored?: () => void;
 }
 
 /** The top-level Pixi scene graph and lifecycle owner. */
@@ -36,6 +41,9 @@ export class Stage {
   private resizeObserver: ResizeObserver | null = null;
   private celebrateOff: (() => void) | null = null;
   private reducedMotion = false;
+  private canvasEl: HTMLCanvasElement | null = null;
+  private onContextLost?: (e: Event) => void;
+  private onContextRestored?: () => void;
 
   /** Design resolution the scene is laid out against. */
   static readonly DESIGN_WIDTH = 1280;
@@ -57,6 +65,22 @@ export class Stage {
     });
     this.app = app;
     options.container.appendChild(app.canvas);
+
+    // Survive a lost GPU context (driver reset, tab backgrounding) instead of
+    // freezing silently: preventDefault lets the browser restore it, and we
+    // surface/clear a notice + telemetry around the gap.
+    this.canvasEl = app.canvas as HTMLCanvasElement;
+    this.onContextLost = (e: Event): void => {
+      e.preventDefault();
+      track({ type: 'render:contextlost' });
+      options.onContextLost?.();
+    };
+    this.onContextRestored = (): void => {
+      track({ type: 'render:restored' });
+      options.onContextRestored?.();
+    };
+    this.canvasEl.addEventListener('webglcontextlost', this.onContextLost, false);
+    this.canvasEl.addEventListener('webglcontextrestored', this.onContextRestored, false);
 
     this.background = new Background();
     this.reels = new ReelEngine(app.renderer);
@@ -159,6 +183,10 @@ export class Stage {
   destroy(): void {
     this.celebrateOff?.();
     this.resizeObserver?.disconnect();
+    if (this.canvasEl && this.onContextLost)
+      this.canvasEl.removeEventListener('webglcontextlost', this.onContextLost);
+    if (this.canvasEl && this.onContextRestored)
+      this.canvasEl.removeEventListener('webglcontextrestored', this.onContextRestored);
     this.app?.ticker.remove(this.update, this);
     this.background?.destroy();
     this.reels?.destroy();

@@ -26,6 +26,7 @@
   import { t, tn, setLocale, localeTag } from '../core/i18n';
   import { announce, announcement, prefersReducedMotion } from '../core/a11y';
   import { startSession, stopSession } from '../core/session';
+  import { track } from '../core/telemetry';
 
   import LoadingScreen from './LoadingScreen.svelte';
   import BalanceDisplay from './BalanceDisplay.svelte';
@@ -53,6 +54,7 @@
   let autoplayToken = 0;
 
   onMount(async () => {
+    const bootStart = performance.now();
     sound.load();
     sound.setMuted(false);
 
@@ -70,6 +72,8 @@
           container: canvasHost,
           onFps: (v) => (fps = v),
           reducedMotion: get(prefersReducedMotion),
+          onContextLost: () => errorMessage.set(tn('error.renderLost')),
+          onContextRestored: () => errorMessage.set(null),
         }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('renderer init timed out')), 12000)
@@ -104,6 +108,12 @@
     if (params.currency) currency.set(params.currency);
 
     await authenticate();
+    track({
+      type: 'app:loaded',
+      ms: Math.round(performance.now() - bootStart),
+      game: activeGameId,
+      mock: usingMock,
+    });
   });
 
   onDestroy(() => {
@@ -142,10 +152,20 @@
   /** Run a single round in the given mode. */
   async function spin(mode: string): Promise<void> {
     if (!player || get(isSpinning)) return;
+    track({ type: 'spin:start', mode });
+    const started = performance.now();
     announce(tn('a11y.spinStart'));
     try {
       await player.play(getCurrentBet(), mode);
       announceOutcome();
+      const r = get(lastResult);
+      track({
+        type: 'spin:end',
+        ms: Math.round(performance.now() - started),
+        winMultiplier: r?.payoutMultiplier ?? 0,
+        tier: r?.wincap ? 'wincap' : (r?.win ?? 0) > 0 ? 'win' : 'none',
+        feature: r?.triggeredFeature ?? false,
+      });
     } catch (err) {
       handleSpinError(err);
     }
@@ -165,6 +185,7 @@
   /** Convert spin errors into UI toasts and stop autoplay. */
   function handleSpinError(err: unknown): void {
     stopAutoplay();
+    if (err instanceof RgsError) track({ type: 'rgs:error', code: err.message });
     const message =
       err instanceof RgsError ? err.message : ((err as Error)?.message ?? tn('error.spinFailed'));
     errorMessage.set(message);

@@ -14,6 +14,7 @@ export const de: Partial<Translations> = {
   'error.connect': 'Verbindung zum Spielserver fehlgeschlagen.',
   'error.spinFailed': 'Spin fehlgeschlagen.',
   'error.autoplayInsufficient': 'Autoplay gestoppt: Guthaben zu niedrig.',
+  'error.renderLost': 'Grafik pausiert — wird wiederhergestellt…',
 
   'hud.balance': 'Guthaben',
   'hud.bet': 'Einsatz',
