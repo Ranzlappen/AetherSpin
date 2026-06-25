@@ -182,5 +182,40 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
   downloads, so it can't be verified green here; should be added where browsers
   install) and all of Phase C.
 
+## Status — post-1.0 delivery (v1.1.0 → v1.2.0)
+
+**v1.1.0** (PRs #21–#27) closed the remaining headline items:
+
+- **Quick wins** — A11 RNG provenance, `.devcontainer`, and the **Playwright E2E**
+  suite (B3, previously deferred) — which caught and fixed two real production
+  crashes (the Svelte-5 `mount()` `effect_orphan` and a PaytableModal duplicate-key).
+- **Certification readiness** — `scripts/preflight.sh` (structural bet #3),
+  `submission-manifest.json` + `SHA256SUMS` + CycloneDX SBOM (C9), and the Python
+  golden-book guard (structural bet #2, math half).
+- **Operator compliance** — Responsible Gaming reality-check (C1), i18n (C2),
+  accessibility (C3).
+- **Reusable studio** — the engine mechanic-plugin seam (C5 / structural bet #4),
+  a second game type **Cosmic Ways** (`ways`), a multi-game frontend registry
+  (C6), and contract-first codegen of the TS types from the JSON Schema
+  (structural bet #1).
+
+**v1.2.0** (PRs #29–#33) closes the rest:
+
+- **Math↔client parity** — the missing half of structural bet #2: a committed
+  seeded golden-book corpus (`shared/fixtures/books`) replayed and reconciled by
+  **both** Python (`test_parity.py`) and the frontend (`parity.test.ts`), with a
+  CI drift guard. Plus the **QA replay viewer** (`?replay=`, structural bet #5).
+- **Cosmic Ways is certification-ready** — a full official-SDK module
+  (`math/games/cosmicways/`), its event factories contract-tested, with a
+  `py_compile` CI syntax gate for every game.
+- **Production hardening** — a Svelte error boundary, PII-free opt-in telemetry
+  (C8), WebGL context-loss recovery, and a CI **bundle-size budget** (C4).
+- **Reusable scaffolder + assets** — `new-game.sh --mechanic lines|ways` with a CI
+  reusability smoke (finishes C5), and the C7 asset-manifest + cache-busting seam.
+
+Still open: the certified **SDK runtime** is exercised via `setup-math.sh` (not
+vendored in CI); the **C7 asset pipeline** (atlases/audio sprites) awaits real art
+since the renderer is fully procedural.
+
 The seven raw source audits (`Evaluation1–7.MD`) are retained only on the archived
 branch (`claude/stake-engine-monorepo-setup-2b2chu` / `main`).
