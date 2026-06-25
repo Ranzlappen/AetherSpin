@@ -3,7 +3,7 @@
  */
 import './styles/global.css';
 import { mount } from 'svelte';
-import App from './components/App.svelte';
+import Root from './components/Root.svelte';
 
 const target = document.getElementById('app');
 if (!target) {
@@ -13,6 +13,8 @@ if (!target) {
 // Svelte 5 mount API. The legacy `new App({ target })` class API leaves the
 // root reactive effects orphaned in a production build (`effect_orphan`), which
 // crashes the bundle on load — `mount()` establishes the proper effect root.
-const app = mount(App, { target });
+// Root wraps App in an error boundary so a crash degrades to a recoverable
+// fallback instead of a blank screen.
+const app = mount(Root, { target });
 
 export default app;

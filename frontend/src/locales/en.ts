@@ -14,6 +14,7 @@ export const en = {
   'error.connect': 'Failed to connect to the game server.',
   'error.spinFailed': 'Spin failed.',
   'error.autoplayInsufficient': 'Autoplay stopped: insufficient balance.',
+  'error.renderLost': 'Graphics paused — restoring…',
 
   'hud.balance': 'Balance',
   'hud.bet': 'Bet',
