@@ -14,8 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Maintains a release PR that rolls up Conventional Commits into the
-      # CHANGELOG and, when merged, tags a release. "simple" tracks the repo as a
-      # single versioned unit (per-game math versions live in their definitions).
+      # CHANGELOG and, when merged, tags a release. Manifest-driven (see
+      # release-please-config.json + .release-please-manifest.json): "simple"
+      # tracks the repo as one versioned unit and, via extra-files, bumps the
+      # root + frontend package.json in lock-step.
+      #
+      # NOTE: per-game math versions in shared/games/*/game-definition.json are
+      # deliberately NOT bumped here — a game's version tracks its own math/rules
+      # and is bumped by hand when that game changes, independent of repo releases.
       - uses: googleapis/release-please-action@v4
-        with:
-          release-type: simple
