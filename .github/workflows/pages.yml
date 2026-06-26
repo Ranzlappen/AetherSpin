@@ -1,0 +1,81 @@
+name: Deploy demo to GitHub Pages
+
+# Publishes the playable web client to GitHub Pages as a public demo access
+# point. The frontend auto-runs on its in-browser mock RGS when no `rgsUrl`/
+# `sessionID` query params are present (see frontend/src/core/rgsClient.ts), so
+# the deployed static bundle is fully self-contained — no backend, no secrets.
+#
+# The build is identical to CI's frontend build; Vite's `base: './'` (kept for
+# the Stake CDN iframe) also makes the bundle work unmodified under the Pages
+# project subpath (https://<owner>.github.io/<repo>/). The app uses query-param
+# navigation (?game=, ?replay=), not path routing, so there are no deep-link
+# 404s.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'shared/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# Least-privilege token scoped to what Pages deployment needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one in-flight Pages deployment; let a running one finish rather
+# than cancelling (a half-published site is worse than a slightly stale one).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build static bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.5.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the web client
+        run: pnpm --filter @aetherspin/frontend build
+
+      - name: Configure Pages
+        # enablement provisions Pages (source = GitHub Actions) on first run so
+        # no manual Settings step is needed; harmless on subsequent runs.
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
