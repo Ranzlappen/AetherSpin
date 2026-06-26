@@ -1,15 +1,16 @@
-name: Deploy demo to GitHub Pages
+name: Deploy to GitHub Pages
 
-# Publishes the playable web client to GitHub Pages as a public demo access
-# point. The frontend auto-runs on its in-browser mock RGS when no `rgsUrl`/
-# `sessionID` query params are present (see frontend/src/core/rgsClient.ts), so
-# the deployed static bundle is fully self-contained — no backend, no secrets.
+# Publishes a single combined GitHub Pages site:
+#   /            → the playable web client (public demo access point)
+#   /storybook/  → the component library (Storybook)
 #
-# The build is identical to CI's frontend build; Vite's `base: './'` (kept for
-# the Stake CDN iframe) also makes the bundle work unmodified under the Pages
-# project subpath (https://<owner>.github.io/<repo>/). The app uses query-param
-# navigation (?game=, ?replay=), not path routing, so there are no deep-link
-# 404s.
+# A repository has only one Pages site, so the game demo and Storybook are built
+# and deployed together here rather than from competing workflows. The frontend
+# auto-runs on its in-browser mock RGS when no `rgsUrl`/`sessionID` query params
+# are present (see frontend/src/core/rgsClient.ts), so the demo is fully
+# self-contained — no backend, no secrets. Both builds emit relative asset paths
+# (Vite `base: './'` for the game; Storybook 8 relative output), so each works
+# unmodified under the Pages project subpath and under /storybook/.
 
 on:
   push:
@@ -26,15 +27,15 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one in-flight Pages deployment; let a running one finish rather
-# than cancelling (a half-published site is worse than a slightly stale one).
+# Single in-flight Pages deployment; let a running one finish rather than
+# cancelling (a half-published site is worse than a slightly stale one).
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
   build:
-    name: Build static bundle
+    name: Build combined site (demo + Storybook)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,8 +54,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build the web client
+      - name: Build the web client (demo → site root)
         run: pnpm --filter @aetherspin/frontend build
+
+      - name: Build Storybook (→ /storybook)
+        run: pnpm --filter @aetherspin/frontend build-storybook
+
+      - name: Assemble combined site
+        run: |
+          rm -rf site
+          mkdir -p site/storybook
+          cp -r frontend/dist/. site/
+          cp -r frontend/storybook-static/. site/storybook/
 
       - name: Configure Pages
         # enablement provisions Pages (source = GitHub Actions) on first run so
@@ -66,7 +77,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/dist
+          path: site
 
   deploy:
     name: Deploy to GitHub Pages
