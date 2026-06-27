@@ -19,6 +19,11 @@ export default defineConfig({
   // walk). Cap workers on CI to keep render contention sane — wall time stays
   // well under the 20-minute job budget.
   workers: isCI ? 2 : undefined,
+  // A spin drives a full RGS round → reveal → settle through the software
+  // renderer; on a contended CI runner that occasionally brushes the default
+  // 30s per-test cap (e.g. the replay viewer waiting on the round badge). Double
+  // it on CI so a slow-but-correct spin isn't reported as a failure.
+  timeout: isCI ? 60_000 : 30_000,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
