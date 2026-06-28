@@ -7,6 +7,13 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.7.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.6.0...v1.7.0) (2026-06-28)
+
+
+### Features
+
+* **frontend:** add synthesized placeholder SFX ([#54](https://github.com/Ranzlappen/AetherSpin/issues/54)) ([15acbae](https://github.com/Ranzlappen/AetherSpin/commit/15acbaec598a826e2edec80619e6aa30332755e4))
+
 ## [1.6.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.5.0...v1.6.0) (2026-06-28)
 
 
