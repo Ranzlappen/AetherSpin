@@ -28,3 +28,19 @@ test('asset pipeline: every placeholder symbol loads in the browser', async ({ p
   // No symbol failed to fetch/decode in Chromium.
   expect(logs.filter((m) => m.includes('[assets] failed to load'))).toEqual([]);
 });
+
+/**
+ * Audio delivery check. Playback needs a real audio device + a user gesture
+ * (autoplay policy), which CI lacks — but we can still prove the placeholder
+ * clips actually ship and are served at the URLs `sound.ts` requests.
+ */
+const CLIPS = ['spin', 'reelStop', 'win', 'bigWin', 'scatter', 'freeSpinStart', 'buttonClick'];
+test('asset pipeline: every placeholder audio clip is served', async ({ page }) => {
+  for (const name of CLIPS) {
+    const res = await page.request.get(`/audio/${name}.wav`);
+    expect(res.status(), `GET /audio/${name}.wav`).toBe(200);
+    const body = await res.body();
+    expect(body.length, `${name}.wav is empty`).toBeGreaterThan(44); // > WAV header
+    expect(body.subarray(0, 4).toString('latin1')).toBe('RIFF'); // valid WAV magic
+  }
+});

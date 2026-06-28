@@ -1,31 +1,34 @@
 /**
  * Howler-backed sound manager with a named registry. Audio files are optional:
  * if a source is missing or fails to decode the manager logs and continues, so
- * the game never crashes in environments without assets (the default dev state).
+ * the game never crashes in environments without assets.
  *
- * To enable real audio, drop files into `src/assets/audio/` and register their
- * URLs in {@link SOUND_SOURCES}. No Pixi or Svelte imports.
+ * The SFX wired below are **placeholder** synthesized clips
+ * (`scripts/gen-placeholder-audio.mjs` → `public/audio/*.wav`); a designer's
+ * final audio is a pure file replacement under `public/audio/`. URLs resolve
+ * through {@link assetUrl} so the same registry works bundle-relative (dev/CI)
+ * or from a CDN (`VITE_ASSET_BASE`). No Pixi or Svelte imports.
  */
 import { Howl, Howler } from 'howler';
+import { assetUrl } from '../config/assets';
 
 /** Named sounds the game can request. */
 export type SoundName = 'spin' | 'reelStop' | 'win' | 'bigWin' | 'scatter' | 'freeSpinStart' | 'buttonClick';
 
 /**
- * Optional sources per sound. Empty arrays mean "no asset yet" — the manager
- * silently no-ops those names. Replace with real URLs (local or CDN) to enable.
- *
- * @example
- * SOUND_SOURCES.spin = [`${ASSET_BASE}/audio/spin.webm`, `${ASSET_BASE}/audio/spin.mp3`];
+ * Sources per sound (resolved via {@link assetUrl}). An empty array means "no
+ * asset" — the manager silently no-ops that name. The
+ * `every referenced audio file exists` guard in `sound.test.ts` fails CI on a
+ * dangling reference.
  */
 export const SOUND_SOURCES: Record<SoundName, string[]> = {
-  spin: [],
-  reelStop: [],
-  win: [],
-  bigWin: [],
-  scatter: [],
-  freeSpinStart: [],
-  buttonClick: [],
+  spin: [assetUrl('audio/spin.wav')],
+  reelStop: [assetUrl('audio/reelStop.wav')],
+  win: [assetUrl('audio/win.wav')],
+  bigWin: [assetUrl('audio/bigWin.wav')],
+  scatter: [assetUrl('audio/scatter.wav')],
+  freeSpinStart: [assetUrl('audio/freeSpinStart.wav')],
+  buttonClick: [assetUrl('audio/buttonClick.wav')],
 };
 
 /** Manages loading, muting and playback of the named sound registry. */
