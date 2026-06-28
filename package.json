@@ -1,6 +1,6 @@
 {
   "name": "aetherspin",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "AetherSpin — a production-grade Stake Engine game studio monorepo. Reusable math + web engine scaffold plus the flagship NovaForged slot.",
   "license": "MIT",
