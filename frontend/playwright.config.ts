@@ -32,6 +32,10 @@ export default defineConfig({
     // Chromium's software renderer (SwiftShader) — otherwise WebGL init can hang.
     launchOptions: {
       args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--use-gl=angle'],
+      // Escape hatch for sandboxes whose pre-installed Chromium doesn't match the
+      // pinned Playwright build: set PW_CHROMIUM to that binary. Unset in CI,
+      // which installs the matching browser via `playwright install`.
+      executablePath: process.env.PW_CHROMIUM || undefined,
     },
   },
   projects: [

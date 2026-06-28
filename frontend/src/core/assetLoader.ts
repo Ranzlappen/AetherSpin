@@ -92,7 +92,13 @@ export const assetRegistry = new AssetRegistry();
 /**
  * Boot-phase convenience: load the configured manifest into the singleton.
  * A no-op (instant) when the manifest is empty, so it's always safe to await.
+ * Emits a single `[assets] ready: <loaded>/<total>` marker (when anything is
+ * declared) — the E2E asset-load check asserts on it in a real browser.
  */
-export function preloadAssets(options: PreloadOptions = {}): Promise<string[]> {
-  return assetRegistry.preload(options);
+export async function preloadAssets(options: PreloadOptions = {}): Promise<string[]> {
+  const manifest = options.manifest ?? ASSET_MANIFEST;
+  const total = manifest.flatMap((g) => Object.values(g.assets)).length;
+  const loaded = await assetRegistry.preload(options);
+  if (total > 0) console.info(`[assets] ready: ${loaded.length}/${total} loaded`);
+  return loaded;
 }
