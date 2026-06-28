@@ -37,16 +37,20 @@ skip() {
 echo "==> sdk-parity[$GAME]: generating standalone reference ($SIMS sims)…"
 python3 math/scripts/generate_books.py --game "$GAME" --sims "$SIMS" >/dev/null 2>&1 \
   || skip "standalone generation failed (unexpected — this should always work)"
-STD_RTP="$(python3 - "$GAME" <<'PY'
+read_std_rtp() {
+  python3 - "$GAME" "$1" <<'PY'
 import json, sys
 cfg = json.load(open(f"math/library/{sys.argv[1]}/configs/config.json"))
 modes = cfg.get("betModes", [])
-base = next((m for m in modes if m.get("name") == "base"), modes[0] if modes else {})
-print(base.get("measuredRtp", base.get("rtp", "")))
+want = sys.argv[2]
+m = next((m for m in modes if m.get("name") == want), {})
+print(m.get("measuredRtp", m.get("rtp", "")))
 PY
-)"
-[ -n "$STD_RTP" ] || skip "could not read standalone RTP"
-echo "    standalone base RTP: $STD_RTP"
+}
+STD_RTP="$(read_std_rtp base)"
+STD_BONUS_RTP="$(read_std_rtp bonus)"
+[ -n "$STD_RTP" ] || skip "could not read standalone base RTP"
+echo "    standalone base RTP: $STD_RTP   bonus RTP: ${STD_BONUS_RTP:-n/a}"
 
 # ---------------------------------------------------------------------------
 # 2. Ensure the math-sdk is present and wired (fail-soft clone).
@@ -127,7 +131,74 @@ print(f"    SDK base RTP: {sdk_rtp:.4f}  (standalone {std_rtp:.4f}, |Δ|={delta:
 if delta > tol:
     print(f"FAIL: SDK↔standalone RTP mismatch > {tol}. Likely the known multiplier-wild divergence (docs/adr/0005).")
     sys.exit(1)
-print("PASS: SDK output matches the standalone within tolerance.")
+print("PASS: SDK base output matches the standalone within tolerance.")
 PY
+
+# ---------------------------------------------------------------------------
+# 5. Free game — this is where multiplier wilds live (the ADR-0005 divergence),
+#    so the base-RTP check above cannot see it. Gate the bonus books too:
+#      #3  bonus/free-game RTP within tolerance of the standalone's, and
+#      #4  free reveals actually carry `multiplierWilds` (the realized mechanic).
+#    A looser bonus tolerance accounts for the free game's higher variance at the
+#    harness's modest sample size; tighten via SDK_PARITY_BONUS_TOL on big runs.
+# ---------------------------------------------------------------------------
+BONUS_TOL="${SDK_PARITY_BONUS_TOL:-0.08}"
+SDK_BONUS="$(find "$ENGINE" -path "*$GAME*books*books_bonus*.jsonl" 2>/dev/null | head -1)"
+if [ -z "$SDK_BONUS" ]; then
+  echo "    note: no SDK bonus books found — skipping free-game parity checks"
+else
+  echo "    SDK bonus books: ${SDK_BONUS#$ROOT/}"
+
+  # Real check #3: SDK bonus RTP within tolerance of the standalone's (if known).
+  if [ -n "$STD_BONUS_RTP" ]; then
+    python3 - "$SDK_BONUS" "$STD_BONUS_RTP" "$BONUS_TOL" <<'PY' || exit 1
+import json, sys
+path, std_rtp, tol = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
+total = n = 0.0
+for line in open(path, encoding="utf-8"):
+    line = line.strip()
+    if not line:
+        continue
+    total += json.loads(line)["payoutMultiplier"]; n += 1
+sdk_rtp = total / n if n else 0.0
+delta = abs(sdk_rtp - std_rtp)
+print(f"    SDK bonus RTP: {sdk_rtp:.4f}  (standalone {std_rtp:.4f}, |Δ|={delta:.4f}, tol {tol})")
+if delta > tol:
+    print(f"FAIL: SDK↔standalone BONUS RTP mismatch > {tol} — the multiplier-wild reconciliation (docs/adr/0005) is off.")
+    sys.exit(1)
+print("PASS: SDK free-game output matches the standalone within tolerance.")
+PY
+  else
+    echo "    note: standalone bonus RTP unavailable — skipping bonus-RTP comparison"
+  fi
+
+  # Real check #4: if this game has free-game multiplier wilds, the SDK must emit
+  # realized `multiplierWilds` on free reveals (the averaged approach emitted none).
+  python3 - "$GAME" "$SDK_BONUS" <<'PY' || exit 1
+import json, sys
+sys.path.insert(0, "math/simulator"); sys.path.insert(0, "math")
+from simulator.definition import load_definition
+d = load_definition(sys.argv[1])
+vals = list(getattr(d, "mult_wild_values", []) or [])
+has_mult_wilds = any(int(v) > 1 for v in vals)
+if not has_mult_wilds:
+    print("    (game has no >1 multiplier wilds — skipping multiplierWilds emission check)")
+    sys.exit(0)
+free_reveals = mw_reveals = 0
+for line in open(sys.argv[2], encoding="utf-8"):
+    line = line.strip()
+    if not line:
+        continue
+    for e in json.loads(line).get("events", []):
+        if e.get("type") == "reveal" and e.get("gameType") == "free":
+            free_reveals += 1
+            if e.get("multiplierWilds"):
+                mw_reveals += 1
+if free_reveals and mw_reveals == 0:
+    print("FAIL: SDK free reveals carry no `multiplierWilds` — realized wilds not emitted (docs/adr/0005).")
+    sys.exit(1)
+print(f"PASS: SDK emits multiplierWilds on free reveals ({mw_reveals}/{free_reveals} carried realized wilds).")
+PY
+fi
 
 echo "==> sdk-parity[$GAME]: PASS"

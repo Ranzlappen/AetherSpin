@@ -15,10 +15,9 @@ class GameStateOverride(GameExecutables, GeneralGameState):
         self.wild_symbol = config.special_symbols["wild"][0]
         self.scatter_symbol = config.special_symbols["scatter"][0]
         self.scatter_min = config.scatter_min
-        # Weighted-expectation wild multiplier used by line evaluation in the
-        # free game (matches the standalone engine).
-        vals, wts = config.mult_wild_values, config.mult_wild_weights
-        self.expected_wild_multiplier = max(1, round(sum(v * w for v, w in zip(vals, wts)) / sum(wts)))
+        # Free-game multiplier wilds are realized per cell at evaluation time
+        # (see game_calculations.sample_multiplier_grid), mirroring the
+        # standalone engine — no averaged approximation is precomputed here.
 
     def reset_book(self):
         super().reset_book()

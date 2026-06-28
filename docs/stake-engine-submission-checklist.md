@@ -32,9 +32,12 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
       the final submission — the standalone library is for dev/staging
 - [ ] **SDK ↔ standalone parity verified** in an SDK-capable environment:
       `bash scripts/check-sdk-parity.sh <game>` is green (not SKIP). This proves the
-      certified books match what was validated standalone. See `docs/adr/0005` —
-      note the known NovaForged multiplier-wild divergence that must be reconciled
-      there first
+      certified books match what was validated standalone — it now gates the book
+      contract, **base RTP**, **bonus/free-game RTP**, and that free reveals carry
+      realized `multiplierWilds`. The NovaForged multiplier-wild divergence is
+      reconciled in code and unit-proven against the standalone
+      (`test_sdk_multiplier_wilds.py`); this gate is the real-SDK confirmation. See
+      `docs/adr/0005`
 
 ---
 

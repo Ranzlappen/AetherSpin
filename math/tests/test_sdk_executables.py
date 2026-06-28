@@ -78,6 +78,9 @@ class _Config:
     ladder_step = 1
     ladder_max = 10
     freespin_awards = {3: 8}
+    # Free-game multiplier wilds are realized per cell (see game_calculations).
+    mult_wild_values = [2, 3, 5]
+    mult_wild_weights = [60, 30, 10]
 
 
 def _make_state(board):
@@ -86,7 +89,6 @@ def _make_state(board):
     state.config = _Config()
     state.scatter_symbol = "S"
     state.in_freegame = True
-    state.expected_wild_multiplier = 2
     state.global_multiplier = 2
     state.fs = 0
     state.tot_fs = 8
@@ -120,6 +122,11 @@ def test_winning_free_spin_expands_before_reveal_and_emits_result():
     assert events[0]["type"] == "reveal"
     assert events[0]["board"][1] == ["W", "W", "W"], "reveal must show expanded reel"
     assert events[0]["expandedReels"] == [1], "reveal must report expandedReels"
+    # The expanded reel's 3 wild cells each realize a multiplier, surfaced on the
+    # reveal as multiplierWilds (the reconciled behaviour; ADR 0005).
+    mw = events[0]["multiplierWilds"]
+    assert {(m["reel"], m["row"]) for m in mw} == {(1, 0), (1, 1), (1, 2)}
+    assert all(m["value"] in (2, 3, 5) for m in mw)
     assert not validate_event(events[0])
 
     # A winning spin emits exactly one freeSpinResult.
