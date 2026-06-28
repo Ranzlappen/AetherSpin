@@ -7,6 +7,19 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.5.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.4.0...v1.5.0) (2026-06-28)
+
+
+### Features
+
+* **frontend:** activate the asset pipeline (preload + texture fallback + missing-asset guard) ([#51](https://github.com/Ranzlappen/AetherSpin/issues/51)) ([bf9d97b](https://github.com/Ranzlappen/AetherSpin/commit/bf9d97be7d72dc320d60af23963fc1fb3778658e))
+* **sdk:** realize NovaForged multiplier wilds and make the parity gate free-game-aware ([#49](https://github.com/Ranzlappen/AetherSpin/issues/49)) ([2bc9a4a](https://github.com/Ranzlappen/AetherSpin/commit/2bc9a4a711bfcaa5b241888d7b091cc73ce6f1fc))
+
+
+### Bug Fixes
+
+* **ci:** retune novaforged RTP to target and de-flake the nightly + e2e ([#47](https://github.com/Ranzlappen/AetherSpin/issues/47)) ([1a3bf88](https://github.com/Ranzlappen/AetherSpin/commit/1a3bf88f364b61e1f04079ee5ce3af2a85beb310))
+
 ## [1.4.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.3.0...v1.4.0) (2026-06-25)
 
 
