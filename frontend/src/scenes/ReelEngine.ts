@@ -19,6 +19,7 @@ import {
   scatterSymbolId,
 } from '../config/gameConfig';
 import { bus } from '../core/eventBus';
+import { assetRegistry } from '../core/assetLoader';
 
 const SYMBOL_SIZE = 132;
 const SYMBOL_GAP = 8;
@@ -167,10 +168,20 @@ export class ReelEngine {
     return cell;
   }
 
-  /** Generate (and cache) a tile texture for a symbol id. */
+  /**
+   * The tile texture for a symbol id. Prefers loaded art
+   * (`symbol:<id>` in the {@link assetRegistry}) and falls back to a procedural
+   * tile when none is present — so dropping real art into the manifest needs no
+   * renderer change, and with no art the look is unchanged.
+   */
   private symbolTexture(symbolId: string): Texture {
     const cached = this.textureCache.get(symbolId);
     if (cached) return cached;
+    const art = assetRegistry.getTexture(`symbol:${symbolId}`);
+    if (art) {
+      this.textureCache.set(symbolId, art);
+      return art;
+    }
     const color = parseInt(getSymbolColor(symbolId).replace('#', ''), 16);
     const g = new Graphics();
     g.roundRect(0, 0, SYMBOL_SIZE, SYMBOL_SIZE, 14).fill({ color: 0x0d0726 });
@@ -191,9 +202,14 @@ export class ReelEngine {
     const tile = new Sprite(this.symbolTexture(symbolId));
     cell.bg.addChild(tile);
 
+    // The procedural glyph letter is only a stand-in for missing art; when a
+    // real symbol texture is loaded, the tile carries its own artwork and the
+    // letter is hidden.
+    const hasArt = assetRegistry.has(`symbol:${symbolId}`);
+    cell.glyph.visible = !hasArt;
     const meta = getSymbol(symbolId);
     const color = getSymbolColor(symbolId);
-    cell.glyph.text = labelFor(symbolId);
+    cell.glyph.text = hasArt ? '' : labelFor(symbolId);
     cell.glyph.style.fill = color;
     cell.glyph.style.fontSize = meta?.kind === 'low' ? 44 : 52;
     cell.badge.visible = false;

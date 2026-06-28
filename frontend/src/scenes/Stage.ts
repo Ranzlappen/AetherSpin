@@ -9,6 +9,7 @@ import { ReelEngine } from './ReelEngine';
 import { Particles } from './Particles';
 import { bus, type WinTier } from '../core/eventBus';
 import { track } from '../core/telemetry';
+import { preloadAssets } from '../core/assetLoader';
 import { TARGET_FPS } from '../config/gameConfig';
 
 /** Callback invoked roughly once per second with the measured FPS. */
@@ -81,6 +82,12 @@ export class Stage {
     };
     this.canvasEl.addEventListener('webglcontextlost', this.onContextLost, false);
     this.canvasEl.addEventListener('webglcontextrestored', this.onContextRestored, false);
+
+    // Preload declared art before building the board so symbol tiles can use it
+    // (no-op when the manifest is empty → instant, procedural rendering). The
+    // boot timeout in App.svelte bounds this, and any per-asset failure falls
+    // back to procedural rather than blocking.
+    await preloadAssets();
 
     this.background = new Background();
     this.reels = new ReelEngine(app.renderer);

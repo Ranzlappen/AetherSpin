@@ -1,12 +1,14 @@
 /**
  * Asset resolution + manifest seam.
  *
- * The renderer currently draws every symbol procedurally (no external art), so
- * there are no binary assets to ship today. This module is the seam real art
- * plugs into: declare assets in {@link ASSET_MANIFEST}, resolve their URLs with
- * {@link assetUrl} (CDN base + cache-busting), and a future preload phase can
- * load the manifest through Pixi `Assets`. A missing-asset CI check can diff the
- * manifest against the deployed bundle.
+ * The renderer draws every symbol procedurally by default (no external art), so
+ * the manifest ships empty. This module is the seam real art plugs into: declare
+ * assets in {@link ASSET_MANIFEST}, resolve their URLs with {@link assetUrl}
+ * (CDN base + cache-busting). At boot the loader (`core/assetLoader.ts`) loads
+ * the manifest through Pixi `Assets`, and the renderer prefers a loaded texture
+ * over its procedural tile — so adding art is a pure data change. The
+ * missing-asset guard in `assets.test.ts` fails CI if a declared bundle-relative
+ * asset isn't present under `frontend/public/`.
  *
  * @example
  * # .env.production
@@ -51,3 +53,16 @@ export const ASSET_MANIFEST: readonly AssetGroup[] = [];
 export function manifestUrls(): string[] {
   return ASSET_MANIFEST.flatMap((g) => Object.values(g.assets)).map(assetUrl);
 }
+
+/**
+ * Flat list of every declared asset *path* (relative to the asset root, before
+ * {@link assetUrl} resolution). Bundle-relative paths (no {@link ASSET_BASE})
+ * are served from `frontend/public/<path>`; the missing-asset guard in
+ * `assets.test.ts` checks each one exists so a dangling reference fails CI.
+ */
+export function manifestPaths(): string[] {
+  return ASSET_MANIFEST.flatMap((g) => Object.values(g.assets));
+}
+
+/** True when assets resolve from the bundle (`public/`) rather than a CDN. */
+export const ASSET_IS_BUNDLE_RELATIVE = ASSET_BASE === '';
