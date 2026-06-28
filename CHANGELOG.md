@@ -7,6 +7,13 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.6.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.5.0...v1.6.0) (2026-06-28)
+
+
+### Features
+
+* **frontend:** add neon-cosmic placeholder symbol art ([#52](https://github.com/Ranzlappen/AetherSpin/issues/52)) ([b79bcfc](https://github.com/Ranzlappen/AetherSpin/commit/b79bcfcece69c3375dbe8a9501ebc0075d59b036))
+
 ## [1.5.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.4.0...v1.5.0) (2026-06-28)
 
 
