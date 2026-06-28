@@ -26,11 +26,16 @@ class GameExecutables(GameCalculations):
         self.board, self.reel_positions = self.create_board_reelstrips()
         self.book.add_event(reveal_event(self))
 
-    def _line_wins(self, global_mult: int = 1):
-        """Return (wins, line_total) with per-win payout already computed."""
+    def _line_wins(self, global_mult: int = 1, mult_grid=None):
+        """Return (wins, line_total) with per-win payout already computed.
+
+        ``mult_grid`` (free game) carries the realized per-cell wild multipliers;
+        each winning line's ``wild_mult`` is then the SUM of its participating
+        wild cells (computed in ``get_line_wins``), matching the standalone.
+        """
         wins = []
         line_total = 0.0
-        for win in self.get_line_wins(self.board):
+        for win in self.get_line_wins(self.board, mult_grid=mult_grid):
             payout = (win["amount"] / self.config.num_paylines) * win["wild_mult"] * global_mult
             wins.append({**win, "amount": payout})
             line_total += payout
@@ -72,8 +77,12 @@ class GameExecutables(GameCalculations):
         self.fs += 1
         self.board, self.reel_positions = self.create_board_reelstrips()
         expanded = self.apply_expanding_wilds()
-        self.book.add_event(reveal_event(self, expanded_reels=expanded))
-        wins, line_total = self._line_wins(global_mult=1)
+        # Realize a per-cell multiplier for every wild on the post-expansion board
+        # (so expanded reels are covered too), surface them on the reveal, and use
+        # them in line evaluation — exactly as the standalone engine does.
+        mult_grid, mult_wilds = self.sample_multiplier_grid(self.board)
+        self.book.add_event(reveal_event(self, expanded_reels=expanded, multiplier_wilds=mult_wilds))
+        wins, line_total = self._line_wins(global_mult=1, mult_grid=mult_grid)
         count, samount = self._scatter()
         spin_win = (line_total + samount) * self.global_multiplier * self.config.free_win_scale
         if wins or samount > 0:

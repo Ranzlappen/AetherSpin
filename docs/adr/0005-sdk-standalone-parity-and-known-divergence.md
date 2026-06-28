@@ -40,19 +40,35 @@ books wouldn't carry the per-cell `multiplierWilds` the frontend expects.
 **Cosmic Ways is unaffected** — its multiplier wilds are disabled (value `1`), so
 `expected_wild_multiplier == 1 ==` the realized value.
 
+### Update — reconciled in code (pending a real SDK run)
+
+The reconciliation has now **landed in the SDK module** (`math/games/novaforged/`):
+`game_calculations.sample_multiplier_grid` realizes a multiplier per wild cell,
+`reveal_event` emits `multiplierWilds`, and line evaluation sums the participating
+wild cells — mirroring `simulator/engine.py`/`mechanics.py`. The averaged
+`expected_wild_multiplier` is gone. Because the certified SDK can't run in this
+environment, the change is proven **here** by `test_sdk_multiplier_wilds.py`,
+which runs the reconciled SDK `get_line_wins` and the validated standalone
+`LinesMechanic` over thousands of random free-game boards on the **same** realized
+grid and asserts identical wins. The remaining step — a real SDK run confirming
+the end-to-end book/RTP parity — is what the (now free-game-aware) parity gate
+performs where the SDK is available.
+
 ## Decision
 
 1. **Treat the SDK path as authoritative for certification, the standalone as the
    fast/validated mirror — and prove they agree before submission**, not just at
-   the contract level. The reconciliation (porting realized multiplier wilds into
-   the SDK `game_calculations` / `game_executables` / `game_events`, mirroring the
-   standalone) is deliberately **deferred to an SDK-capable environment**: it
-   changes certified, money-handling code and must be verified against a real SDK
-   run, never landed blind.
-2. **Ship the parity gate now, fail-soft.** `scripts/check-sdk-parity.sh` runs the
-   SDK pipeline where it's available and compares its output — book contract and
-   base RTP — to the standalone; `.github/workflows/sdk-parity.yml` runs it on
-   demand and nightly, and **skips cleanly** where the SDK can't be fetched (e.g.
+   the contract level. The reconciliation (realized multiplier wilds in the SDK
+   `game_calculations` / `game_executables` / `game_events`, mirroring the
+   standalone) is now **written and unit-proven against the standalone**
+   (`test_sdk_multiplier_wilds.py`); the certified-code change must still be
+   **confirmed against a real SDK run** before submission — never trusted blind.
+2. **Ship the parity gate now, fail-soft — and make it free-game-aware.**
+   `scripts/check-sdk-parity.sh` runs the SDK pipeline where it's available and
+   compares its output to the standalone: the book contract, **base RTP**, **bonus
+   (free-game) RTP** — where multiplier wilds live — and that free reveals actually
+   carry `multiplierWilds`. `.github/workflows/sdk-parity.yml` runs it on demand and
+   nightly, and **skips cleanly** where the SDK can't be fetched (e.g.
    network-restricted CI). It is not a required PR check.
 3. **Gate submission on it.** `docs/stake-engine-submission-checklist.md` now
    requires a green `check-sdk-parity.sh` for the game being submitted.
@@ -61,9 +77,9 @@ books wouldn't carry the per-cell `multiplierWilds` the frontend expects.
 
 - The divergence is now **explicit and tracked**, not silent. Anyone wiring up the
   SDK environment runs one script to see whether the certified books match.
-- Until reconciled, **do not rely on the SDK's NovaForged free-game RTP** as
-  equal to the standalone's; the standalone RTP gate remains the validated number,
-  and the certified PAR comes from the SDK's own optimizer run.
-- When the reconciliation lands (in an SDK-capable env), this ADR's "known
-  divergence" section should be removed and the parity gate promoted toward
-  required.
+- The code divergence is **closed**; what remains is **verification**. Until a real
+  SDK run confirms the free-game parity, the standalone RTP gate remains the
+  validated number and the certified PAR comes from the SDK's own optimizer run.
+- Once a real SDK run passes the free-game-aware `check-sdk-parity.sh`, this ADR's
+  "known divergence" section can be removed and the parity gate promoted toward a
+  required check.

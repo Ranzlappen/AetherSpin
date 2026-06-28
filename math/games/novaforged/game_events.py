@@ -16,12 +16,14 @@ def _board(state):
     return [[cell.name for cell in col] for col in state.board]
 
 
-def reveal_event(state, expanded_reels=None):
+def reveal_event(state, expanded_reels=None, multiplier_wilds=None):
     """Reveal the (post-expansion) board.
 
-    ``expanded_reels`` is the list of reels turned fully wild this spin; it is
-    emitted only for free-game reveals, matching the standalone engine so both
-    math paths produce byte-identical reveal events.
+    ``expanded_reels`` is the list of reels turned fully wild this spin and
+    ``multiplier_wilds`` the realized per-cell wild multipliers
+    (``[{reel,row,value}]``); both are emitted only for free-game reveals,
+    matching the standalone engine and the ``BookEvent`` contract the frontend
+    renders from.
     """
     evt = {
         "type": "reveal",
@@ -35,6 +37,8 @@ def reveal_event(state, expanded_reels=None):
         evt["spinsTotal"] = state.tot_fs
         if expanded_reels:
             evt["expandedReels"] = list(expanded_reels)
+        if multiplier_wilds:
+            evt["multiplierWilds"] = [dict(m) for m in multiplier_wilds]
     return evt
 
 
