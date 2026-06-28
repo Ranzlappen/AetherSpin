@@ -99,10 +99,18 @@ describe('AssetRegistry', () => {
 describe('asset singleton (boot path)', () => {
   beforeEach(() => assetRegistry.clear());
 
-  it('preloadAssets() drives the shared registry; empty manifest is a no-op', async () => {
-    // Default manifest (the app's) is empty today → resolves to no keys.
-    await expect(preloadAssets()).resolves.toEqual([]);
-    assetRegistry.register('symbol:H1', fakeTexture('h1'));
+  it('preloadAssets() drives the shared registry over the real manifest', async () => {
+    // Inject a fake loader so we exercise the *app* manifest without real I/O
+    // (jsdom can't rasterize SVGs). The renderer reads from this same singleton.
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const loaded = await preloadAssets({ load: async (url) => fakeTexture(url) });
+
+    expect(loaded).toContain('symbol:W');
+    expect(loaded).toContain('symbol:L5');
+    expect(loaded).toHaveLength(11);
     expect(assetRegistry.getTexture('symbol:H1')).not.toBeNull();
+    // Readiness marker the E2E asset-load check asserts on in a real browser.
+    expect(info).toHaveBeenCalledWith('[assets] ready: 11/11 loaded');
+    info.mockRestore();
   });
 });

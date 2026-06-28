@@ -11,10 +11,15 @@ describe('assets', () => {
     expect(assetUrl('/audio/spin.mp3')).toBe('audio/spin.mp3');
   });
 
-  it('manifest is empty today (procedural rendering) and yields no urls', () => {
-    expect(ASSET_MANIFEST).toEqual([]);
-    expect(manifestUrls()).toEqual([]);
-    expect(manifestPaths()).toEqual([]);
+  it('declares placeholder art for the full symbol set, keyed for the renderer', () => {
+    const keys = ASSET_MANIFEST.flatMap((g) => Object.keys(g.assets));
+    const expected = ['W', 'S', 'H1', 'H2', 'H3', 'H4', 'L1', 'L2', 'L3', 'L4', 'L5'].map(
+      (id) => `symbol:${id}`
+    );
+    expect(new Set(keys)).toEqual(new Set(expected));
+    // manifestPaths/manifestUrls mirror the declared assets (bundle-relative here).
+    expect(manifestPaths()).toHaveLength(expected.length);
+    expect(manifestUrls()).toContain('symbols/W.svg');
   });
 
   it('asset keys are unique across the whole manifest', () => {
