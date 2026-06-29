@@ -1,37 +1,46 @@
-"""State initialisation and per-round resets for NovaForged.
+"""Per-round state + special-symbol functions for NovaForged (real SDK API).
 
-Bridges the SDK ``GeneralGameState`` with our executables. Derives convenience
-attributes from :class:`GameConfig` and resets feature state between rounds.
+Modelled on `0_0_lines`/`0_0_expwilds`: the wild symbol carries a realized
+`multiplier` attribute in the free game (the SDK's native multiplier-wild
+mechanism), and `check_repeat` enforces the distribution win criteria.
 """
 
 from game_executables import GameExecutables
-from src.state.state import GeneralGameState  # type: ignore  # provided by the SDK
+from src.calculations.statistics import get_random_outcome  # type: ignore
 
 
-class GameStateOverride(GameExecutables, GeneralGameState):
-    def __init__(self, config):
-        super().__init__(config)
-        self.config = config
-        self.wild_symbol = config.special_symbols["wild"][0]
-        self.scatter_symbol = config.special_symbols["scatter"][0]
-        self.scatter_min = config.scatter_min
-        # Free-game multiplier wilds are realized per cell at evaluation time
-        # (see game_calculations.sample_multiplier_grid), mirroring the
-        # standalone engine — no averaged approximation is precomputed here.
-
+class GameStateOverride(GameExecutables):
     def reset_book(self):
         super().reset_book()
-        self.in_freegame = False
+        # NovaForged free-game state.
         self.global_multiplier = self.config.ladder_start
-        self.last_scatter_count = 0
-        self.tot_fs = 0
-        self.fs = 0
+        self.expanding_wild_reels = []
 
     def reset_fs_spin(self):
-        self.in_freegame = True
-        self.fs = 0
+        super().reset_fs_spin()
         self.global_multiplier = self.config.ladder_start
-        self.free_total = 0.0
+        self.expanding_wild_reels = []
 
-    def end_freespin(self):
-        self.in_freegame = False
+    def assign_special_sym_function(self):
+        # The wild realizes a multiplier (free game only); see assign_mult_property.
+        self.special_symbol_functions = {self.config.wild_symbol: [self.assign_mult_property]}
+
+    def assign_mult_property(self, symbol):
+        """Realize a per-cell wild multiplier in the free game (1 in the base game)."""
+        multiplier_value = 1
+        if self.gametype == self.config.freegame_type:
+            multiplier_value = get_random_outcome(
+                self.get_current_distribution_conditions()["mult_values"][self.gametype]
+            )
+        symbol.assign_attribute({"multiplier": multiplier_value})
+
+    def check_repeat(self):
+        super().check_repeat()
+        if self.repeat is False:
+            win_criteria = self.get_current_betmode_distributions().get_win_criteria()
+            if win_criteria is not None and self.final_win != win_criteria:
+                self.repeat = True
+                return
+            if win_criteria is None and self.final_win == 0:
+                self.repeat = True
+                return
