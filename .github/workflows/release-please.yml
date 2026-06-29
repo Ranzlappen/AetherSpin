@@ -22,4 +22,4 @@ jobs:
       # NOTE: per-game math versions in shared/games/*/game-definition.json are
       # deliberately NOT bumped here — a game's version tracks its own math/rules
       # and is bumped by hand when that game changes, independent of repo releases.
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
