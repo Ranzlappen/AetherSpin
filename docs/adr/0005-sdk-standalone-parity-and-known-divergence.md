@@ -135,3 +135,72 @@ free-game-aware `check-sdk-parity.sh` is the acceptance test (RTP + book contrac
   validated truth** and the SDK modules are non-functional scaffolding. This is the
   genuine remaining certification work — larger than the "averaged vs realized"
   framing above implied.
+
+## Update 3 — the port landed; and why raw SDK RTP isn't a parity oracle
+
+The NovaForged module has now been **ported to the real SDK API and runs
+end-to-end** (`create_books`). The six modules were rewritten against the actual
+surface (`Config`/`BetMode`/`Distribution`, `GeneralGameState`, static
+`Lines.get_lines`/`record_lines_wins`/`emit_linewin_events`,
+`src.events.events.*`, the Symbol-attribute model). Two file-level fixes were
+needed to share the canonical inputs:
+
+- **Paytable ÷ paylines.** The shared paytable is in _total-bet_ units (the
+  standalone divides each line win by `num_paylines`, see `mechanics.py`); the
+  SDK pays per line and sums, so `game_config` divides the paytable by 20 to
+  land on the same per-line payout.
+- **Reel-header strip.** The shared reel CSVs carry an `R1..R5` column header
+  the SDK's `read_reels_csv` would ingest as a symbol (`'R4' is not
+  registered`); `game_config` overrides the reader to drop it.
+
+All four NovaForged free-game mechanics are realized natively in the SDK and
+verified against a book set: realized multiplier wilds (native Symbol
+`multiplier` attribute, summed per line via `multiplier_method="symbol"`) in
+5000/5000 bonus books; expanding wilds on the middle reels; the escalating
+global-multiplier ladder; and the free-game win scale applied to the whole spin
+win — matching `spin_win = (lines + scatter) * global_mult * win_scale`.
+
+One forcing detail worth recording: a `wincap` forced distribution needs a
+high-volatility WCAP reel (as `0_0_lines` ships) to be reachable; without it,
+forcing a 5000x book loops forever. The wincap distributions are therefore
+**omitted** from the bet modes for now (noted in `game_config`) — the natural
+wincap still clamps; only the _forced_ wincap quota is deferred until a WCAP
+reel is added.
+
+### The real finding: raw `create_books` RTP is quota-shaped, not natural
+
+The original parity premise (run the SDK, compare its **RTP** to the
+standalone's) is **flawed by construction**. The SDK's `create_books` does not
+sample a natural population of rounds — it generates books **per forced
+distribution**, in the quotas declared on each `BetMode` (NovaForged base:
+`freegame` 0.1, `"0"` 0.4, `basegame` 0.5). The raw RTP of that book pile is an
+artifact of the forcing quotas, not the game's true return. A direct run here
+showed a base "RTP" of **~16x** precisely because 10% of books are forced
+free-game triggers worth a great deal each — nowhere near the 0.965 target.
+
+This is **by design**: the books are the _input_ to the SDK's **Rust optimizer**
+(`optimization_program`), which solves for the per-book selection weights that
+hit the target RTP/volatility. The natural RTP only exists **after
+optimization**, in the lookup tables — not in the raw `create_books` output. The
+optimizer needs Rust + the math-sdk toolchain unavailable in this environment.
+
+### What the parity gate should actually check (re-scoped, again)
+
+Comparing raw SDK RTP to standalone RTP is a category error. The defensible,
+environment-independent parity checks are:
+
+1. **Per-outcome math correctness** — for the _same board + same realized
+   multiplier grid_, the SDK line evaluation and the standalone `LinesMechanic`
+   pay the same. Unit-testable here without the optimizer; the real guard that
+   the two engines agree on the mechanic.
+2. **Book contract** — SDK book events map onto the shared `BookEvent` union the
+   frontend replays (the next piece of work).
+3. **Post-optimization RTP** — only meaningful where the Rust optimizer runs;
+   belongs in the SDK-capable submission environment, gated by the submission
+   checklist, **not** in the raw-`create_books` comparison.
+
+So `check-sdk-parity.sh`'s "compare RTP" step is a **post-optimization** check
+that only runs in an SDK+Rust environment; the runnable-everywhere guards are the
+per-outcome math equivalence and the book contract. The standalone remains the
+fast validated mirror and the source of the pre-submission RTP number; the SDK's
+optimizer produces the certified PAR.
