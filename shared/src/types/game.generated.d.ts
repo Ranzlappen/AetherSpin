@@ -78,5 +78,17 @@ export interface AetherSpinGameDefinition {
   responsibleGaming?: {
     realityCheckMinutes?: number;
     helpUrl?: string;
+    /**
+     * Minimum player age shown in the age/legal acknowledgement (e.g. 18).
+     */
+    ageRating?: number;
+    /**
+     * Show a one-time age/legal acknowledgement before play. Default false — for operator-embedded games KYC/age-gating is usually enforced upstream.
+     */
+    requireAgeAck?: boolean;
+    /**
+     * Optional extra legal/terms line shown in the acknowledgement and reality-check dialogs.
+     */
+    legalDisclaimer?: string;
   };
 }

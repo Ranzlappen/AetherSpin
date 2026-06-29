@@ -39,6 +39,7 @@
   import FreeSpinsBanner from './FreeSpinsBanner.svelte';
   import SoundToggle from './SoundToggle.svelte';
   import RealityCheck from './RealityCheck.svelte';
+  import AgeGate from './AgeGate.svelte';
 
   let canvasHost: HTMLDivElement;
   let stage: Stage | null = null;
@@ -344,6 +345,7 @@
 
   <PaytableModal open={paytableOpen} on:close={() => (paytableOpen = false)} />
   <RealityCheck />
+  <AgeGate />
 </div>
 
 <style>

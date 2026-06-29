@@ -69,6 +69,12 @@ export const en = {
   'rg.quit': 'Take a break',
   'rg.ended': 'Session ended. You can safely close this window.',
 
+  // Age / legal acknowledgement (shown only when a game opts in).
+  'ageGate.title': 'Before you play',
+  'ageGate.body': 'You must be {age} or older and agree to the terms to play this game.',
+  'ageGate.confirm': 'I am {age} or older and accept the terms.',
+  'ageGate.enter': 'Enter game',
+
   // Screen-reader announcements (aria-live).
   'a11y.spinStart': 'Spinning.',
   'a11y.win': 'You won {amount}.',

@@ -66,6 +66,12 @@ export const de: Partial<Translations> = {
   'rg.quit': 'Pause machen',
   'rg.ended': 'Sitzung beendet. Sie können dieses Fenster schließen.',
 
+  'ageGate.title': 'Bevor Sie spielen',
+  'ageGate.body':
+    'Sie müssen mindestens {age} Jahre alt sein und den Bedingungen zustimmen, um dieses Spiel zu spielen.',
+  'ageGate.confirm': 'Ich bin mindestens {age} Jahre alt und akzeptiere die Bedingungen.',
+  'ageGate.enter': 'Spiel starten',
+
   'a11y.spinStart': 'Dreht.',
   'a11y.win': 'Sie haben {amount} gewonnen.',
   'a11y.noWin': 'Kein Gewinn.',

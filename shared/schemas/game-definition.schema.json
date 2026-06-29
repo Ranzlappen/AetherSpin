@@ -111,7 +111,20 @@
       "additionalProperties": false,
       "properties": {
         "realityCheckMinutes": { "type": "integer", "minimum": 1 },
-        "helpUrl": { "type": "string" }
+        "helpUrl": { "type": "string" },
+        "ageRating": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum player age shown in the age/legal acknowledgement (e.g. 18)."
+        },
+        "requireAgeAck": {
+          "type": "boolean",
+          "description": "Show a one-time age/legal acknowledgement before play. Default false — for operator-embedded games KYC/age-gating is usually enforced upstream."
+        },
+        "legalDisclaimer": {
+          "type": "string",
+          "description": "Optional extra legal/terms line shown in the acknowledgement and reality-check dialogs."
+        }
       }
     }
   }
