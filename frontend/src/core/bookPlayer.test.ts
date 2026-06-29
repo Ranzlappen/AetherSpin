@@ -2,7 +2,15 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import { BookPlayer, classifyWin } from './bookPlayer';
 import type { Book } from '../../../shared/src/types/events';
-import type { RgsTransport, PlayResult, AuthenticateResult, EndRoundResult, Balance } from './rgsClient';
+import {
+  RgsError,
+  type RgsTransport,
+  type PlayResult,
+  type AuthenticateResult,
+  type EndRoundResult,
+  type Balance,
+  type RoundState,
+} from './rgsClient';
 import { balance, totalWin, gameMode, freeSpins, isSpinning, lastResult, resetFreeSpins } from './gameState';
 
 /** A fake transport returning a fixed book, recording endRound calls. */
@@ -173,5 +181,88 @@ describe('BookPlayer free-spins round', () => {
     expect(get(freeSpins).remaining).toBe(0);
     expect(get(gameMode)).toBe('base');
     expect(transport.endRoundCalls).toBe(1);
+  });
+});
+
+/**
+ * A transport whose first `endRound` fails with a transport error, then reports
+ * a configurable round state on re-authenticate — exercising the settle-recovery
+ * path in BookPlayer.settleRound.
+ */
+class FlakySettleTransport implements RgsTransport {
+  readonly params = { sessionID: 's', rgsUrl: 'r', lang: 'en', currency: 'USD' };
+  endRoundCalls = 0;
+  authCalls = 0;
+  constructor(
+    private readonly book: Book,
+    private readonly roundOnReauth: RoundState | null,
+    private readonly firstEndError: RgsError = new RgsError('ERR_UE'),
+    private readonly authBalance = 130,
+    private readonly endBalance = 140
+  ) {}
+  async authenticate(): Promise<AuthenticateResult> {
+    this.authCalls++;
+    return {
+      balance: { amount: this.authBalance, currency: 'USD' },
+      config: { minBet: 0.1, maxBet: 100, stepBet: 0.1, betLevels: [] },
+      round: this.roundOnReauth,
+      statusCode: 'SUCCESS',
+    };
+  }
+  async play(): Promise<PlayResult> {
+    return {
+      round: { betID: 7, state: 'placed', payoutMultiplier: 0.5, book: this.book },
+      balance: { amount: 90, currency: 'USD' },
+      statusCode: 'SUCCESS',
+    };
+  }
+  async endRound(): Promise<EndRoundResult> {
+    this.endRoundCalls++;
+    if (this.endRoundCalls === 1) throw this.firstEndError;
+    return { balance: { amount: this.endBalance, currency: 'USD' }, statusCode: 'SUCCESS' };
+  }
+  async getBalance(): Promise<Balance> {
+    return { amount: this.endBalance, currency: 'USD' };
+  }
+}
+
+describe('BookPlayer settle resilience', () => {
+  const book: Book = {
+    id: 1,
+    payoutMultiplier: 0.5,
+    events: [
+      { type: 'reveal', gameType: 'base', board: [['L1', 'L2', 'L3']], reelStops: [1] },
+      { type: 'finalWin', amount: 0.5, wincap: false },
+    ],
+  };
+
+  it('treats a lost end-round response as settled when re-auth shows no open round', async () => {
+    // endRound reply lost AFTER the server settled → re-auth shows round resolved.
+    const transport = new FlakySettleTransport(book, null, new RgsError('ERR_UE'), 130, 999);
+    const player = new BookPlayer({ transport, wait: instantWait });
+    await player.play(10, 'base');
+    // No blind double-settle: endRound called once (failed), not retried.
+    expect(transport.endRoundCalls).toBe(1);
+    expect(transport.authCalls).toBe(1);
+    expect(get(balance)).toBe(130); // authoritative wallet balance from re-auth
+    expect(get(isSpinning)).toBe(false);
+  });
+
+  it('retries end-round when re-auth shows the round is still open', async () => {
+    const openRound: RoundState = { betID: 7, state: 'placed', payoutMultiplier: 0.5, book };
+    const transport = new FlakySettleTransport(book, openRound, new RgsError('ERR_UE'), 130, 140);
+    const player = new BookPlayer({ transport, wait: instantWait });
+    await player.play(10, 'base');
+    // Round genuinely unsettled → retried exactly once and the win finalizes.
+    expect(transport.endRoundCalls).toBe(2);
+    expect(get(balance)).toBe(140);
+  });
+
+  it('propagates a business error from end-round (does not swallow it)', async () => {
+    const transport = new FlakySettleTransport(book, null, new RgsError('ERR_IS'));
+    const player = new BookPlayer({ transport, wait: instantWait });
+    await expect(player.play(10, 'base')).rejects.toMatchObject({ code: 'ERR_IS' });
+    expect(transport.authCalls).toBe(0); // not a transport blip → no recovery attempt
+    expect(get(isSpinning)).toBe(false); // finally still clears the spin flag
   });
 });

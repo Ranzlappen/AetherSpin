@@ -35,11 +35,21 @@ const VALID_EVENT_TYPES = new Set([
 export function isValidBook(book: unknown): book is Book {
   if (!book || typeof book !== 'object') return false;
   const b = book as { id?: unknown; payoutMultiplier?: unknown; events?: unknown };
-  if (typeof b.id !== 'number' || typeof b.payoutMultiplier !== 'number') return false;
+  // id + payoutMultiplier must be real, finite numbers; a payout can't be negative.
+  if (typeof b.id !== 'number' || !Number.isFinite(b.id)) return false;
+  if (typeof b.payoutMultiplier !== 'number' || !Number.isFinite(b.payoutMultiplier)) return false;
+  if (b.payoutMultiplier < 0) return false;
   if (!Array.isArray(b.events) || b.events.length < 2) return false;
   const events = b.events as BookEvent[];
   if (events[0]?.type !== 'reveal' || events[events.length - 1]?.type !== 'finalWin') return false;
-  return events.every((e) => e && typeof e.type === 'string' && VALID_EVENT_TYPES.has(e.type));
+  if (!events.every((e) => e && typeof e.type === 'string' && VALID_EVENT_TYPES.has(e.type))) return false;
+  // The terminal finalWin amount is the authoritative payout — it must be a
+  // finite number that agrees with the book's payoutMultiplier. A mismatch means
+  // the book and its settlement value disagree; reject rather than mis-settle.
+  const final = events[events.length - 1] as { amount?: unknown };
+  if (typeof final.amount !== 'number' || !Number.isFinite(final.amount)) return false;
+  if (Math.abs(final.amount - b.payoutMultiplier) > 1e-6) return false;
+  return true;
 }
 
 /** RGS status codes surfaced by the Stake Engine wallet API. */
