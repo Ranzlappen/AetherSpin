@@ -22,8 +22,21 @@ function readAck(): boolean {
   }
 }
 
-/** True while the age/legal gate must block play (enabled and not yet acknowledged). */
-export const ageGateOpen: Writable<boolean> = writable(ageGateEnabled && !readAck());
+/** `?ageGate=1` forces the gate on for QA/manual testing of a game that ships
+ * with it off (the default). Never weakens a game that requires it. */
+function forcedByQuery(): boolean {
+  try {
+    return (
+      typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('ageGate') === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** True while the age/legal gate must block play (enabled — or QA-forced — and
+ * not yet acknowledged). */
+export const ageGateOpen: Writable<boolean> = writable((ageGateEnabled || forcedByQuery()) && !readAck());
 
 /** Record the acknowledgement and close the gate. */
 export function acknowledgeAge(): void {
