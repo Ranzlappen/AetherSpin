@@ -1,30 +1,27 @@
-"""Cosmic Ways game configuration for the official StakeEngine math-sdk.
+"""Cosmic Ways config for the official StakeEngine math-sdk (real API).
 
-Written against the official ``StakeEngine/math-sdk`` API (the same ``Config`` /
-``BetMode`` / ``Distribution`` primitives as ``games/template``). Runnable once
-the SDK is present — run ``bash scripts/setup-math.sh`` which clones the SDK into
-``math/engine/`` and links ``math/games/*`` into ``math/engine/games/``.
+Ported to the current SDK `Config` API (see ADR 0005), modelled on NovaForged
+and the SDK's `0_0_ways` example. Numbers are loaded from the canonical
+`shared/games/cosmicways/game-definition.json`.
 
-Numeric values (paytable, reels, RTP target, wincap, features) are kept in
-lock-step with the canonical ``shared/games/cosmicways/game-definition.json`` —
-``_load_shared_definition`` reads it so the standalone engine and certified SDK
-agree. Cosmic Ways is an all-ways (243-ways) game: ``win_type = "ways"`` and the
-``paylines`` map is empty.
+Mechanic: 5x3 all-ways (243 ways), free-spin scatter trigger with a flat
+multiplier and a free-game win scale. Multiplier wilds and expanding wilds are
+disabled for this game (definition: `multiplierWilds.values == [1]`,
+`expandingWilds.enabled == false`), so the free game is ways + scatter pays,
+scaled by `features.freeSpins.winScale`.
 """
-
-from __future__ import annotations
 
 import json
 import os
 
-from src.config.config import Config, BetMode  # type: ignore
+from src.config.config import Config  # type: ignore
 from src.config.distributions import Distribution  # type: ignore
+from src.config.betmode import BetMode  # type: ignore
 
 
 def _load_shared_definition() -> dict:
     here = os.path.dirname(os.path.abspath(__file__))
     candidates = [
-        os.path.join(here, "shared_definition.json"),
         os.path.normpath(os.path.join(here, "..", "..", "..", "shared", "games", "cosmicways", "game-definition.json")),
         os.path.normpath(os.path.join(here, "..", "..", "shared", "games", "cosmicways", "game-definition.json")),
     ]
@@ -36,72 +33,99 @@ def _load_shared_definition() -> dict:
 
 
 class GameConfig(Config):
-    """Cosmic Ways — 5x3, 243-ways neon-cosmic slot."""
+    """Cosmic Ways — 5x3, 243-ways neon slot (official math-sdk path)."""
+
+    def read_reels_csv(self, file_path):
+        """Read a reelstrip CSV, dropping the shared `R1,R2,…` header row."""
+        strips = super().read_reels_csv(file_path)
+        cleaned = []
+        for strip in strips:
+            if strip and strip[0][:1].upper() == "R" and strip[0][1:].isdigit():
+                strip = strip[1:]
+            cleaned.append(strip)
+        return cleaned
 
     def __init__(self) -> None:
         super().__init__()
         d = _load_shared_definition()
         eng = d["engine"]
+        fs = d["features"]["freeSpins"]
 
         self.game_id = "cosmicways"
-        self.provider_number = 1
-        self.working_name = "Cosmic Ways"
+        self.provider_number = 0
+        self.working_name = "CosmicWays"
         self.wincap = float(eng["wincapMultiplier"])
         self.win_type = "ways"
         self.rtp = float(eng["rtpTarget"])
         self.construct_paths()
 
-        # Board dimensions
         self.num_reels = int(eng["numReels"])
         self.num_rows = [int(eng["numRows"])] * self.num_reels
+        self.paylines = {}  # ways games have no fixed paylines
 
-        # Paytable: SDK expects {(count, symbol): payout}
+        # Ways/cluster pay the paytable value directly (no per-line division).
         self.paytable = {}
         for sym, pays in d["paytable"].items():
             for count, value in pays.items():
                 self.paytable[(int(count), sym)] = float(value)
 
         self.include_padding = True
-        self.special_symbols = {
-            "wild": [s["id"] for s in d["symbols"] if s["kind"] == "wild"],
-            "scatter": [d["scatter"]["symbol"]],
-            "multiplier": [s["id"] for s in d["symbols"] if s["kind"] == "wild"],
-        }
+        wild_id = next(s["id"] for s in d["symbols"] if s["kind"] == "wild")
+        scatter_id = d["scatter"]["symbol"]
+        self.special_symbols = {"wild": [wild_id], "scatter": [scatter_id], "multiplier": [wild_id]}
 
-        # Ways games have no fixed paylines.
-        self.paylines = {i: line for i, line in enumerate(d["paylines"])}
-
-        awards = {int(k): int(v) for k, v in d["features"]["freeSpins"]["awards"].items()}
-        self.freespin_triggers = {
-            self.basegame_type: awards,
-            self.freegame_type: awards,
-        }
+        awards = {int(k): int(v) for k, v in fs["awards"].items()}
+        self.freespin_triggers = {self.basegame_type: awards}
+        if fs.get("retrigger"):
+            self.freespin_triggers[self.freegame_type] = awards
         self.anticipation_triggers = {
-            self.basegame_type: d["scatter"]["minToTrigger"] - 1,
-            self.freegame_type: d["scatter"]["minToTrigger"] - 1,
+            self.basegame_type: min(awards) - 1,
+            self.freegame_type: min(awards) - 1,
         }
 
         reels = {"BR0": "BR0.csv", "FR0": "FR0.csv"}
         self.reels = {}
         for name, fname in reels.items():
             self.reels[name] = self.read_reels_csv(os.path.join(self.reels_path, fname))
+        self.padding_reels[self.basegame_type] = self.reels["BR0"]
+        self.padding_reels[self.freegame_type] = self.reels["FR0"]
 
-        # --- Convenience attributes used by our calculation/executable layers ---
-        self.wild_symbol = self.special_symbols["wild"][0]
-        self.num_paylines = len(self.paylines)
-        self.symbol_paytable = {sym: {int(c): float(v) for c, v in pays.items()} for sym, pays in d["paytable"].items()}
+        mw = d["features"]["multiplierWilds"]
+        free_mult = {int(v): int(w) for v, w in zip(mw["values"], mw["weights"])}
+        base_mult = {1: 1}
+
+        # --- Convenience attributes used by the executables/override layers ---
+        self.contract_win_event = "wayWins"
+        self.wild_symbol = wild_id
+        self.scatter_symbol = scatter_id
         self.scatter_paytable = {int(c): float(v) for c, v in d["scatter"]["pays"].items()}
         self.scatter_min = int(d["scatter"]["minToTrigger"])
-        self.freespin_awards = awards
-        self.freespin_retrigger = bool(d["features"]["freeSpins"]["retrigger"])
-        ladder = d["features"]["freeSpins"]["multiplierLadder"]
+        self.free_win_scale = float(fs.get("winScale", 1.0))
+        ladder = fs["multiplierLadder"]
         self.ladder_start = int(ladder["start"])
         self.ladder_step = int(ladder["step"])
         self.ladder_max = int(ladder["max"])
-        self.free_win_scale = float(d["features"]["freeSpins"].get("winScale", 1.0))
-        self.mult_wild_values = [int(v) for v in d["features"]["multiplierWilds"]["values"]]
-        self.mult_wild_weights = [int(w) for w in d["features"]["multiplierWilds"]["weights"]]
-        self.expanding_wilds = bool(d["features"]["expandingWilds"]["enabled"])
+        self.expanding_reels = ()  # expanding wilds disabled for this game
+
+        def cond(force_freegame: bool, force_wincap: bool) -> dict:
+            return {
+                "reel_weights": {
+                    self.basegame_type: {"BR0": 1},
+                    self.freegame_type: {"FR0": 1},
+                },
+                "scatter_triggers": {k: 1 for k in awards},
+                "mult_values": {self.basegame_type: base_mult, self.freegame_type: free_mult},
+                "force_wincap": force_wincap,
+                "force_freegame": force_freegame,
+            }
+
+        base_only = {
+            "reel_weights": {self.basegame_type: {"BR0": 1}},
+            "mult_values": {self.basegame_type: base_mult},
+            "force_wincap": False,
+            "force_freegame": False,
+        }
+        buy_cost = float(d["features"]["bonusBuy"]["costMultiplier"])
 
         self.bet_modes = [
             BetMode(
@@ -112,74 +136,22 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=False,
-                distributions=self._base_distributions(),
+                distributions=[
+                    Distribution(criteria="freegame", quota=0.1, conditions=cond(True, False)),
+                    Distribution(criteria="0", quota=0.4, win_criteria=0.0, conditions=base_only),
+                    Distribution(criteria="basegame", quota=0.5, conditions=base_only),
+                ],
             ),
             BetMode(
                 name="bonus",
-                cost=float(d["features"]["bonusBuy"]["costMultiplier"]),
+                cost=buy_cost,
                 rtp=self.rtp,
                 max_win=self.wincap,
                 auto_close_disabled=False,
-                is_feature=True,
+                is_feature=False,
                 is_buybonus=True,
-                distributions=self._bonus_distributions(),
-            ),
-        ]
-
-    # ------------------------------------------------------------------ #
-    def _base_distributions(self) -> list:
-        return [
-            Distribution(
-                criteria="wincap",
-                quota=0.001,
-                win_criteria=self.wincap,
-                conditions={
-                    "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                    "force_wincap": True,
-                    "force_freegame": True,
-                },
-            ),
-            Distribution(
-                criteria="freegame",
-                quota=0.1,
-                conditions={
-                    "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                    "force_wincap": False,
-                    "force_freegame": True,
-                },
-            ),
-            Distribution(
-                criteria="0",
-                quota=0.45,
-                win_criteria=0.0,
-                conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}, "force_wincap": False, "force_freegame": False},
-            ),
-            Distribution(
-                criteria="basegame",
-                quota=0.45,
-                conditions={"reel_weights": {self.basegame_type: {"BR0": 1}}, "force_wincap": False, "force_freegame": False},
-            ),
-        ]
-
-    def _bonus_distributions(self) -> list:
-        return [
-            Distribution(
-                criteria="wincap",
-                quota=0.002,
-                win_criteria=self.wincap,
-                conditions={
-                    "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                    "force_wincap": True,
-                    "force_freegame": True,
-                },
-            ),
-            Distribution(
-                criteria="freegame",
-                quota=0.998,
-                conditions={
-                    "reel_weights": {self.basegame_type: {"BR0": 1}, self.freegame_type: {"FR0": 1}},
-                    "force_wincap": False,
-                    "force_freegame": True,
-                },
+                distributions=[
+                    Distribution(criteria="freegame", quota=1.0, conditions=cond(True, False)),
+                ],
             ),
         ]

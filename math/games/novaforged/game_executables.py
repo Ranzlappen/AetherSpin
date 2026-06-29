@@ -16,7 +16,7 @@ These mirror the standalone engine (`math/simulator/engine.py` +
   multiplier.
 
 Win evaluation only *computes and stashes* the per-board results
-(`contract_line_wins` / `contract_line_total` / `contract_scatter`) and updates
+(`contract_wins` / `contract_win_total` / `contract_scatter`) and updates
 the win manager; the gamestate emits the shared `BookEvent`s (see
 `game_events.py`) in the right order.
 """
@@ -39,8 +39,8 @@ class GameExecutables(GameCalculations):
         self.win_data = Lines.get_lines(self.board, self.config, multiplier_method="symbol")
         Lines.record_lines_wins(self)
         line_total = self.win_data["totalWin"]
-        self.contract_line_wins = self._to_contract_line_wins(self.win_data["wins"])
-        self.contract_line_total = line_total
+        self.contract_wins = self._to_contract_wins(self.win_data["wins"])
+        self.contract_win_total = line_total
 
         scatter_count = self.count_special_symbols("scatter")
         scatter_total = float(self.config.scatter_paytable.get(scatter_count, 0.0))
@@ -57,7 +57,7 @@ class GameExecutables(GameCalculations):
         self.evaluate_wincap()
 
     @staticmethod
-    def _to_contract_line_wins(sdk_wins: list) -> list:
+    def _to_contract_wins(sdk_wins: list) -> list:
         """Translate SDK line-win dicts into the shared `LineWin` shape.
 
         With ``global_multiplier=1`` the SDK's per-line ``win`` is the base

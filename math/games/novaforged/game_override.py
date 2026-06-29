@@ -20,8 +20,8 @@ class GameStateOverride(GameExecutables):
         super().reset_book()
         self.global_multiplier = self.config.ladder_start
         self.expanding_wild_reels = []
-        self.contract_line_wins = []
-        self.contract_line_total = 0.0
+        self.contract_wins = []
+        self.contract_win_total = 0.0
         self.contract_scatter = None
         self.contract_free_total = 0.0
 

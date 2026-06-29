@@ -112,6 +112,7 @@ class GameConfig(Config):
         base_mult = {1: 1}
 
         # --- Convenience attributes used by the executables/override layers ---
+        self.contract_win_event = "lineWins"
         self.wild_symbol = wild_id
         self.scatter_symbol = scatter_id
         self.scatter_paytable = {int(c): float(v) for c, v in d["scatter"]["pays"].items()}

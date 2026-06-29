@@ -39,8 +39,8 @@ class GameState(GameStateOverride):
 
             self.evaluate_board_wins()
             ev.reveal_event(self, self.config.basegame_type)
-            if self.contract_line_wins:
-                ev.line_wins_event(self, self.config.basegame_type)
+            if self.contract_wins:
+                ev.win_event(self, self.config.basegame_type)
             if self.contract_scatter:
                 ev.scatter_win_event(self)
             self.win_manager.update_gametype_wins(self.gametype)
@@ -63,7 +63,7 @@ class GameState(GameStateOverride):
 
             self.evaluate_board_wins()
             ev.reveal_event(self, self.config.freegame_type, spin=self.fs, spins_total=self.tot_fs)
-            if self.contract_line_wins or self.contract_scatter:
+            if self.contract_wins or self.contract_scatter:
                 ev.free_spin_result_event(self, self.fs)
             self.contract_free_total += self.win_manager.spin_win
 

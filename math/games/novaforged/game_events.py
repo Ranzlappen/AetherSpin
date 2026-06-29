@@ -58,14 +58,15 @@ def reveal_event(gamestate, game_type: str, spin: int = None, spins_total: int =
     gamestate.book.add_event(event)
 
 
-def line_wins_event(gamestate, game_type: str) -> None:
-    """Batched line wins for a board (base game)."""
+def win_event(gamestate, game_type: str) -> None:
+    """Batched mechanic wins for a board (base game). The event type is the
+    mechanic's contract name (`config.contract_win_event` — lineWins here)."""
     gamestate.book.add_event(
         {
-            "type": "lineWins",
+            "type": gamestate.config.contract_win_event,
             "gameType": _contract_gametype(gamestate, game_type),
-            "wins": gamestate.contract_line_wins,
-            "amount": round(gamestate.contract_line_total, 6),
+            "wins": gamestate.contract_wins,
+            "amount": round(gamestate.contract_win_total, 6),
         }
     )
 
@@ -99,7 +100,7 @@ def free_spin_result_event(gamestate, spin: int) -> None:
         {
             "type": "freeSpinResult",
             "spin": spin,
-            "wins": gamestate.contract_line_wins,
+            "wins": gamestate.contract_wins,
             "scatter": gamestate.contract_scatter,
             "globalMultiplier": int(gamestate.global_multiplier),
             "amount": round(gamestate.win_manager.spin_win, 6),
