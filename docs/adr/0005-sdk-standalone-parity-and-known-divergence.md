@@ -83,3 +83,55 @@ performs where the SDK is available.
 - Once a real SDK run passes the free-game-aware `check-sdk-parity.sh`, this ADR's
   "known divergence" section can be removed and the parity gate promoted toward a
   required check.
+
+## Update 2 — what the first real SDK run revealed
+
+The SDK was finally run against in an SDK-capable session (vendored via a
+GitHub **tarball** through the HTTPS proxy — plain `git clone` is allowlist-blocked
+here). The result corrects the record: **the `math/games/<id>/*.py` modules were
+written against an _assumed_ SDK API and do not execute on the current
+`StakeEngine/math-sdk`.** `py_compile` + the pure event-factory contract tests
+never caught this because nothing instantiated the SDK classes.
+
+What the run surfaced (novaforged):
+
+- `GameState` can't be instantiated — the SDK's `src/state/state.py` declares an
+  abstract `assign_special_sym_function()` the modules don't implement.
+- The modules also call methods that **don't exist** on the real bases
+  (`create_board_reelstrips`, an instance `get_line_wins`, hand-written
+  `game_events` factories appended via `self.book.add_event`). The real SDK uses a
+  different surface: `Lines.get_lines(...)` / `record_lines_wins` /
+  `emit_linewin_events` (static, on `src.calculations.lines.Lines`), events from
+  `src.events.events.*`, and a **Symbol-attribute model** where a board cell is a
+  `Symbol` object carrying attributes.
+
+Crucially, **the SDK implements realized multiplier wilds natively**: an
+`assign_special_sym_function` maps `"W" → assign_mult_property`, which samples a
+per-symbol multiplier from the bet-mode distribution
+(`get_current_distribution_conditions()["mult_values"][gametype]`) and stores it
+on the symbol. So the _mechanic_ from #49 (realized per-cell wilds, summed per
+line) is aligned with how the SDK already works — what's wrong is the **API
+surface**, not the math model.
+
+### The real remaining work (re-scoped)
+
+The SDK modules need a **port to the current SDK API**, modeled on the SDK's own
+example games (under `math/engine/games/` once vendored):
+
+| AetherSpin game   | Closest SDK example | Notes                                           |
+| ----------------- | ------------------- | ----------------------------------------------- |
+| `novaforged`      | `0_0_expwilds`      | lines + expanding wilds + multiplier wilds + FS |
+| `cosmicways`      | `0_0_ways`          | all-ways                                        |
+| `stellarclusters` | `0_0_cluster`       | cluster pays                                    |
+
+The port re-implements `game_config` (real `Config`/`BetMode`/`Distribution`
+with `mult_values`/`landing_wilds` conditions), `gamestate` (real run loop:
+`Lines.get_lines` → `record_lines_wins` → `emit_linewin_events`),
+`game_override` (`assign_special_sym_function`, resets), and `game_events`
+(built on `src.events`), parameterized by the shared definition. The
+free-game-aware `check-sdk-parity.sh` is the acceptance test (RTP + book contract
+
+- realized wilds). Until that passes, **the standalone + frontend remain the
+  validated truth** and the SDK modules are non-functional scaffolding. This is the
+  genuine remaining certification work — larger than the "averaged vs realized"
+  framing above implied.
