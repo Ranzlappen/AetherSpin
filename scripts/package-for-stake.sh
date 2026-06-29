@@ -148,6 +148,16 @@ python3 "$ROOT/scripts/make_submission_artifacts.py" \
   --bundle-dir "$OUT_DIR" --game "$GAME_ID" --version "$VERSION"
 
 # ---------------------------------------------------------------------------
+# 4c. Fail closed if the bundle's version/provenance drifts from the definition
+#     (e.g. a stale math library packaged against a newer definition).
+# ---------------------------------------------------------------------------
+echo "==> Verifying version consistency (definition ↔ config ↔ bundle) ..."
+python3 "$ROOT/scripts/check-version-consistency.py" "$GAME_ID" --bundle "$OUT_DIR" || {
+  echo "ERROR: bundle failed version-consistency check — regenerate the math library and re-package." >&2
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
 # 5. Zip it.
 # ---------------------------------------------------------------------------
 ZIP_PATH="$OUT_ROOT/$GAME_ID-v$VERSION.zip"
