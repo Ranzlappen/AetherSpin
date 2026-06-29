@@ -93,11 +93,30 @@ def validate_book(book: dict, idx: int) -> list[str]:
     return errors
 
 
-def validate_file(path: str) -> tuple[int, list[str]]:
+def _load_books(path: str) -> list:
+    """Load books from a `.json` array, a `{id: book}` map, or a compressed
+    `.jsonl.zst`/`.jsonl` stream (the SDK's publish format)."""
+    if path.endswith(".zst") or path.endswith(".zstd"):
+        import zstandard as zstd  # optional; only needed for compressed books
+        from io import TextIOWrapper
+
+        books = []
+        with open(path, "rb") as f:
+            with zstd.ZstdDecompressor().stream_reader(f) as reader:
+                for line in TextIOWrapper(reader, encoding="utf-8"):
+                    line = line.strip()
+                    if line:
+                        books.append(json.loads(line))
+        return books
     with open(path, "r", encoding="utf-8") as f:
+        if path.endswith(".jsonl"):
+            return [json.loads(line) for line in f if line.strip()]
         data = json.load(f)
-    if isinstance(data, dict):  # tolerate {id: book} maps
-        data = list(data.values())
+    return list(data.values()) if isinstance(data, dict) else data
+
+
+def validate_file(path: str) -> tuple[int, list[str]]:
+    data = _load_books(path)
     errors: list[str] = []
     for idx, book in enumerate(data):
         errors.extend(validate_book(book, idx))

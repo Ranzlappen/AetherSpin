@@ -16,6 +16,20 @@ import game_events as ev
 class GameState(GameStateOverride):
     """Handles game logic and events for a single simulation/round."""
 
+    def run_sims(self, *args, **kwargs):
+        """Reset the per-run payout sidecar before each mode/thread run.
+
+        The SDK initialises `self._payout_ints` only in `__init__` and never
+        clears it between bet modes, so when `create_books` runs base then bonus
+        on the same gamestate the bonus run's verification sidecar accumulates
+        base's payouts too (25k vs 5k) and its `payout_hash` no longer matches the
+        published lookup table. Each `run_sims` call writes its own per-thread
+        sidecar, so clearing here makes every sidecar contain only its own run's
+        payouts — fixing `execute_all_tests`' fast-path verification.
+        """
+        self._payout_ints = []
+        return super().run_sims(*args, **kwargs)
+
     def run_spin(self, sim, simulation_seed=None):
         self.reset_seed(sim)
         self.repeat = True

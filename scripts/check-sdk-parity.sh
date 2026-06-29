@@ -54,95 +54,75 @@ if [ -f "$ENGINE/requirements.txt" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 2. Generate a SMALL, uncompressed SDK library (create_books directly — skips
-#    the heavy Rust optimizer that run.py would invoke). Fail-soft.
+# 2. Generate a SMALL, COMPRESSED SDK library (create_books directly — skips the
+#    heavy Rust optimizer that run.py would invoke) and run the SDK's OWN upload
+#    verifier (execute_all_tests = verify_lookup_format + book/LUT payout-hash +
+#    SHA-256). This is the authoritative Stake RGS conformance check. Fail-soft.
+#    Imports use the game's real path so the shared definition resolves; cwd is
+#    the engine root so the stats summary's relative path is valid.
 # ---------------------------------------------------------------------------
-echo "==> running the SDK book generation ($SIMS sims, no optimizer)…"
+echo "==> generating compressed SDK books + running the SDK RGS verifier ($SIMS sims)…"
+REAL_GAME_DIR="$ROOT/math/games/$GAME"
 (
-  cd "$ENGINE/games/$GAME"
-  PYTHONHASHSEED=0 PYTHONPATH="$ENGINE" python3 - "$SIMS" <<'PY'
-import sys
+  cd "$ENGINE"
+  PYTHONHASHSEED=0 PYTHONPATH="$ENGINE" REAL_GAME_DIR="$REAL_GAME_DIR" python3 - "$SIMS" <<'PYEOF'
+import os, sys, warnings
+sys.path.insert(0, os.environ["REAL_GAME_DIR"])
 sims = int(sys.argv[1])
 from game_config import GameConfig
 from gamestate import GameState
-from src.state.run_sims import create_books  # type: ignore
+from src.state.run_sims import create_books          # type: ignore
+from utils.rgs_verification import execute_all_tests  # type: ignore
 cfg = GameConfig()
 gs = GameState(cfg)
-create_books(gs, cfg, {"base": sims, "bonus": max(1, sims // 4)}, max(1, sims), 1, False, False)
-print("SDK_BOOKS_OK")
-PY
-) >/tmp/sdk-gen.log 2>&1 || skip "SDK generation failed (see /tmp/sdk-gen.log) — reconcile in an SDK-capable env"
-grep -q "SDK_BOOKS_OK" /tmp/sdk-gen.log || skip "SDK generation did not complete"
+create_books(gs, cfg, {"base": sims, "bonus": max(1, sims // 4)}, max(1, sims), 1, True, False)
+with warnings.catch_warnings():           # quota-shaped pre-optimizer RTP warns; not a failure
+    warnings.simplefilter("ignore")
+    execute_all_tests(cfg)
+print("RGS_VERIFY_OK")
+PYEOF
+) >/tmp/sdk-gen.log 2>&1 || { tail -30 /tmp/sdk-gen.log; \
+  if grep -qi "payout hash\|verify_lookup_format\|AssertionError" /tmp/sdk-gen.log; then
+    echo "FAIL: SDK RGS verification (execute_all_tests) failed — see above."; exit 1
+  fi; skip "SDK generation/verification could not run (see /tmp/sdk-gen.log)"; }
+grep -q "RGS_VERIFY_OK" /tmp/sdk-gen.log || { tail -30 /tmp/sdk-gen.log; skip "SDK verification did not complete"; }
+echo "==> check #1: SDK RGS verifier (verify_lookup_format + payout-hash + SHA-256) PASS"
 
-# Locate the SDK-produced books (uncompressed JSON arrays). The SDK's
-# construct_paths always writes to <game>/library/books/; fall back to find.
-SDK_BOOKS_DIR="$ENGINE/games/$GAME/library/books"
-SDK_BASE="$SDK_BOOKS_DIR/books_base.json"
-SDK_BONUS="$SDK_BOOKS_DIR/books_bonus.json"
-[ -f "$SDK_BASE" ] || SDK_BASE="$(find "$ENGINE" -name "books_base.json" 2>/dev/null | head -1)"
-[ -f "$SDK_BONUS" ] || SDK_BONUS="$(find "$ENGINE" -name "books_bonus.json" 2>/dev/null | head -1)"
-[ -f "$SDK_BASE" ] || skip "could not locate SDK-generated books"
+# Locate the compressed publish books for our own contract checks.
+PUB="$ENGINE/games/$GAME/library/publish_files"
+SDK_BASE="$PUB/books_base.jsonl.zst"
+SDK_BONUS="$PUB/books_bonus.jsonl.zst"
+[ -f "$SDK_BASE" ] || SDK_BASE="$(find "$ENGINE" -name "books_base.jsonl.zst" 2>/dev/null | head -1)"
+[ -f "$SDK_BONUS" ] || SDK_BONUS="$(find "$ENGINE" -name "books_bonus.jsonl.zst" 2>/dev/null | head -1)"
+[ -f "$SDK_BASE" ] || skip "could not locate SDK publish books"
 [ -f "$SDK_BONUS" ] || SDK_BONUS=""
 echo "    SDK books: ${SDK_BASE#$ROOT/}${SDK_BONUS:+, ${SDK_BONUS#$ROOT/}}"
 
 # ---------------------------------------------------------------------------
-# 3. Real check #1 — SDK books must satisfy the shared BookEvent contract.
-#    (validate_sdk_books understands the SDK's cents-encoded payoutMultiplier.)
+# 3. Real check #2 — SDK books must satisfy the shared BookEvent contract the
+#    frontend replays (the RGS treats events as opaque, so this is OUR guard).
 # ---------------------------------------------------------------------------
-echo "==> check #1: SDK books conform to the BookEvent contract…"
+echo "==> check #2: SDK books conform to the BookEvent contract…"
 python3 math/scripts/validate_sdk_books.py "$SDK_BASE" ${SDK_BONUS:+"$SDK_BONUS"} \
   || { echo "FAIL: SDK books violate the shared book contract (docs/adr/0005)."; exit 1; }
 
 # ---------------------------------------------------------------------------
-# 3b. Real check — lookup-table payouts must satisfy the Stake RGS rule
-#     (non-negative integers, divisible by 10, min non-zero 10). Uses the SDK's
-#     own verify_lookup_format where importable; stdlib fallback otherwise.
-# ---------------------------------------------------------------------------
-echo "==> check #1b: lookup-table payouts pass RGS format rules…"
-LUT_DIR="$ENGINE/games/$GAME/library/lookup_tables"
-python3 - "$LUT_DIR" <<'PY' || { echo "FAIL: lookup-table payouts violate the RGS 0.1x increment rule."; exit 1; }
-import csv, glob, os, sys
-lut_dir = sys.argv[1]
-luts = sorted(glob.glob(os.path.join(lut_dir, "lookUpTable_base.csv"))) + \
-       sorted(glob.glob(os.path.join(lut_dir, "lookUpTable_bonus.csv")))
-if not luts:
-    print("    (no lookup tables found — skipping)"); sys.exit(0)
-bad = 0
-for f in luts:
-    rows = nz_lt10 = nd10 = 0
-    for row in csv.reader(open(f)):
-        if len(row) < 3:
-            continue
-        rows += 1
-        p = float(row[2])
-        if not p.is_integer() or p < 0 or p % 10 != 0:
-            nd10 += 1
-        if 0 < p < 10:
-            nz_lt10 += 1
-    status = "OK" if (nd10 == 0 and nz_lt10 == 0) else "FAIL"
-    print(f"    {status} {os.path.basename(f)}: rows={rows} not-div-10={nd10} nonzero<10={nz_lt10}")
-    bad += nd10 + nz_lt10
-sys.exit(1 if bad else 0)
-PY
-
-# ---------------------------------------------------------------------------
-# 4. Real check #2 — free reveals must carry realized `multiplierWilds`
+# 4. Real check #3 — free reveals must carry realized `multiplierWilds`
 #    (only meaningful if the game has >1 multiplier wilds).
 # ---------------------------------------------------------------------------
 if [ -n "$SDK_BONUS" ]; then
-  echo "==> check #2: realized multiplierWilds on free reveals…"
-  python3 - "$GAME" "$SDK_BONUS" <<'PY' || exit 1
+  echo "==> check #3: realized multiplierWilds on free reveals…"
+  python3 - "$GAME" "$SDK_BONUS" <<'PYEOF' || exit 1
 import json, sys
-sys.path.insert(0, "math/simulator"); sys.path.insert(0, "math")
+sys.path.insert(0, "math/simulator"); sys.path.insert(0, "math"); sys.path.insert(0, "math/scripts")
 from simulator.definition import load_definition
+from validate_sdk_books import _load_books
 d = load_definition(sys.argv[1])
 vals = list(getattr(d, "mult_wild_values", []) or [])
 if not any(int(v) > 1 for v in vals):
     print("    (game has no >1 multiplier wilds — skipping multiplierWilds check)")
     sys.exit(0)
-books = json.load(open(sys.argv[2], encoding="utf-8"))
-if isinstance(books, dict):
-    books = list(books.values())
+books = _load_books(sys.argv[2])
 free_reveals = mw_reveals = 0
 for b in books:
     for e in b.get("events", []):
@@ -154,7 +134,7 @@ if free_reveals and mw_reveals == 0:
     print("FAIL: SDK free reveals carry no `multiplierWilds` — realized wilds not emitted.")
     sys.exit(1)
 print(f"    PASS: {mw_reveals}/{free_reveals} free reveals carried realized multiplierWilds.")
-PY
+PYEOF
 fi
 
 # ---------------------------------------------------------------------------
@@ -176,10 +156,10 @@ print(m.get("measuredRtp", m.get("rtp", "")))
 PY
 )"
   python3 - "$SDK_BASE" "$STD_RTP" "$RTP_TOL" <<'PY' || exit 1
-import json, sys
-books = json.load(open(sys.argv[1], encoding="utf-8"))
-if isinstance(books, dict):
-    books = list(books.values())
+import sys
+sys.path.insert(0, "math/scripts")
+from validate_sdk_books import _load_books
+books = _load_books(sys.argv[1])
 n = len(books)
 sdk_rtp = sum(b["payoutMultiplier"] for b in books) / 100.0 / n if n else 0.0
 std_rtp, tol = float(sys.argv[2]), float(sys.argv[3])

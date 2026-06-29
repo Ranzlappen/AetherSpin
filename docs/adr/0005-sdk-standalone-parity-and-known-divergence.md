@@ -226,13 +226,27 @@ lookup-table payouts. Guarded by `validate_sdk_books.py`, the
 `test_sdk_book_contract.py` quantization test, and a lookup-table check in
 `check-sdk-parity.sh`.
 
-Still open on the SDK upload path (needs the SDK+Rust submission environment, not
-reproducible in this harness): the Rust optimizer run that produces the certified
-weights/RTP, and `execute_all_tests`' **fast-path** verification sidecar for the
-**bonus** mode. The fast path compares a generation-order payout hash to the
-published lookup table; for the buy-bonus mode (forced free game + win-criteria
-repeats) the sidecar ordering diverges from the published table, so the
-`payout_hash` differs even though the authoritative **fallback** check (read the
-books, compare to the lookup table) passes. This is an SDK-internal
-sidecar/ordering artifact independent of the payout values (quantization changes
-values, not order) and is to be confirmed in a full optimizer run.
+### `execute_all_tests` passes — including the bonus verification sidecar
+
+Running the SDK's full uploader verifier (`execute_all_tests`) initially passed
+**base** but failed **bonus** on the fast-path `payout_hash`. Root cause: the SDK
+initialises `self._payout_ints` only in `__init__` and never clears it between bet
+modes, so when `create_books` runs base (20k) then bonus (5k) on the same
+gamestate, the bonus mode's verification sidecar accumulates **both** modes'
+payouts (25k vs 5k) and its hash no longer matches the published lookup table.
+This is an upstream SDK bug, not a payout-value problem (quantization changes
+values, not the sidecar count).
+
+Fix (from our side, since `math/engine/` is vendored/gitignored):
+`gamestate.GameState.run_sims` resets `self._payout_ints = []` before delegating
+to the SDK — each `run_sims` call writes its own per-thread sidecar, so each
+sidecar now contains only its own run's payouts. After this, `execute_all_tests`
+passes for **both** modes (fast path: SHA-256 OK, payout hash OK, entries
+20000/5000). `check-sdk-parity.sh` now runs the SDK's own `execute_all_tests` as
+its check #1 — the authoritative Stake RGS verification — over compressed publish
+books.
+
+What remains genuinely environment-bound: the **Rust optimizer** run that
+produces the certified selection weights and the post-optimization RTP. That
+needs the SDK+Rust submission environment; this harness validates everything up
+to (but not including) the optimizer.
