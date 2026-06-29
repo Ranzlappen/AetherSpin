@@ -7,7 +7,7 @@
 
 # Numerical / data analysis (optional: PAR sheets, distribution analysis)
 numpy>=2.4.6
-pandas>=3.0.3
+pandas>=3.0.4
 
 # Testing & quality
 pytest>=9.1.1
