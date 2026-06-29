@@ -82,7 +82,9 @@ class GameConfig(Config):
             self.freegame_type: min(awards) - 1,
         }
 
-        reels = {"BR0": "BR0.csv", "FR0": "FR0.csv"}
+        # WCAP is a wild-heavy free-game strip used only by the forced win-cap
+        # distribution so the 5000x cap is reliably reachable.
+        reels = {"BR0": "BR0.csv", "FR0": "FR0.csv", "WCAP": "WCAP.csv"}
         self.reels = {}
         for name, fname in reels.items():
             self.reels[name] = self.read_reels_csv(os.path.join(self.reels_path, fname))
@@ -124,6 +126,19 @@ class GameConfig(Config):
             "force_wincap": False,
             "force_freegame": False,
         }
+        # Forced win-cap: a wild-heavy free reel so the high win-scale free game
+        # reliably reaches the 5000x cap, giving the optimizer win-cap examples to
+        # weight. Multiplier wilds stay disabled (mult_values == {1: 1}).
+        wincap_condition = {
+            "reel_weights": {
+                self.basegame_type: {"BR0": 1},
+                self.freegame_type: {"FR0": 1, "WCAP": 8},
+            },
+            "scatter_triggers": {k: 1 for k in awards},
+            "mult_values": {self.basegame_type: base_mult, self.freegame_type: free_mult},
+            "force_wincap": True,
+            "force_freegame": True,
+        }
         buy_cost = float(d["features"]["bonusBuy"]["costMultiplier"])
 
         self.bet_modes = [
@@ -136,6 +151,12 @@ class GameConfig(Config):
                 is_feature=True,
                 is_buybonus=False,
                 distributions=[
+                    Distribution(
+                        criteria="wincap",
+                        quota=0.001,
+                        win_criteria=self.wincap,
+                        conditions=wincap_condition,
+                    ),
                     Distribution(criteria="freegame", quota=0.1, conditions=cond(True, False)),
                     Distribution(criteria="0", quota=0.4, win_criteria=0.0, conditions=base_only),
                     Distribution(criteria="basegame", quota=0.5, conditions=base_only),
@@ -150,7 +171,13 @@ class GameConfig(Config):
                 is_feature=False,
                 is_buybonus=True,
                 distributions=[
-                    Distribution(criteria="freegame", quota=1.0, conditions=cond(True, False)),
+                    Distribution(
+                        criteria="wincap",
+                        quota=0.005,
+                        win_criteria=self.wincap,
+                        conditions=wincap_condition,
+                    ),
+                    Distribution(criteria="freegame", quota=0.995, conditions=cond(True, False)),
                 ],
             ),
         ]

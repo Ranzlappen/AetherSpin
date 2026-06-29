@@ -63,6 +63,9 @@ fi
 # ---------------------------------------------------------------------------
 echo "==> generating compressed SDK books + running the SDK RGS verifier ($SIMS sims)…"
 REAL_GAME_DIR="$ROOT/math/games/$GAME"
+# Start from a clean library so a prior run's artifacts can't confuse the
+# verification sidecar fast-path (stale .json books / mismatched payout hash).
+rm -rf "$ENGINE/games/$GAME/library"
 (
   cd "$ENGINE"
   PYTHONHASHSEED=0 PYTHONPATH="$ENGINE" REAL_GAME_DIR="$REAL_GAME_DIR" python3 - "$SIMS" <<'PYEOF'
