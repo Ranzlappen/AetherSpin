@@ -14,7 +14,7 @@ pytest>=9.1.1
 pytest-cov>=7.1.0
 hypothesis>=6.100
 mypy>=1.11
-ruff>=0.15.18
+ruff>=0.15.20
 
 # TOML parsing for run_config.toml on Python <3.11 (3.11+ ships tomllib)
 tomli>=2.0; python_version < "3.11"
