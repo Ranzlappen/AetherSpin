@@ -71,6 +71,37 @@ class GameStateOverride(GameExecutables):
     def end_freespin(self) -> None:
         ev.free_spin_end_event(self, self.contract_free_total)
 
+    @staticmethod
+    def _quantize_payout(x: float) -> float:
+        """Round a payout to 10-cent (0.1x) increments.
+
+        Stake's RGS verification (`utils/rgs_verification.verify_lookup_format`)
+        requires every lookup-table payout to be a non-negative integer divisible
+        by 10 (book units = multiplier × 100), with the minimum non-zero payout
+        being 10 (0.1x). Our shared paytable, divided to per-line units, produces
+        sub-cent payouts, so the round total is rounded (half-up) to the nearest
+        0.1x here — the single, certified place a payout is quantized.
+        """
+        cents = int(round(x * 100))
+        tens = (cents + 5) // 10
+        return (tens * 10) / 100.0
+
+    def update_final_win(self) -> None:
+        """Quantize the round payout to 0.1x and keep the base/free split
+        consistent (overrides the SDK so certified payouts pass RGS verification).
+        """
+        final = min(self.win_manager.running_bet_win, self.config.wincap)
+        base = min(self.win_manager.basegame_wins, self.config.wincap)
+
+        final_q = self._quantize_payout(final)
+        base_q = min(self._quantize_payout(base), final_q)
+        free_q = round(final_q - base_q, 2)
+
+        self.final_win = final_q
+        self.book.payout_multiplier = final_q
+        self.book.basegame_wins = base_q
+        self.book.freegame_wins = free_q
+
     def evaluate_finalwin(self) -> None:
         """Set the payout multiplier (SDK bookkeeping) and emit the contract
         finalWin."""

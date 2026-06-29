@@ -94,6 +94,38 @@ python3 math/scripts/validate_sdk_books.py "$SDK_BASE" ${SDK_BONUS:+"$SDK_BONUS"
   || { echo "FAIL: SDK books violate the shared book contract (docs/adr/0005)."; exit 1; }
 
 # ---------------------------------------------------------------------------
+# 3b. Real check — lookup-table payouts must satisfy the Stake RGS rule
+#     (non-negative integers, divisible by 10, min non-zero 10). Uses the SDK's
+#     own verify_lookup_format where importable; stdlib fallback otherwise.
+# ---------------------------------------------------------------------------
+echo "==> check #1b: lookup-table payouts pass RGS format rules…"
+LUT_DIR="$ENGINE/games/$GAME/library/lookup_tables"
+python3 - "$LUT_DIR" <<'PY' || { echo "FAIL: lookup-table payouts violate the RGS 0.1x increment rule."; exit 1; }
+import csv, glob, os, sys
+lut_dir = sys.argv[1]
+luts = sorted(glob.glob(os.path.join(lut_dir, "lookUpTable_base.csv"))) + \
+       sorted(glob.glob(os.path.join(lut_dir, "lookUpTable_bonus.csv")))
+if not luts:
+    print("    (no lookup tables found — skipping)"); sys.exit(0)
+bad = 0
+for f in luts:
+    rows = nz_lt10 = nd10 = 0
+    for row in csv.reader(open(f)):
+        if len(row) < 3:
+            continue
+        rows += 1
+        p = float(row[2])
+        if not p.is_integer() or p < 0 or p % 10 != 0:
+            nd10 += 1
+        if 0 < p < 10:
+            nz_lt10 += 1
+    status = "OK" if (nd10 == 0 and nz_lt10 == 0) else "FAIL"
+    print(f"    {status} {os.path.basename(f)}: rows={rows} not-div-10={nd10} nonzero<10={nz_lt10}")
+    bad += nd10 + nz_lt10
+sys.exit(1 if bad else 0)
+PY
+
+# ---------------------------------------------------------------------------
 # 4. Real check #2 — free reveals must carry realized `multiplierWilds`
 #    (only meaningful if the game has >1 multiplier wilds).
 # ---------------------------------------------------------------------------

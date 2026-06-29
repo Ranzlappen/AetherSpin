@@ -79,6 +79,17 @@ def validate_book(book: dict, idx: int) -> list[str]:
             errors.append(
                 f"book {bid}: payoutMultiplier {book['payoutMultiplier']} != finalWin amount*100 ({expect})"
             )
+
+    # Stake RGS rule (utils/rgs_verification.verify_lookup_format): the payout
+    # must be a non-negative integer, divisible by 10, and >= 10 when non-zero.
+    if "payoutMultiplier" in book:
+        pm = book["payoutMultiplier"]
+        if int(pm) != pm or pm < 0:
+            errors.append(f"book {bid}: payoutMultiplier {pm} is not a non-negative integer")
+        elif pm % 10 != 0:
+            errors.append(f"book {bid}: payoutMultiplier {pm} is not divisible by 10 (0.1x increments)")
+        elif 0 < pm < 10:
+            errors.append(f"book {bid}: payoutMultiplier {pm} below the minimum non-zero payout (10)")
     return errors
 
 

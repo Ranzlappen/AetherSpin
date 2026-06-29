@@ -86,6 +86,19 @@ def test_every_book_conforms_to_contract(sdk_books, mode):
     assert not errors, f"{mode}: {len(errors)} contract violation(s):\n" + "\n".join(errors[:20])
 
 
+@pytest.mark.parametrize("mode", ["base", "bonus"])
+def test_payouts_quantized_to_tenths(sdk_books, mode):
+    """Stake RGS requires lookup-table payouts divisible by 10 (0.1x increments)
+    with a minimum non-zero payout of 10 — so every book payoutMultiplier must
+    be a non-negative multiple of 10 that is 0 or >= 10."""
+    bad = [
+        b.get("id")
+        for b in sdk_books[mode]
+        if b["payoutMultiplier"] % 10 != 0 or 0 < b["payoutMultiplier"] < 10
+    ]
+    assert not bad, f"{mode}: {len(bad)} books violate the 0.1x payout rule, e.g. {bad[:10]}"
+
+
 def test_free_game_mechanics_present(sdk_books):
     """The bonus mode must exercise the full free-game vocabulary."""
     types = {e["type"] for book in sdk_books["bonus"] for e in book["events"]}

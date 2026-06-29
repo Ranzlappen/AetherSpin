@@ -204,3 +204,35 @@ that only runs in an SDK+Rust environment; the runnable-everywhere guards are th
 per-outcome math equivalence and the book contract. The standalone remains the
 fast validated mirror and the source of the pre-submission RTP number; the SDK's
 optimizer produces the certified PAR.
+
+## Update 4 — payout quantization (RGS upload rule)
+
+Running the SDK's own upload verifier (`utils/rgs_verification.py`) surfaced a
+hard conformance rule the port initially violated: `verify_lookup_format`
+asserts every lookup-table payout is a **non-negative integer, divisible by 10,
+with a minimum non-zero value of 10** (book units = multiplier × 100, so payouts
+are quantized to **0.1x** / 10-cent increments). Our shared paytable, divided to
+per-line units (÷ `num_paylines`), produces sub-cent payouts (e.g. `0.73x →
+73`), so 181/400 base lookup rows failed the rule.
+
+Fix: `game_override.update_final_win` is overridden to **round the round payout
+to the nearest 0.1x** (half-up), keeping the base/free split summing to the
+quantized total. This is the single, certified place a payout is quantized — the
+per-event amounts stay at full precision; only the authoritative
+`payoutMultiplier` / lookup-table payout is snapped to the grid. After the fix
+the SDK's `verify_lookup_format` passes for both modes (0 violations over 25k
+books), and `compare_payout_values` confirms the book payouts equal the
+lookup-table payouts. Guarded by `validate_sdk_books.py`, the
+`test_sdk_book_contract.py` quantization test, and a lookup-table check in
+`check-sdk-parity.sh`.
+
+Still open on the SDK upload path (needs the SDK+Rust submission environment, not
+reproducible in this harness): the Rust optimizer run that produces the certified
+weights/RTP, and `execute_all_tests`' **fast-path** verification sidecar for the
+**bonus** mode. The fast path compares a generation-order payout hash to the
+published lookup table; for the buy-bonus mode (forced free game + win-criteria
+repeats) the sidecar ordering diverges from the published table, so the
+`payout_hash` differs even though the authoritative **fallback** check (read the
+books, compare to the lookup table) passes. This is an SDK-internal
+sidecar/ordering artifact independent of the payout values (quantization changes
+values, not order) and is to be confirmed in a full optimizer run.
