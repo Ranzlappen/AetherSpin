@@ -151,7 +151,7 @@ needed to share the canonical inputs:
   land on the same per-line payout.
 - **Reel-header strip.** The shared reel CSVs carry an `R1..R5` column header
   the SDK's `read_reels_csv` would ingest as a symbol (`'R4' is not
-  registered`); `game_config` overrides the reader to drop it.
+registered`); `game_config` overrides the reader to drop it.
 
 All four NovaForged free-game mechanics are realized natively in the SDK and
 verified against a book set: realized multiplier wilds (native Symbol
@@ -256,11 +256,11 @@ to (but not including) the optimizer.
 The remaining two games are now ported to the real SDK with the same treatment
 as NovaForged:
 
-| Game              | Mechanic    | SDK calc                 | Win event     |
-| ----------------- | ----------- | ------------------------ | ------------- |
-| `novaforged`      | lines       | `Lines.get_lines`        | `lineWins`    |
-| `cosmicways`      | all-ways    | `Ways.get_ways_data`     | `wayWins`     |
-| `stellarclusters` | cluster     | `Cluster.get_cluster_data` | `clusterWins` |
+| Game              | Mechanic | SDK calc                   | Win event     |
+| ----------------- | -------- | -------------------------- | ------------- |
+| `novaforged`      | lines    | `Lines.get_lines`          | `lineWins`    |
+| `cosmicways`      | all-ways | `Ways.get_ways_data`       | `wayWins`     |
+| `stellarclusters` | cluster  | `Cluster.get_cluster_data` | `clusterWins` |
 
 Cosmic Ways and Stellar Clusters both disable multiplier wilds
 (`multiplierWilds.values == [1]`) and expanding wilds, so their free game is
