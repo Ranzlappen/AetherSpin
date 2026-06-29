@@ -14,6 +14,11 @@ These mirror the standalone engine (`math/simulator/engine.py` +
 * **Expanding wilds** turn any of the middle reels carrying a wild into a full
   wild reel (free game only), each new cell sampling its own realized
   multiplier.
+
+Win evaluation only *computes and stashes* the per-board results
+(`contract_line_wins` / `contract_line_total` / `contract_scatter`) and updates
+the win manager; the gamestate emits the shared `BookEvent`s (see
+`game_events.py`) in the right order.
 """
 
 from game_calculations import GameCalculations
@@ -23,7 +28,8 @@ from src.calculations.statistics import get_random_outcome  # type: ignore
 
 class GameExecutables(GameCalculations):
     def evaluate_board_wins(self):
-        """Evaluate line + scatter wins, apply free-game scaling, bank + emit.
+        """Evaluate line + scatter wins, apply free-game scaling, bank, and
+        stash the contract-shaped results for event emission.
 
         Line evaluation uses the additive symbol-multiplier strategy so the
         realized wild multipliers sum per line (matching the standalone). In the
@@ -33,8 +39,14 @@ class GameExecutables(GameCalculations):
         self.win_data = Lines.get_lines(self.board, self.config, multiplier_method="symbol")
         Lines.record_lines_wins(self)
         line_total = self.win_data["totalWin"]
+        self.contract_line_wins = self._to_contract_line_wins(self.win_data["wins"])
+        self.contract_line_total = line_total
 
-        scatter_total = self.evaluate_scatter_pays()
+        scatter_count = self.count_special_symbols("scatter")
+        scatter_total = float(self.config.scatter_paytable.get(scatter_count, 0.0))
+        self.contract_scatter = (
+            {"count": scatter_count, "amount": round(scatter_total, 6)} if scatter_total > 0 else None
+        )
 
         if self.gametype == self.config.freegame_type:
             spin_win = (line_total + scatter_total) * self.global_multiplier * self.config.free_win_scale
@@ -42,12 +54,30 @@ class GameExecutables(GameCalculations):
             spin_win = line_total + scatter_total
 
         self.win_manager.update_spinwin(round(spin_win, 6))
-        Lines.emit_linewin_events(self)
+        self.evaluate_wincap()
 
-    def evaluate_scatter_pays(self) -> float:
-        """Scatter pays by count, in total-bet units (0 below the trigger min)."""
-        count = self.count_special_symbols("scatter")
-        return float(self.config.scatter_paytable.get(count, 0.0))
+    @staticmethod
+    def _to_contract_line_wins(sdk_wins: list) -> list:
+        """Translate SDK line-win dicts into the shared `LineWin` shape.
+
+        With ``global_multiplier=1`` the SDK's per-line ``win`` is the base
+        payout times the summed wild multiplier — exactly the standalone's
+        unscaled per-line amount (the global/free scaling is applied to the spin
+        total, not the line). ``meta.multiplier`` is that summed wild multiplier.
+        """
+        wins = []
+        for win in sdk_wins:
+            meta = win["meta"]
+            wins.append(
+                {
+                    "line": int(meta["lineIndex"]) - 1,  # SDK payline ids are 1-indexed
+                    "symbol": win["symbol"],
+                    "count": int(win["kind"]),
+                    "wildMultiplier": int(meta["multiplier"]),
+                    "amount": round(float(win["win"]), 6),
+                }
+            )
+        return wins
 
     def expand_wilds(self) -> None:
         """Expand any middle reel holding a wild into a full wild reel.
@@ -69,9 +99,22 @@ class GameExecutables(GameCalculations):
                 expanded.append(reel)
         self.expanding_wild_reels = expanded
 
-    def bump_ladder(self) -> None:
-        """Advance the global-multiplier ladder after any winning free spin."""
+    def evaluate_wincap(self) -> bool:
+        """Flag the win-cap without emitting the SDK's native `wincap` event —
+        the contract carries the cap on `finalWin.wincap` instead."""
+        if self.win_manager.running_bet_win >= self.config.wincap and not self.wincap_triggered:
+            self.wincap_triggered = True
+            return True
+        return False
+
+    def bump_ladder(self) -> bool:
+        """Advance the global-multiplier ladder after a winning free spin.
+
+        Returns True if the multiplier actually advanced (so the caller can emit
+        a `ladderStep`)."""
         if self.win_manager.spin_win > 0 and self.global_multiplier < self.config.ladder_max:
             self.global_multiplier = min(
                 self.config.ladder_max, self.global_multiplier + self.config.ladder_step
             )
+            return True
+        return False
