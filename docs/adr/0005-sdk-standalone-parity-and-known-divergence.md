@@ -276,4 +276,40 @@ Verified for all three: `check-sdk-parity.sh <game>` passes — the SDK's own
 `execute_all_tests` (verify_lookup_format + book/LUT payout-hash + SHA-256) green
 for both modes, and every book conforms to the `BookEvent` contract. The
 hermetic `test_event_contract.py` covers each game's event factories in CI
-(no SDK). Only the Rust optimizer run remains environment-bound.
+(no SDK).
+
+## Update 6 — the Rust optimizer runs; certified RTP solved to target
+
+Updates 3–5 called the Rust optimizer "environment-bound." That's now
+**superseded** — given a Rust toolchain and **Python 3.12** (the SDK's required
+interpreter; 3.11 runs `create_books` but not the full path), the optimizer runs
+end to end here once its config is ported to the real API.
+
+Two fixes made it work:
+
+1. **`game_optimization.py`** rewritten against the real `optimization_program`
+   API (`ConstructConditions`/`ConstructScaling`/`ConstructParameters`/
+   `ConstructFenceBias` + `verify_optimization_input`) — the previous module
+   imported a non-existent `OptimizationSetup` from `optimization_config`. The
+   per-mode RTP allocation across criteria (base: wincap/0/freegame/basegame;
+   bonus: wincap/freegame) sums to the target; NovaForged splits base-heavy, the
+   ways/cluster games free-game-heavy.
+2. **`run.py` ordering** — `OptimizationSetup(config)` must run **before** the
+   first `generate_configs`, because it populates `config.opt_params`, which
+   `generate_configs` writes into `math_config.json` (the optimizer reads its
+   `bet_modes`/`fences`/`bias` from there). The old order left those empty → the
+   Rust binary panicked with "betmode index not found."
+
+Result — all three games' certified libraries hit the target exactly (100k base
+/ 40k bonus sims):
+
+| Game              | base RTP | bonus RTP |
+| ----------------- | -------- | --------- |
+| `novaforged`      | 0.9650   | 0.9650    |
+| `cosmicways`      | 0.9650   | 0.9650    |
+| `stellarclusters` | 0.9650   | 0.9650    |
+
+`scripts/run-certification.sh <game>` runs the whole certified pipeline in one
+command (fail-soft if Python 3.12 / Rust / the SDK are absent); the prerequisites
+and the proven result are documented in `docs/sdk-certification-runbook.md`. The
+post-optimization RTP is no longer a deferred unknown.
