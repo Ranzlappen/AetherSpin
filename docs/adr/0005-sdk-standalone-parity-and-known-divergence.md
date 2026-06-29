@@ -250,3 +250,30 @@ What remains genuinely environment-bound: the **Rust optimizer** run that
 produces the certified selection weights and the post-optimization RTP. That
 needs the SDK+Rust submission environment; this harness validates everything up
 to (but not including) the optimizer.
+
+## Update 5 — all three games ported
+
+The remaining two games are now ported to the real SDK with the same treatment
+as NovaForged:
+
+| Game              | Mechanic    | SDK calc                 | Win event     |
+| ----------------- | ----------- | ------------------------ | ------------- |
+| `novaforged`      | lines       | `Lines.get_lines`        | `lineWins`    |
+| `cosmicways`      | all-ways    | `Ways.get_ways_data`     | `wayWins`     |
+| `stellarclusters` | cluster     | `Cluster.get_cluster_data` | `clusterWins` |
+
+Cosmic Ways and Stellar Clusters both disable multiplier wilds
+(`multiplierWilds.values == [1]`) and expanding wilds, so their free game is
+mechanic + scatter pays scaled by the win scale (flat ladder). The shared layer
+is now generic: the base-game win-event type comes from
+`config.contract_win_event`, and the gamestate guards expanding wilds (no-op when
+disabled), the ladder (no-op when flat), and retriggers (skipped when a game has
+no free-game trigger table). All the per-game certification mechanics —
+0.1x payout quantization, the per-mode payout-sidecar reset, the contract-event
+emission — are shared.
+
+Verified for all three: `check-sdk-parity.sh <game>` passes — the SDK's own
+`execute_all_tests` (verify_lookup_format + book/LUT payout-hash + SHA-256) green
+for both modes, and every book conforms to the `BookEvent` contract. The
+hermetic `test_event_contract.py` covers each game's event factories in CI
+(no SDK). Only the Rust optimizer run remains environment-bound.
