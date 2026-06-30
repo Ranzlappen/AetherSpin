@@ -13,6 +13,8 @@
 import { derived, get, writable, type Readable } from 'svelte/store';
 import { en } from '../locales/en';
 import { de } from '../locales/de';
+import { es } from '../locales/es';
+import { pt } from '../locales/pt';
 
 /** A valid translation key (the keys of the canonical English dictionary). */
 export type TranslationKey = keyof typeof en;
@@ -21,13 +23,18 @@ export type Translations = Record<TranslationKey, string>;
 /** Interpolation parameters for placeholder substitution (`{name}`). */
 export type TranslationParams = Record<string, string | number>;
 
-const DICTS = { en, de } as const;
-/** Supported locale codes (ISO 639-1). */
+const DICTS = { en, de, es, pt } as const;
+/** Supported locale codes (ISO 639-1; `pt` ships Brazilian Portuguese). */
 export type LocaleCode = keyof typeof DICTS;
 export const SUPPORTED_LOCALES = Object.keys(DICTS) as LocaleCode[];
 
 /** BCP-47 tags for `Intl` formatting, keyed by locale code. */
-const LOCALE_TAGS: Record<LocaleCode, string> = { en: 'en-US', de: 'de-DE' };
+const LOCALE_TAGS: Record<LocaleCode, string> = {
+  en: 'en-US',
+  de: 'de-DE',
+  es: 'es-ES',
+  pt: 'pt-BR',
+};
 
 /** The active locale code. */
 export const locale = writable<LocaleCode>('en');
