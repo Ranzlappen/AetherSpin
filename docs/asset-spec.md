@@ -21,10 +21,14 @@ swap** — no code changes for anything marked _wired_.
   is caught automatically.
 - **Shared vs per-game:** all three games (NovaForged · lines, Cosmic Ways ·
   ways, Stellar Clusters · cluster) currently **share one symbol set** (same
-  ids, same neon-cosmic theme). See _Per-game art_ below to give each title its
-  own look.
+  ids, same neon-cosmic theme). The per-game theming seam is already built — see
+  _Per-game art_ below to give each title its own look (drop-in, no code change).
 - **Design resolution:** the scene is laid out against **1280×800**; a symbol
-  tile renders at **132×132 px** on a 5×3 grid. Deliver at 2× for crispness.
+  tile renders at **132×132 px** on a 5×3 grid (8 px gap → board **700×420**).
+  Render resolution is capped at 2×, so author raster art at 2× for crispness.
+- **Formats:** not SVG-only. Textures load via Pixi `Assets.load` (parser by
+  extension): **SVG, WebP, PNG, AVIF, JPG**, and GPU-compressed **KTX2/Basis**.
+  SVG for symbols/logos/icons; WebP for raster plates/FX; PNG for lossless alpha.
 
 ---
 
@@ -61,14 +65,22 @@ keep the names. Placeholders today are SVG (`scripts/gen-placeholder-art.mjs`).
 > The procedural glyph letter is auto-hidden once a symbol texture loads, so your
 > art is the whole tile — no letter overlay to design around.
 
-### Per-game art (optional — needs a 1-line keying change)
+### Per-game art (wired — drop-in, no code change)
 
-To give each title its own symbols, namespace the keys/files by game
-(`symbol:<game>:<id>` → `symbols/<game>/<id>.svg`) and have `ReelEngine` query
-the active game id. Themes to target: **NovaForged** neon-cosmic (lines),
-**Cosmic Ways** ways-cosmic (brighter/expansive), **Stellar Clusters**
-cluster-cosmic (gem/constellation). Tell us if you want this and we'll wire the
-game-aware key (small change in `config/assets.ts` + `ReelEngine.symbolTexture`).
+The per-game theming seam is built: `config/assets.ts` resolves each symbol via
+`symbolAssetPath(id, game)`, which prefers a per-game override and otherwise falls
+back to the shared set (the renderer still asks for the same `symbol:<id>` key).
+To give a title its own symbols:
+
+1. Drop files under `frontend/public/games/<game>/symbols/<id>.{svg|webp|png}`
+   (same ids, same size/format targets as §1).
+2. Add the entries to `THEMED_SYMBOL_SETS` in `config/assets.ts`, e.g.
+   `cosmicways: { H1: 'games/cosmicways/symbols/H1.svg', … }`.
+
+Any id you don't override keeps the shared placeholder, so theming is incremental.
+Themes to target: **NovaForged** neon-cosmic (lines), **Cosmic Ways**
+ways-cosmic (brighter/expansive), **Stellar Clusters** cluster-cosmic
+(gem/constellation).
 
 ---
 
