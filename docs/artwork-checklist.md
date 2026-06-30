@@ -16,19 +16,24 @@ picks the parser by file extension, so any of these work for symbols/art:
 - **AVIF / JPG** also load; **KTX2/Basis** (GPU-compressed) supported if you ever
   need it. JPG only where alpha isn't needed.
 
-**Sizing rule:** the scene is laid out at **1280×800**; a symbol tile is
-**132×132** on a 5×3 grid (8 px gap → board **700×420**). The renderer caps render
-resolution at **2×**, so author raster art at **2×** the on-screen size. Vectors
-(SVG) are resolution-independent — no size to pick. sRGB; design for a near-black
-stage (`#05010f`).
+**Sizing rule:** the scene is laid out in **design pixels** (1280×800; a symbol
+tile is **132×132** on a 5×3 grid, 8 px gap → board **700×420**). On HiDPI screens
+the renderer draws each design pixel into more physical pixels, **capped at 2×**
+(`Math.min(devicePixelRatio, 2)`) — so the most it ever asks of your art is **2× the
+design size** (a 132² tile → 264² physical; the full scene → 2560×1600). **Deliver
+raster art at that 2× ("optimal") size**, rounded up for headroom — the tables below
+list both the on-screen and the deliver resolution. Vectors (SVG) are
+resolution-independent — no size to pick. sRGB; design for a near-black stage
+(`#05010f`).
 
 ## REQUIRED (wired now — drop-in swap, keep the filenames/keys)
 
 ### Symbols — 11 tiles → `frontend/public/symbols/<id>.{svg|webp|png}`
 
-- **Format:** SVG (preferred) _or_ WebP/PNG. **Size:** square; SVG any, raster
-  **512×512** (≥ 264×264 = 2× of the 132 px tile). Transparent; art within a ~10%
-  safe margin. **Weight:** ≲ 60 KB each (boot-loaded; CI bundle budget).
+- **Format:** SVG (preferred) _or_ WebP/PNG. **On-screen** 132×132 → **renderer
+  max** 264×264 (2×) → **deliver (optimal)** **512×512** raster (≥ 264² minimum), or
+  SVG (any). Square, transparent; art within a ~10% safe margin. **Weight:** ≲ 60 KB
+  each (boot-loaded; CI bundle budget).
 
 - [ ] `W` — Aether Crystal (wild, #7df9ff) — most iconic; substitutes all pays
 - [ ] `S` — Nova Sigil (scatter, #ff45e0) — must pop; triggers free spins
@@ -58,19 +63,19 @@ stage (`#05010f`).
 
 ## RECOMMENDED (turns demo → finished title; each needs a small code hook)
 
-| Asset                         | File(s)                                                    | Format                 | Target size                                          |
-| ----------------------------- | ---------------------------------------------------------- | ---------------------- | ---------------------------------------------------- |
-| **Background plate**          | `public/bg/<theme>.webp`                                   | WebP                   | **2560×1600** (2× of 1280×800)                       |
-| **Board frame / housing**     | `public/ui/reel-frame.{webp\|png}`                         | WebP/PNG, alpha        | wraps board 700×420 → **~1520×960** (2×), or 9-slice |
-| **Game logo / wordmark**      | `public/brand/<game>-logo.{webp\|png\|svg}`                | SVG or WebP/PNG, alpha | ~**1200 px** wide (SVG = any)                        |
-| **Loading screen**            | `public/brand/loading-bg.webp`                             | WebP                   | **2560×1600**                                        |
-| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`  | WebP, alpha            | ~**512×512** tileable/stretchable                    |
-| **Big-win burst**             | `public/fx/burst.webp` (+ sprite sheet)                    | WebP/PNG or atlas      | frames **512×512** (sheet ≤ 2048²)                   |
-| **Free-spins intro card**     | `public/fx/freespins-card.webp`                            | WebP, alpha            | **2560×1600** (full-screen splash)                   |
-| **UI button skins**           | `public/ui/btn-*.{webp\|png}`                              | WebP/PNG, alpha        | ~**256×256** per state (2×)                          |
-| **App icon / favicon**        | `public/favicon.svg`, `icon-192.png`, `icon-512.png`       | SVG + PNG              | **192×192** and **512×512**                          |
-| **Ambient music**             | `public/audio/music/base-loop.webm`, `freespins-loop.webm` | WebM + MP3             | seamless loop, streamed                              |
-| _(Optional)_ symbol win FX    | `public/symbols/anim/<id>.json` (+ atlas)                  | Spine/Lottie/atlas     | matches 132 px tile (author 2×)                      |
+| Asset                         | File(s)                                                    | Format                 | On-screen (design)               | Deliver @2× (optimal)               |
+| ----------------------------- | ---------------------------------------------------------- | ---------------------- | -------------------------------- | ----------------------------------- |
+| **Background plate**          | `public/bg/<theme>.webp`                                   | WebP                   | 1280×800 (full scene)            | **2560×1600**                       |
+| **Board frame / housing**     | `public/ui/reel-frame.{webp\|png}`                         | WebP/PNG, alpha        | ~760×480 (board 700×420 + frame) | **~1520×960** (or 9-slice)          |
+| **Game logo / wordmark**      | `public/brand/<game>-logo.{webp\|png\|svg}`                | SVG or WebP/PNG, alpha | ~600 px wide                     | **~1200 px** wide (SVG = any)       |
+| **Loading screen**            | `public/brand/loading-bg.webp`                             | WebP                   | 1280×800                         | **2560×1600**                       |
+| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`  | WebP, alpha            | ~256×256                         | **~512×512** (tileable/stretchable) |
+| **Big-win burst**             | `public/fx/burst.webp` (+ sprite sheet)                    | WebP/PNG or atlas      | frames ~256×256                  | **512×512** frames (sheet ≤ 2048²)  |
+| **Free-spins intro card**     | `public/fx/freespins-card.webp`                            | WebP, alpha            | 1280×800 (full-screen)           | **2560×1600**                       |
+| **UI button skins**           | `public/ui/btn-*.{webp\|png}`                              | WebP/PNG, alpha        | ~128×128 per state               | **~256×256** per state              |
+| **App icon / favicon**        | `public/favicon.svg`, `icon-192.png`, `icon-512.png`       | SVG + PNG              | n/a (icon)                       | **192×192** + **512×512** (SVG any) |
+| **Ambient music**             | `public/audio/music/base-loop.webm`, `freespins-loop.webm` | WebM + MP3             | n/a                              | seamless loop, streamed             |
+| _(Optional)_ symbol win FX    | `public/symbols/anim/<id>.json` (+ atlas)                  | Spine/Lottie/atlas     | 132×132                          | author **512×512** (2×)             |
 
 ## Per-game theming (the seam is built — drop files in)
 
