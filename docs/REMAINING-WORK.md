@@ -7,10 +7,12 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 1. Math / certification
 
-- [x] **Production-scale optimizer run** per game — DONE at 200k base / 60k bonus.
-      All three hit **RTP 0.9650 exact** (base & bonus). Certified white papers in
-      [`docs/white-papers/`](white-papers/). To re-run at full production counts
-      (1e6 / 2e5) before submission: `scripts/run-certification.sh <game>`.
+- [x] **Production-scale optimizer run** per game — DONE at **full production
+      counts (1e6 base / 2e5 bonus)**. All three hit **RTP 0.9650 exact** (base &
+      bonus), converging within a tight 0.02 tolerance; base lookup tables carry
+      ~1,000,000 distinct outcomes. Certified white papers regenerated from these
+      libraries in [`docs/white-papers/`](white-papers/). Reproduce:
+      `scripts/run-certification.sh <game>`.
 - [ ] **Per-game volatility/profile tuning.** All three currently share the same
       optimizer constraints (hit-rate, free-spin frequency 1-in-200, RTP split), so
       their headline frequencies are identical; only volatility differs by mechanic
