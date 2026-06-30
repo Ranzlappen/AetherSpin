@@ -19,7 +19,7 @@ from src.config.betmode import BetMode  # type: ignore
 
 
 def _load_shared_definition() -> dict:
-    here = os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(os.path.realpath(__file__))  # realpath: resolve the SDK symlink so shared/ is found
     candidates = [
         os.path.normpath(os.path.join(here, "..", "..", "..", "shared", "games", "stellarclusters", "game-definition.json")),
         os.path.normpath(os.path.join(here, "..", "..", "shared", "games", "stellarclusters", "game-definition.json")),

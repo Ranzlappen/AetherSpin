@@ -45,8 +45,8 @@ fi
 
 # SDK runtime deps for the 3.12 interpreter (PEP 668 external env → break-system).
 echo "==> ensuring Python 3.12 SDK deps…"
-"$PY" -m pip install -q --break-system-packages numpy zstandard python-dotenv >/tmp/sdk-pip312.log 2>&1 || true
-"$PY" -c "import numpy, zstandard, dotenv" 2>/dev/null || skip "could not import SDK deps under python3.12"
+"$PY" -m pip install -q --break-system-packages numpy zstandard python-dotenv xlsxwriter >/tmp/sdk-pip312.log 2>&1 || true
+"$PY" -c "import numpy, zstandard, dotenv, xlsxwriter" 2>/dev/null || skip "could not import SDK deps under python3.12"
 
 # Run the certified pipeline from the engine root using the game's real path so
 # the shared definition resolves; library writes under <game>/library/.
