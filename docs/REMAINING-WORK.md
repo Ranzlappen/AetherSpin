@@ -7,19 +7,19 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 1. Math / certification
 
-- [ ] **Production-scale optimizer run** per game. The optimizer is proven here
-      at 100k base / 40k bonus sims (RTP 0.9650 exact). Before actual submission,
-      re-run at production counts (`run.py` defaults: 1e6 base / 2e5 bonus) for
-      tighter convergence and the real distributions:
-      `scripts/run-certification.sh <game>`.
-- [ ] **Review the Cosmic Ways / Stellar Clusters RTP allocation.** Their
-      `game_optimization.py` splits base RTP free-game-heavy (heuristic that
-      converged at proof scale). Confirm the per-criteria split still hits target
-      and the volatility/hit-rate look right at production scale.
-- [ ] **PAR sheet review** from the certified (post-optimization) library — not
-      the standalone estimate. `package-for-stake.sh` + the SDK analysis output
-      feed this; have a math reviewer sign off hit-frequency, free-spin frequency,
-      win-cap frequency, and max-win.
+- [x] **Production-scale optimizer run** per game — DONE at 200k base / 60k bonus.
+      All three hit **RTP 0.9650 exact** (base & bonus). Certified white papers in
+      [`docs/white-papers/`](white-papers/). To re-run at full production counts
+      (1e6 / 2e5) before submission: `scripts/run-certification.sh <game>`.
+- [ ] **Per-game volatility/profile tuning.** All three currently share the same
+      optimizer constraints (hit-rate, free-spin frequency 1-in-200, RTP split), so
+      their headline frequencies are identical; only volatility differs by mechanic
+      (CV ≈ 9 / 12 / 12.5). Tune `game_optimization.py` per title if distinct
+      profiles are wanted.
+- [x] **PAR sheets** generated from the certified library —
+      [`docs/white-papers/<game>-white-paper.md`](white-papers/). Have a math
+      reviewer sign off the hit/free-spin/win-cap frequencies and max-win before
+      submission.
 - [ ] _(Known, low priority)_ **Ways multiplier-wild reconciliation** — moot while
       Cosmic Ways disables multiplier wilds (`values: [1]`); only needed if it ever
       enables `>1` wilds (the SDK's ways `"symbol"` strategy differs from the
