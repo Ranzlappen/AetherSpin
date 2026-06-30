@@ -23,7 +23,10 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 - [ ] _(Known, low priority)_ **Ways multiplier-wild reconciliation** — moot while
       Cosmic Ways disables multiplier wilds (`values: [1]`); only needed if it ever
       enables `>1` wilds (the SDK's ways `"symbol"` strategy differs from the
-      standalone's additive sum). See ADR 0005.
+      standalone's additive sum). See ADR 0005. A guard in
+      `math/games/cosmicways/game_config.py` now **fails fast** if a ways game
+      declares `>1` wilds before that reconciliation lands, so it can't silently
+      mis-pay.
 
 ## 2. Frontend / product
 

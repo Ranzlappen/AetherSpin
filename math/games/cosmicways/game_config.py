@@ -96,6 +96,20 @@ class GameConfig(Config):
         free_mult = {int(v): int(w) for v, w in zip(mw["values"], mw["weights"])}
         base_mult = {1: 1}
 
+        # Guard: multiplier wilds are disabled for this ways game (values == [1]).
+        # The SDK applies wild multipliers per the "symbol" strategy, which differs
+        # from the standalone engine's additive-sum reconciliation for ways wins
+        # (ADR 0005). Until that reconciliation is implemented and parity-tested,
+        # refuse to certify a ways game with realized (>1) multiplier wilds rather
+        # than silently mis-paying. See docs/REMAINING-WORK.md §1.
+        if any(int(v) > 1 for v in mw["values"]):
+            raise ValueError(
+                "cosmicways: multiplierWilds.values has a value > 1, but the ways "
+                "wild-multiplier reconciliation (SDK 'symbol' strategy vs standalone "
+                "additive sum) is not implemented. Implement + parity-test it before "
+                "enabling realized multiplier wilds for a ways game (ADR 0005)."
+            )
+
         # --- Convenience attributes used by the executables/override layers ---
         self.contract_win_event = "wayWins"
         self.wild_symbol = wild_id
