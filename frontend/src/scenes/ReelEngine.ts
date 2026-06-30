@@ -327,10 +327,15 @@ export class ReelEngine {
         }
         this.lineOverlay.poly(points, false).stroke({ color, width: 5, alpha: 0.85 });
       } else if ('cells' in win) {
-        // Cluster win: pulse exactly the connected cells the math reported.
+        // Cluster win: pulse the connected cells the math reported and outline
+        // each with a symbol-coloured rounded rect so the cluster reads as a group.
+        const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
         for (const { reel, row } of win.cells) {
           const cell = this.reels[reel]?.cells[row + 1];
           if (cell) cell.container.scale.set(1.12);
+          this.lineOverlay
+            .roundRect(reel * REEL_WIDTH + 2, row * CELL + 2, CELL - 4, CELL - 4, 6)
+            .stroke({ color, width: 4, alpha: 0.85 });
         }
       } else {
         // Ways win: pulse all matching (or wild) cells on the first `count` reels.

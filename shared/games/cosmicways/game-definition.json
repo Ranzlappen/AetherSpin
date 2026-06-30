@@ -208,6 +208,8 @@
   },
   "responsibleGaming": {
     "realityCheckMinutes": 60,
-    "helpUrl": "https://www.begambleaware.org/"
+    "helpUrl": "https://www.begambleaware.org/",
+    "ageRating": 18,
+    "legalDisclaimer": "Play responsibly. You must be 18+ to play. Gambling involves risk; never wager more than you can afford to lose."
   }
 }

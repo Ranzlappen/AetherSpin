@@ -1,0 +1,78 @@
+name: Certification (Rust optimizer)
+
+# Runs the full certified pipeline — OptimizationSetup → create_books →
+# generate_configs → Rust optimizer → execute_all_tests — for each game and
+# checks the optimized lookup tables converge to the target RTP.
+#
+# Not a PR gate: it needs Python 3.12 + a Rust toolchain and (first run) fetches
+# the math-sdk, so it runs nightly and on demand. run-certification.sh is
+# fail-soft — it SKIPs cleanly (exit 0) where the toolchain or SDK is missing.
+# The job fails on a real regression: run.py ends in execute_all_tests (the RGS
+# conformance gate), and the assertion step below fails if a produced library's
+# optimized RTP drifts from target.
+#
+# Sim counts are a bounded "does it still converge" pass (defaults below); the
+# full production counts (1e6 / 2e5) are the manual pre-submission step, see
+# docs/sdk-certification-runbook.md.
+on:
+  workflow_dispatch:
+    inputs:
+      game:
+        description: Game id to certify (blank = all)
+        required: false
+        default: ''
+      base_sims:
+        description: Base-mode sim count
+        required: false
+        default: '100000'
+      bonus_sims:
+        description: Bonus-mode sim count
+        required: false
+        default: '40000'
+  schedule:
+    - cron: '0 4 * * *' # nightly, 04:00 UTC (offset from SDK Parity at 05:00)
+
+permissions:
+  contents: read
+
+jobs:
+  certify:
+    name: Optimizer convergence
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONHASHSEED: '0'
+      SDK_BASE_SIMS: ${{ inputs.base_sims || '100000' }}
+      SDK_BONUS_SIMS: ${{ inputs.bonus_sims || '40000' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Run the certified pipeline (fail-soft on toolchain/SDK unavailability)
+        run: |
+          set -e
+          if [ -n "${{ inputs.game }}" ]; then
+            games="${{ inputs.game }}"
+          else
+            games="$(ls shared/games | tr '\n' ' ')"
+          fi
+          for g in $games; do
+            [ -f "shared/games/$g/game-definition.json" ] || continue
+            [ "$g" = "template" ] && continue
+            echo "::group::certify $g"
+            bash scripts/run-certification.sh "$g"
+            echo "::endgroup::"
+          done
+      - name: Assert optimized RTP converged to target
+        run: |
+          if [ -n "${{ inputs.game }}" ]; then
+            games="${{ inputs.game }}"
+          else
+            games="$(ls shared/games | tr '\n' ' ')"
+          fi
+          python3.12 scripts/assert_certified_rtp.py --tol 0.03 $games

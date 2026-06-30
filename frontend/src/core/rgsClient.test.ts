@@ -249,6 +249,27 @@ describe('isValidBook', () => {
     ).toBe(false);
     expect(isValidBook(null)).toBe(false);
   });
+
+  it('rejects non-finite/negative numbers and payout/finalWin mismatches', async () => {
+    const { isValidBook } = await import('./rgsClient');
+    const reveal = { type: 'reveal', gameType: 'base', board: [['L1']], reelStops: [0] };
+    const make = (payout: unknown, finalAmount: unknown) => ({
+      id: 1,
+      payoutMultiplier: payout,
+      events: [reveal, { type: 'finalWin', amount: finalAmount, wincap: false }],
+    });
+    // payoutMultiplier must be finite and non-negative.
+    expect(isValidBook(make(NaN, NaN))).toBe(false);
+    expect(isValidBook(make(Infinity, Infinity))).toBe(false);
+    expect(isValidBook(make(-1, -1))).toBe(false);
+    // finalWin.amount must agree with payoutMultiplier (authoritative settlement).
+    expect(isValidBook(make(5, 4.9))).toBe(false);
+    expect(isValidBook(make(5, 'oops'))).toBe(false);
+    // A consistent book still passes.
+    expect(isValidBook(make(5, 5))).toBe(true);
+    // Non-finite id is rejected too.
+    expect(isValidBook({ ...make(0, 0), id: NaN })).toBe(false);
+  });
 });
 
 describe('messageForStatus', () => {

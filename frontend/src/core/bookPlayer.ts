@@ -11,7 +11,7 @@ import { get } from 'svelte/store';
 import type { Book, BookEvent, Board } from '../../../shared/src/types/events';
 import { wildSymbolId, scatterSymbolId, WINCAP_MULTIPLIER } from '../config/gameConfig';
 import { bus, type WinTier } from './eventBus';
-import type { RgsTransport, RoundState } from './rgsClient';
+import { RgsError, type RgsTransport, type RoundState } from './rgsClient';
 import {
   balance,
   currency as currencyStore,
@@ -135,9 +135,8 @@ export class BookPlayer {
         await this.replay(book, bet);
       }
 
-      // Settle the round on the RGS.
-      const end = await this.transport.endRound();
-      balance.set(end.balance.amount);
+      // Settle the round on the RGS (transport-resilient — see settleRound).
+      await this.settleRound();
 
       lastResult.set({
         betID: result.round.betID,
@@ -169,8 +168,7 @@ export class BookPlayer {
     bus.emit('reels:spin', { gameType: 'base' });
     try {
       await this.replay(book, bet);
-      const end = await this.transport.endRound();
-      balance.set(end.balance.amount);
+      await this.settleRound();
       lastResult.set({
         betID: round.betID,
         win: get(totalWin),
@@ -181,6 +179,34 @@ export class BookPlayer {
     } finally {
       isSpinning.set(false);
       gameMode.set('base');
+    }
+  }
+
+  /**
+   * Settle the active round, recovering from a transport blip at settle time.
+   *
+   * A lost `endRound` response is the dangerous case: the server may have
+   * already settled while the client never saw the reply. Blindly retrying could
+   * double-settle (the RGS provides no client idempotency key), and *not*
+   * retrying would strand the round and the player's win. So on a transport error
+   * we re-authenticate to learn the true round state: if the round is gone or
+   * `resolved`, the settle landed — trust the wallet balance; only if the round
+   * is genuinely still open do we retry `endRound` (now provably safe). Business
+   * errors (invalid session, etc.) propagate unchanged.
+   */
+  private async settleRound(): Promise<void> {
+    try {
+      const end = await this.transport.endRound();
+      balance.set(end.balance.amount);
+    } catch (err) {
+      if (!(err instanceof RgsError) || err.code !== 'ERR_UE') throw err;
+      const auth = await this.transport.authenticate();
+      if (!auth.round || auth.round.state === 'resolved') {
+        balance.set(auth.balance.amount); // already settled server-side
+        return;
+      }
+      const end = await this.transport.endRound(); // round still open — safe to retry
+      balance.set(end.balance.amount);
     }
   }
 

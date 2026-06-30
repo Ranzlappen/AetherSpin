@@ -129,6 +129,8 @@ if ok:
     print(f"  version {defn['version']} synced; provenance stamped (commit {prov['gitCommit'][:12]})")
 sys.exit(0 if ok else 1)
 PY
+  # Cross-check version + definitionHash consistency (catches a stale library).
+  python3 "$ROOT/scripts/check-version-consistency.py" "$GAME_ID"
 }
 run_step "Version + provenance sync" version_sync
 

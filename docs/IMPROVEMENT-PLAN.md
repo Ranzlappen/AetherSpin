@@ -213,9 +213,41 @@ multiplier wilds) and **A7** (RGS resume) are the natural second PR.
 - **Reusable scaffolder + assets** — `new-game.sh --mechanic lines|ways` with a CI
   reusability smoke (finishes C5), and the C7 asset-manifest + cache-busting seam.
 
-Still open: the certified **SDK runtime** is exercised via `setup-math.sh` (not
-vendored in CI); the **C7 asset pipeline** (atlases/audio sprites) awaits real art
-since the renderer is fully procedural.
+## Status — SDK certification milestone (PR #57, on `feat/novaforged-sdk-port`)
+
+This closes the largest remaining gap: the **certified SDK path now actually
+runs**, for **all three** games, not just NovaForged.
+
+- **Real-SDK ports for all three games** — NovaForged (`lines`), Cosmic Ways
+  (`ways`), Stellar Clusters (`cluster`) each have a complete official-SDK module
+  (real `Config`/`BetMode`/`Distribution`, `GeneralGameState`, the static
+  `Lines`/`Ways`/`Cluster` helpers, `Executables`, `create_books`,
+  `generate_configs`) wired to the shared definition. This finishes issue #1's
+  contract unification on the SDK path across every game.
+- **The Rust optimizer runs end-to-end** — `OptimizationSetup → create_books →
+generate_configs → optimizer → execute_all_tests` converges to **RTP 0.9650
+  exact** (base & bonus) for all three games. The certified RTP only exists after
+  this step; the optimized lookup tables are the certified library.
+- **Passes the SDK's own RGS verification** (`execute_all_tests`) on both modes —
+  fixed the two blockers a real upload would have hit: payout **0.1x
+  quantization** (LUT rows divisible by 10) and the cross-mode **payout-hash**
+  accumulation bug. Closes issue #4 (two unverified sources of truth): there's now
+  a `check-sdk-parity.sh` gate (book contract + RGS verifier + payout
+  quantization) and `validate_sdk_books.py`, so the certified path is verified, not
+  just the standalone one.
+- **Certified white papers (PAR)** for all three games in
+  [`docs/white-papers/`](white-papers/), computed exactly from the optimizer's
+  final selection weights (not sim-noise). One command to reproduce:
+  `scripts/run-certification.sh <game>` (+ `docs/sdk-certification-runbook.md`).
+- **Version/`definitionHash` consistency guard** across definition ↔ config ↔
+  bundle (`check-version-consistency.py`), wired into packaging + preflight.
+
+What this leaves open is **process/content**, tracked in
+[`docs/REMAINING-WORK.md`](REMAINING-WORK.md): the full-scale (`1e6`/`2e5`)
+certified re-run before submission, per-game volatility tuning, designer
+art/audio (the **C7 asset pipeline** seam + placeholders exist; real atlases/audio
+sprites await art), compliance copy sign-off, and the manual dashboard upload +
+external certification.
 
 The seven raw source audits (`Evaluation1–7.MD`) are retained only on the archived
 branch (`claude/stake-engine-monorepo-setup-2b2chu` / `main`).

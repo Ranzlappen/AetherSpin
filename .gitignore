@@ -57,3 +57,6 @@ test-results/
 
 # Generated PAR sheets (single-seed estimates; see docs/par-sheets/README.md)
 docs/par-sheets/*-par-sheet.md
+
+# Generated SDK book output (per-game library dirs)
+math/games/*/library/

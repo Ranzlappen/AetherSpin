@@ -14,7 +14,7 @@
     sessionElapsedMinutes,
     sessionNet,
   } from '../core/session';
-  import { helpUrl } from '../config/responsibleGaming';
+  import { helpUrl, legalDisclaimer } from '../config/responsibleGaming';
   import { currency } from '../core/gameState';
   import { formatCurrency } from '../config/gameConfig';
   import type { TranslationKey } from '../core/i18n';
@@ -58,6 +58,9 @@
         <p>{$t('rg.sessionTime', { minutes })}</p>
         <p class="net" class:up={net > 0} class:down={net < 0}>{$t(netKey, { amount: netAbs })}</p>
         <p class="disclaimer">{$t('rg.disclaimer')}</p>
+        {#if legalDisclaimer}
+          <p class="disclaimer legal">{legalDisclaimer}</p>
+        {/if}
         {#if helpUrl}
           <a class="help" href={helpUrl} target="_blank" rel="noopener noreferrer">{$t('rg.help')}</a>
         {/if}

@@ -94,6 +94,12 @@ export interface ResponsibleGamingConfig {
   realityCheckMinutes?: number;
   /** URL to operator help / limit-setting resources. */
   helpUrl?: string;
+  /** Minimum player age shown in the age/legal acknowledgement (e.g. 18). */
+  ageRating?: number;
+  /** Show a one-time age/legal acknowledgement before play (default false). */
+  requireAgeAck?: boolean;
+  /** Optional extra legal/terms line shown in the acknowledgement + reality check. */
+  legalDisclaimer?: string;
 }
 
 /* ----------------------------- schema conformance ----------------------------
