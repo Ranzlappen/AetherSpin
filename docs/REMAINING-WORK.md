@@ -57,7 +57,9 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 - [x] e2e the age gate on `mobile-chromium` too — `frontend/e2e/agegate.spec.ts`
       runs under both the `desktop-chromium` and `mobile-chromium` Playwright
       projects (no project restriction), so it's covered on mobile already.
-- [ ] Add a CI job that runs `run-certification.sh` nightly where Rust + 3.12 are
-      available (currently a manual/submission step).
+- [x] Add a CI job that runs `run-certification.sh` nightly where Rust + 3.12 are
+      available — `.github/workflows/certification.yml` (nightly 04:00 UTC +
+      `workflow_dispatch`). Fail-soft on toolchain/SDK absence; asserts optimized
+      RTP convergence via `scripts/assert_certified_rtp.py`.
 - [ ] Per-game volatility tuning (the optimizer hit-rate constraints are sane
       defaults, not tuned per title).
