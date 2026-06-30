@@ -43,8 +43,9 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 3. Process / submission
 
-- [ ] **Land PR #57.** It's a large draft (SDK ports + production hardening +
-      optimizer). Decide: mark ready for review and merge as-is, or split.
+- [ ] **Land PR #57.** Large PR (SDK ports + production hardening + optimizer),
+      now **marked ready for review** (out of draft). Get review + required checks
+      green, then decide: merge as-is or split.
 - [ ] **Release** — release-please cuts the version bump on merge to `main`.
 - [ ] **Dashboard upload** — the manual Stake Engine steps (create game, upload
       library + frontend bundle, set RTP/config, staging playthrough, submit for
@@ -53,7 +54,9 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 4. Nice-to-have / hardening (optional)
 
-- [ ] e2e the age gate on `mobile-chromium` too (desktop covered).
+- [x] e2e the age gate on `mobile-chromium` too — `frontend/e2e/agegate.spec.ts`
+      runs under both the `desktop-chromium` and `mobile-chromium` Playwright
+      projects (no project restriction), so it's covered on mobile already.
 - [ ] Add a CI job that runs `run-certification.sh` nightly where Rust + 3.12 are
       available (currently a manual/submission step).
 - [ ] Per-game volatility tuning (the optimizer hit-rate constraints are sane
