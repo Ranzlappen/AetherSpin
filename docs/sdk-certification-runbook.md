@@ -24,24 +24,24 @@ bash scripts/package-for-stake.sh <game>
 
 ## Prerequisites
 
-| Need                         | Why                                                       | Notes                                                   |
-| ---------------------------- | --------------------------------------------------------- | ------------------------------------------------------- |
-| **Python 3.12**              | the math-sdk uses 3.12-only syntax (`get_file_hash.py`)   | `python3.11` runs `create_books` but not the full path  |
-| **Rust toolchain** (`cargo`) | the optimizer (`optimization_program`) is a Rust binary   | compiled on first run (`cargo build --release`)         |
-| math-sdk vendored            | `scripts/setup-math.sh` clones it into `math/engine/`     | gitignored; the script fetches it if absent             |
-| SDK deps under 3.12          | `numpy`, `zstandard`, `python-dotenv`                     | the script installs them (`pip --break-system-packages`)|
+| Need                         | Why                                                     | Notes                                                    |
+| ---------------------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| **Python 3.12**              | the math-sdk uses 3.12-only syntax (`get_file_hash.py`) | `python3.11` runs `create_books` but not the full path   |
+| **Rust toolchain** (`cargo`) | the optimizer (`optimization_program`) is a Rust binary | compiled on first run (`cargo build --release`)          |
+| math-sdk vendored            | `scripts/setup-math.sh` clones it into `math/engine/`   | gitignored; the script fetches it if absent              |
+| SDK deps under 3.12          | `numpy`, `zstandard`, `python-dotenv`                   | the script installs them (`pip --break-system-packages`) |
 
 `run-certification.sh` checks each and **SKIPs cleanly** (exit 0) with guidance
 if any is missing, so it's safe to call in environments that can't run it.
 
 ## What "optimization" does
 
-`create_books` does **not** produce a natural RTP — it generates books *per
-forced distribution* (win-cap / free-game / zero / base) in declared quotas, so
+`create_books` does **not** produce a natural RTP — it generates books _per
+forced distribution_ (win-cap / free-game / zero / base) in declared quotas, so
 its raw RTP is quota-shaped (e.g. NovaForged base reads ~16–22x). Those books are
-the *input* to the optimizer, which solves for the per-book **selection weights**
+the _input_ to the optimizer, which solves for the per-book **selection weights**
 that make the final library hit the target RTP and volatility. The certified RTP
-only exists *after* this step, in the optimized lookup tables.
+only exists _after_ this step, in the optimized lookup tables.
 
 The per-game optimization targets live in `math/games/<id>/game_optimization.py`
 (`OptimizationSetup`): an RTP allocation across criteria (must sum to the target),
