@@ -7,6 +7,33 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.8.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.7.0...v1.8.0) (2026-07-01)
+
+
+### Features
+
+* all three games on the real StakeEngine SDK (RGS-conformant) + production hardening ([9d7e60c](https://github.com/Ranzlappen/AetherSpin/commit/9d7e60cd4e37b964e4a1ad52181281773128cf7b))
+* **assets:** per-game symbol-art theming seam ([09c02f3](https://github.com/Ranzlappen/AetherSpin/commit/09c02f3b27942b1c50b055b22acab15c6b4afb31))
+* **cosmicways:** fail-fast guard on realized ways multiplier wilds ([821f2c1](https://github.com/Ranzlappen/AetherSpin/commit/821f2c1718e0e8f4460475fa212d205563eed81f))
+* **frontend:** config-gated age/legal acknowledgement (off by default) ([17560e5](https://github.com/Ranzlappen/AetherSpin/commit/17560e5b63c968c043a287b3ad2e22f6d141fee3))
+* **frontend:** harden RGS settle recovery + deepen book validation ([e317485](https://github.com/Ranzlappen/AetherSpin/commit/e3174858173aefa4e3bb1b8b67d9c7d20a26154c))
+* **i18n:** add Spanish + Brazilian Portuguese locales ([fe3e5cd](https://github.com/Ranzlappen/AetherSpin/commit/fe3e5cd22e467cc3836dabe4af2bf45ddfb07b6a))
+* **math:** add WCAP reels + forced win-cap distributions (all three games) ([7954b94](https://github.com/Ranzlappen/AetherSpin/commit/7954b946a8b15c7c2415a7080081633e8e95b519))
+* **math:** certified optimizer run for all three games (RTP solved to target) ([372ade5](https://github.com/Ranzlappen/AetherSpin/commit/372ade575faa2a7b96ff599117f8e4a279738f63))
+* **math:** emit the shared BookEvent contract from the NovaForged SDK module ([1293510](https://github.com/Ranzlappen/AetherSpin/commit/1293510a8ee369bb462d41f458866059bd0d2dc8))
+* **math:** layer NovaForged free-game mechanics into the SDK module ([b52bad2](https://github.com/Ranzlappen/AetherSpin/commit/b52bad2f4960afa6fce851109b0209423fd42131))
+* **math:** port Cosmic Ways + Stellar Clusters to the real SDK API ([4675f73](https://github.com/Ranzlappen/AetherSpin/commit/4675f73aa6bef372653df82fcbd5bdf6bcb1860d))
+* **math:** port NovaForged SDK module to the real math-sdk API (it runs) ([97c820e](https://github.com/Ranzlappen/AetherSpin/commit/97c820ec6c210de2d52ccd82bd3ecb7dccaeba2f))
+* **math:** white-paper generator + certified-run fixes (realpath, xlsxwriter) ([1e7d806](https://github.com/Ranzlappen/AetherSpin/commit/1e7d806bbc1c0d9f705db976a24bbd05d3b889ca))
+* **scripts:** guard game version + definitionHash across definition/config/bundle ([df0569a](https://github.com/Ranzlappen/AetherSpin/commit/df0569a28d4c8d089369cdcf0ae6a64d9f9eead4))
+
+
+### Bug Fixes
+
+* **math:** quantize NovaForged SDK payouts to 0.1x for RGS conformance ([f62e09f](https://github.com/Ranzlappen/AetherSpin/commit/f62e09f4515aa0e5b304db928c0e5f6b9ff0e836))
+* **math:** reset per-mode payout sidecar so SDK execute_all_tests passes ([3f901db](https://github.com/Ranzlappen/AetherSpin/commit/3f901db54c58e3cce78a5cdc5ffbecdbf3acd394))
+* **math:** stabilise run.py threading for the certified production run ([627fe03](https://github.com/Ranzlappen/AetherSpin/commit/627fe03f39f9739b5e08a5b707cdc2f727d68533))
+
 ## [1.7.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.6.0...v1.7.0) (2026-06-28)
 
 
