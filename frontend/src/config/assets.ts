@@ -53,7 +53,7 @@ export interface AssetGroup {
  */
 const SHARED_SYMBOLS: Record<string, string> = {
   W: 'symbols/W.webp',
-  S: 'symbols/S.svg',
+  S: 'symbols/S.webp',
   H1: 'symbols/H1.svg',
   H2: 'symbols/H2.svg',
   H3: 'symbols/H3.svg',
