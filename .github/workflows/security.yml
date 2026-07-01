@@ -34,7 +34,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@v5
         continue-on-error: true # see note above; non-blocking until Dependency Graph is on
         with:
           fail-on-severity: high
