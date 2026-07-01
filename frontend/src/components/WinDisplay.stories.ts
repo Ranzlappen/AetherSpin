@@ -6,13 +6,13 @@ import { totalWin, currency } from '../core/gameState';
  * The win display animates a count-up from the `totalWin` store. Stories seed the
  * store to show different magnitudes.
  */
-const meta: Meta<WinDisplay> = {
+const meta = {
   title: 'HUD/WinDisplay',
   component: WinDisplay,
-};
+} satisfies Meta<typeof WinDisplay>;
 export default meta;
 
-type Story = StoryObj<WinDisplay>;
+type Story = StoryObj<typeof meta>;
 
 export const SmallWin: Story = {
   play: () => {
