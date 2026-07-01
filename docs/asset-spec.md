@@ -21,10 +21,14 @@ swap** — no code changes for anything marked _wired_.
   is caught automatically.
 - **Shared vs per-game:** all three games (NovaForged · lines, Cosmic Ways ·
   ways, Stellar Clusters · cluster) currently **share one symbol set** (same
-  ids, same neon-cosmic theme). See _Per-game art_ below to give each title its
-  own look.
+  ids, same neon-cosmic theme). The per-game theming seam is already built — see
+  _Per-game art_ below to give each title its own look (drop-in, no code change).
 - **Design resolution:** the scene is laid out against **1280×800**; a symbol
-  tile renders at **132×132 px** on a 5×3 grid. Deliver at 2× for crispness.
+  tile renders at **132×132 px** on a 5×3 grid (8 px gap → board **700×420**).
+  Render resolution is capped at 2×, so author raster art at 2× for crispness.
+- **Formats:** not SVG-only. Textures load via Pixi `Assets.load` (parser by
+  extension): **SVG, WebP, PNG, AVIF, JPG**, and GPU-compressed **KTX2/Basis**.
+  SVG for symbols/logos/icons; WebP for raster plates/FX; PNG for lossless alpha.
 
 ---
 
@@ -61,14 +65,22 @@ keep the names. Placeholders today are SVG (`scripts/gen-placeholder-art.mjs`).
 > The procedural glyph letter is auto-hidden once a symbol texture loads, so your
 > art is the whole tile — no letter overlay to design around.
 
-### Per-game art (optional — needs a 1-line keying change)
+### Per-game art (wired — drop-in, no code change)
 
-To give each title its own symbols, namespace the keys/files by game
-(`symbol:<game>:<id>` → `symbols/<game>/<id>.svg`) and have `ReelEngine` query
-the active game id. Themes to target: **NovaForged** neon-cosmic (lines),
-**Cosmic Ways** ways-cosmic (brighter/expansive), **Stellar Clusters**
-cluster-cosmic (gem/constellation). Tell us if you want this and we'll wire the
-game-aware key (small change in `config/assets.ts` + `ReelEngine.symbolTexture`).
+The per-game theming seam is built: `config/assets.ts` resolves each symbol via
+`symbolAssetPath(id, game)`, which prefers a per-game override and otherwise falls
+back to the shared set (the renderer still asks for the same `symbol:<id>` key).
+To give a title its own symbols:
+
+1. Drop files under `frontend/public/games/<game>/symbols/<id>.{svg|webp|png}`
+   (same ids, same size/format targets as §1).
+2. Add the entries to `THEMED_SYMBOL_SETS` in `config/assets.ts`, e.g.
+   `cosmicways: { H1: 'games/cosmicways/symbols/H1.svg', … }`.
+
+Any id you don't override keeps the shared placeholder, so theming is incremental.
+Themes to target: **NovaForged** neon-cosmic (lines), **Cosmic Ways**
+ways-cosmic (brighter/expansive), **Stellar Clusters** cluster-cosmic
+(gem/constellation).
 
 ---
 
@@ -106,20 +118,22 @@ visuals today), but they're what turns it from "engine demo" into a finished
 title. Each needs a small, well-scoped code change we can do when the art exists
 — ask and we'll wire whichever you want.
 
-| Asset                         | Suggested file(s)                                            | Format / size                  | Description & where it lands                                                                                |
-| ----------------------------- | ------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| **Background plate**          | `public/bg/<theme>.webp` (+ optional layers)                 | WebP, **2560×1600** (2×)       | Replaces the procedural nebula in `scenes/Background.ts`. One per theme; can be a still or parallax layers. |
-| **Board frame / housing**     | `public/ui/reel-frame.webp` (9-slice ok)                     | WebP/PNG, transparent          | The decorative frame around the 5×3 board (`ReelEngine` draws a plain neon frame today).                    |
-| **Game logo / wordmark**      | `public/brand/<game>-logo.webp`                              | WebP/PNG, transparent, ~1200 w | For the loading screen and/or header; one per title.                                                        |
-| **Loading screen**            | `public/brand/loading-bg.webp`                               | WebP, 2560×1600                | Shown during boot (currently a CSS color + spinner).                                                        |
-| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`    | WebP, transparent              | Highlight art for winning paylines (NovaForged), ways, and cluster blobs (currently drawn as glow strokes). |
-| **Big-win celebration**       | `public/fx/burst.webp` (+ sprite sheet)                      | WebP/PNG or sprite atlas       | Coin/star burst for big/mega/wincap tiers (today a procedural particle burst in `scenes/Particles.ts`).     |
-| **Free-spins intro card**     | `public/fx/freespins-card.webp`                              | WebP, transparent              | Full-screen "Free Spins!" splash when the feature triggers.                                                 |
-| **Symbol win animations**     | `public/symbols/anim/<id>.json` (+ atlas)                    | Spine/Lottie or sprite sheet   | Optional per-symbol win animation; needs an animation runtime hook.                                         |
-| **UI button skins**           | `public/ui/btn-spin.webp`, `btn-buybonus.webp`, …            | WebP, transparent              | The HUD is DOM/CSS today; skinning buttons needs CSS background swaps (no engine change).                   |
-| **App icon / favicon**        | `public/favicon.svg`, `public/icon-192.png`, `icon-512.png`  | SVG + PNG                      | Replaces the placeholder `favicon.svg`; PNGs for PWA/home-screen.                                           |
-| **Ambient music**             | `public/audio/music/base-loop.webm`, `freespins-loop.webm`   | webm+mp3, seamless loop        | Background music for base and free-spin modes; needs a small loop manager in `sound.ts`.                    |
-| **Extra SFX**                 | `public/audio/anticipation.*`, `coinTick.*`, `scatterLand.*` | webm+mp3                       | Anticipation riser (near-miss scatter), win-count ticking, per-scatter land — new `SoundName`s + triggers.  |
+Sizes give **on-screen (design px) → deliver @2× (optimal)**; SVG = any size.
+
+| Asset                         | Suggested file(s)                                            | Format                       | On-screen → deliver @2× (optimal)       | Where it lands                                                                                 |
+| ----------------------------- | ------------------------------------------------------------ | ---------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Background plate**          | `public/bg/<theme>.webp` (+ optional layers)                 | WebP                         | 1280×800 → **2560×1600**                | Replaces the procedural nebula in `scenes/Background.ts`. One per theme; still or parallax.    |
+| **Board frame / housing**     | `public/ui/reel-frame.webp` (9-slice ok)                     | WebP/PNG, transparent        | ~760×480 → **~1520×960** (or 9-slice)   | The decorative frame around the 5×3 board (`ReelEngine` draws a plain neon frame today).       |
+| **Game logo / wordmark**      | `public/brand/<game>-logo.webp`                              | WebP/PNG/SVG, transparent    | ~600 w → **~1200 w** (SVG any)          | For the loading screen and/or header; one per title.                                           |
+| **Loading screen**            | `public/brand/loading-bg.webp`                               | WebP                         | 1280×800 → **2560×1600**                | Shown during boot (currently a CSS color + spinner).                                           |
+| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`    | WebP, transparent            | ~256×256 → **~512×512**                 | Highlight art for paylines (NovaForged), ways, and cluster blobs (today glow strokes).         |
+| **Big-win celebration**       | `public/fx/burst.webp` (+ sprite sheet)                      | WebP/PNG or sprite atlas     | frames ~256² → **512²** (sheet ≤ 2048²) | Coin/star burst for big/mega/wincap tiers (today a procedural burst in `scenes/Particles.ts`). |
+| **Free-spins intro card**     | `public/fx/freespins-card.webp`                              | WebP, transparent            | 1280×800 → **2560×1600**                | Full-screen "Free Spins!" splash when the feature triggers.                                    |
+| **Symbol win animations**     | `public/symbols/anim/<id>.json` (+ atlas)                    | Spine/Lottie or sprite sheet | 132² → author **512²** (2×)             | Optional per-symbol win animation; needs an animation runtime hook.                            |
+| **UI button skins**           | `public/ui/btn-spin.webp`, `btn-buybonus.webp`, …            | WebP/PNG, transparent        | ~128² → **~256²** per state             | The HUD is DOM/CSS today; skinning buttons needs CSS background swaps (no engine change).      |
+| **App icon / favicon**        | `public/favicon.svg`, `public/icon-192.png`, `icon-512.png`  | SVG + PNG                    | n/a → **192²** + **512²** (SVG any)     | Replaces the placeholder `favicon.svg`; PNGs for PWA/home-screen.                              |
+| **Ambient music**             | `public/audio/music/base-loop.webm`, `freespins-loop.webm`   | webm+mp3, seamless loop      | n/a (streamed)                          | Background music for base and free-spin modes; needs a small loop manager in `sound.ts`.       |
+| **Extra SFX**                 | `public/audio/anticipation.*`, `coinTick.*`, `scatterLand.*` | webm+mp3                     | n/a                                     | Anticipation riser (near-miss scatter), win-count ticking, per-scatter land — new triggers.    |
 
 ---
 
