@@ -27,7 +27,7 @@ describe('assets', () => {
     expect(new Set(keys)).toEqual(new Set(expected));
     // manifestPaths/manifestUrls mirror the declared assets (bundle-relative here).
     expect(manifestPaths()).toHaveLength(expected.length);
-    expect(manifestUrls()).toContain('symbols/W.svg');
+    expect(manifestUrls()).toContain('symbols/W.webp');
   });
 
   it('asset keys are unique across the whole manifest', () => {
@@ -50,7 +50,7 @@ describe('assets', () => {
       // No themed sets shipped today → every id resolves to the shared art.
       expect(THEMED_SYMBOL_SETS).toEqual({});
       expect(symbolAssetPath('H1', 'cosmicways')).toBe('symbols/H1.svg');
-      expect(symbolAssetPath('W', 'stellarclusters')).toBe('symbols/W.svg');
+      expect(symbolAssetPath('W', 'stellarclusters')).toBe('symbols/W.webp');
     });
 
     it('prefers a game-specific override path, others still fall back', () => {

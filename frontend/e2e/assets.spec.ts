@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Asset-pipeline check: the placeholder symbol art must actually load and
- * rasterize in a real browser. Unit tests cover the loader logic with a fake
- * loader (jsdom can't rasterize SVGs), so this is the only place that proves
- * Pixi's SVG loader turns the committed `public/symbols/*.svg` into textures.
+ * Asset-pipeline check: the symbol art must actually load and rasterize in a
+ * real browser. Unit tests cover the loader logic with a fake loader (jsdom
+ * can't rasterize images), so this is the only place that proves Pixi's loader
+ * turns the committed `public/symbols/*` art (SVG or WebP/PNG) into textures.
  *
  * The loader emits one `[assets] ready: <loaded>/<total> loaded` marker at boot
  * and a `[assets] failed to load ...` warning per failure; we assert every

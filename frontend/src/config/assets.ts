@@ -52,7 +52,7 @@ export interface AssetGroup {
  * game resolves to unless it overrides a symbol in {@link THEMED_SYMBOL_SETS}.
  */
 const SHARED_SYMBOLS: Record<string, string> = {
-  W: 'symbols/W.svg',
+  W: 'symbols/W.webp',
   S: 'symbols/S.svg',
   H1: 'symbols/H1.svg',
   H2: 'symbols/H2.svg',
