@@ -24,7 +24,18 @@ export const en = {
   'hud.demoTitle': 'No RGS params detected — running on the local mock RGS',
 
   'spin.label': 'Spin',
+  'spin.skip': 'Skip',
   'spin.lowBalance': 'Low balance',
+
+  'turbo.label': 'Turbo mode',
+  'turbo.on': 'Turbo on',
+  'turbo.off': 'Turbo off',
+
+  'win.big': 'BIG WIN',
+  'win.mega': 'MEGA WIN',
+  'win.epic': 'EPIC WIN',
+  'win.wincap': 'MAX WIN',
+  'win.tapToContinue': 'Tap to continue',
 
   'bet.decrease': 'Decrease bet',
   'bet.increase': 'Increase bet',
@@ -41,6 +52,13 @@ export const en = {
   'autoplay.stop': 'Stop autoplay',
   'autoplay.stopShort': 'Stop',
   'autoplay.spins': '{count} spins',
+  'autoplay.spinsLegend': 'Number of spins',
+  'autoplay.lossLimit': 'Loss limit',
+  'autoplay.singleWinLimit': 'Single win limit',
+  'autoplay.stopOnFeature': 'Stop on free spins',
+  'autoplay.off': 'Off',
+  'autoplay.stoppedLossLimit': 'Autoplay stopped: loss limit reached.',
+  'autoplay.stoppedWinLimit': 'Autoplay stopped: win limit reached.',
 
   'sound.toggle': 'Toggle sound',
 
@@ -51,6 +69,33 @@ export const en = {
   'paytable.symbol': 'Symbol',
   'paytable.features': 'Features',
   'paytable.scrollRegion': 'Paytable details, scrollable',
+  'paytable.ofAKind': '{count} of a kind',
+  'paytable.scatterTitle': 'Scatter — {name}',
+  'paytable.scatterBody': 'Pays anywhere. {min}+ trigger free spins.',
+  'paytable.freeSpinsTitle': 'Free Spins',
+  'paytable.freeSpinsBody': 'Land {min}+ scatters to win {minSpins}–{maxSpins} spins.',
+  'paytable.freeSpinsRetrigger': 'Retriggers award more spins.',
+  'paytable.ladderTitle': 'Multiplier Ladder',
+  'paytable.ladderBody': 'Wins during free spins step the global multiplier from ×{start} up to ×{max}.',
+  'paytable.multiplierWildsTitle': 'Multiplier Wilds',
+  'paytable.multiplierWildsBody': 'In free spins, wilds carry {values}× multipliers.',
+  'paytable.expandingWildsTitle': 'Expanding Wilds',
+  'paytable.expandingWildsBody': 'In free spins, wilds can expand to cover their entire reel.',
+  'paytable.bonusBuyTitle': 'Buy Bonus',
+  'paytable.bonusBuyBody': 'Buy free spins instantly for {cost}× your bet.',
+  'paytable.paylines': 'Paylines ({count})',
+  'paytable.rtpLine': 'Theoretical RTP: {rtp}% · Max win: {maxWin}× · Volatility: {volatility}',
+  'paytable.desc.novaforged':
+    'A premium 5×3, 20-line neon-cosmic video slot featuring multiplier wilds, scatter-triggered free spins with an escalating multiplier ladder, expanding wilds, and a bonus buy.',
+  'paytable.desc.cosmicways':
+    'A 5×3, 243-ways neon-cosmic video slot. Symbols pay on any adjacent reels from the left, with scatter-triggered free spins.',
+  'paytable.desc.stellarclusters':
+    'A 5×3 cluster-pays neon-cosmic slot: connected groups of a symbol (wilds substitute) pay by size, with scatter-triggered free spins.',
+
+  'volatility.low': 'Low',
+  'volatility.medium': 'Medium',
+  'volatility.high': 'High',
+  'volatility.veryHigh': 'Very high',
 
   'common.dismiss': 'Dismiss',
   'common.close': 'Close',

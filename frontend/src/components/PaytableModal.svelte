@@ -12,7 +12,7 @@
     NUM_ROWS,
     formatMultiplier,
   } from '../config/gameConfig';
-  import { t } from '../core/i18n';
+  import { t, hasKey } from '../core/i18n';
 
   export let open = false;
   import { createEventDispatcher } from 'svelte';
@@ -31,10 +31,23 @@
     .map(Number)
     .sort((a, b) => a - b)
     .map(String);
-  // Lines/ways pay N-of-a-kind on a run; cluster pays a connected group of N.
-  const countHeader = (c: string): string => (mechanic === 'cluster' ? c : `${c} of a kind`);
   const scatter = gameDefinition.scatter;
   const features = gameDefinition.features;
+  const ladder = features.freeSpins.multiplierLadder;
+
+  // Per-game localized description; falls back to the definition's English copy
+  // for games without dedicated locale entries.
+  const descKey = `paytable.desc.${gameDefinition.id}`;
+
+  // Localized volatility class label (schema enum → key).
+  const volatilityKey = (
+    {
+      low: 'volatility.low',
+      medium: 'volatility.medium',
+      high: 'volatility.high',
+      'very-high': 'volatility.veryHigh',
+    } as const
+  )[gameDefinition.engine.volatility ?? 'medium'];
 
   /** Build a small grid preview for a single payline. */
   function lineCells(line: number[]): boolean[][] {
@@ -61,14 +74,19 @@
            users can scroll it (WCAG 2.1.1 — scrollable-region-focusable). -->
       <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
       <div class="content" role="group" aria-label={$t('paytable.scrollRegion')} tabindex="0">
-        <p class="desc">{gameDefinition.description}</p>
+        <p class="desc">{hasKey(descKey) ? $t(descKey) : gameDefinition.description}</p>
 
         <section>
           <h3>{$t('paytable.title')}</h3>
           <p class="sub">{$t('paytable.subtitle')}</p>
           <div class="pay-grid" style:grid-template-columns={`2fr ${'1fr '.repeat(counts.length)}`}>
             <div class="pay-head">{$t('paytable.symbol')}</div>
-            {#each counts as c (c)}<div class="pay-head">{countHeader(c)}</div>{/each}
+            <!-- Lines/ways pay N-of-a-kind on a run; cluster pays a connected group of N. -->
+            {#each counts as c (c)}
+              <div class="pay-head">
+                {mechanic === 'cluster' ? c : $t('paytable.ofAKind', { count: c })}
+              </div>
+            {/each}
             {#each paySymbols as sym (sym.id)}
               <div class="sym">
                 <span class="chip" style:background={getSymbolColor(sym.id)}></span>
@@ -86,9 +104,9 @@
         </section>
 
         <section>
-          <h3>Scatter — {getSymbol(scatter.symbol)?.name ?? scatter.symbol}</h3>
+          <h3>{$t('paytable.scatterTitle', { name: getSymbol(scatter.symbol)?.name ?? scatter.symbol })}</h3>
           <p class="sub">
-            Pays anywhere. {scatter.minToTrigger}+ trigger free spins.
+            {$t('paytable.scatterBody', { min: scatter.minToTrigger })}
           </p>
           <div class="scatter-pays">
             {#each Object.entries(scatter.pays) as [count, mult] (count)}
@@ -104,33 +122,38 @@
           <h3>{$t('paytable.features')}</h3>
           <ul class="rules">
             <li>
-              <strong>Free Spins:</strong> Land {scatter.minToTrigger}+ scatters to win
-              {features.freeSpins.awards['3']}–{features.freeSpins.awards['5']} spins.
-              {#if features.freeSpins.retrigger}Retriggers award more spins.{/if}
+              <strong>{$t('paytable.freeSpinsTitle')}:</strong>
+              {$t('paytable.freeSpinsBody', {
+                min: scatter.minToTrigger,
+                minSpins: features.freeSpins.awards['3'],
+                maxSpins: features.freeSpins.awards['5'],
+              })}
+              {#if features.freeSpins.retrigger}{$t('paytable.freeSpinsRetrigger')}{/if}
             </li>
             <li>
-              <strong>Multiplier Ladder:</strong>
-              {features.freeSpins.multiplierLadder.description}
-              (x{features.freeSpins.multiplierLadder.start} up to x{features.freeSpins.multiplierLadder.max}).
+              <strong>{$t('paytable.ladderTitle')}:</strong>
+              {$t('paytable.ladderBody', { start: ladder.start, max: ladder.max })}
             </li>
             <li>
-              <strong>Multiplier Wilds:</strong> In free spins, wilds carry
-              {features.multiplierWilds.values.join('× / ')}× multipliers.
+              <strong>{$t('paytable.multiplierWildsTitle')}:</strong>
+              {$t('paytable.multiplierWildsBody', {
+                values: features.multiplierWilds.values.join('× / '),
+              })}
             </li>
             <li>
-              <strong>Expanding Wilds:</strong>
-              {features.expandingWilds.description}
+              <strong>{$t('paytable.expandingWildsTitle')}:</strong>
+              {$t('paytable.expandingWildsBody')}
             </li>
             <li>
-              <strong>Buy Bonus:</strong>
-              {features.bonusBuy.description}
+              <strong>{$t('paytable.bonusBuyTitle')}:</strong>
+              {$t('paytable.bonusBuyBody', { cost: features.bonusBuy.costMultiplier })}
             </li>
           </ul>
         </section>
 
         {#if paylines.length > 0}
           <section>
-            <h3>Paylines ({paylines.length})</h3>
+            <h3>{$t('paytable.paylines', { count: paylines.length })}</h3>
             <div class="lines">
               {#each paylines as line, i (i)}
                 <div class="line-card">
@@ -149,8 +172,11 @@
         {/if}
 
         <p class="rtp">
-          Theoretical RTP: {(gameDefinition.engine.rtpTarget * 100).toFixed(2)}% · Max win: {gameDefinition.engine.wincapMultiplier.toLocaleString()}×
-          · Volatility: {gameDefinition.engine.volatility}
+          {$t('paytable.rtpLine', {
+            rtp: (gameDefinition.engine.rtpTarget * 100).toFixed(2),
+            maxWin: gameDefinition.engine.wincapMultiplier.toLocaleString(),
+            volatility: $t(volatilityKey),
+          })}
         </p>
       </div>
     </div>

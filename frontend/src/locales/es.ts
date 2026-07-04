@@ -26,7 +26,18 @@ export const es: Partial<Translations> = {
   'hud.demoTitle': 'No se detectaron parámetros de RGS — ejecutando en el RGS simulado local',
 
   'spin.label': 'Girar',
+  'spin.skip': 'Saltar',
   'spin.lowBalance': 'Saldo bajo',
+
+  'turbo.label': 'Modo turbo',
+  'turbo.on': 'Turbo activado',
+  'turbo.off': 'Turbo desactivado',
+
+  'win.big': 'GRAN PREMIO',
+  'win.mega': 'MEGA PREMIO',
+  'win.epic': 'PREMIO ÉPICO',
+  'win.wincap': 'PREMIO MÁXIMO',
+  'win.tapToContinue': 'Toca para continuar',
 
   'bet.decrease': 'Disminuir apuesta',
   'bet.increase': 'Aumentar apuesta',
@@ -43,6 +54,13 @@ export const es: Partial<Translations> = {
   'autoplay.stop': 'Detener giro automático',
   'autoplay.stopShort': 'Detener',
   'autoplay.spins': '{count} giros',
+  'autoplay.spinsLegend': 'Número de giros',
+  'autoplay.lossLimit': 'Límite de pérdida',
+  'autoplay.singleWinLimit': 'Límite de ganancia única',
+  'autoplay.stopOnFeature': 'Detener con giros gratis',
+  'autoplay.off': 'No',
+  'autoplay.stoppedLossLimit': 'Giro automático detenido: límite de pérdida alcanzado.',
+  'autoplay.stoppedWinLimit': 'Giro automático detenido: límite de ganancia alcanzado.',
 
   'sound.toggle': 'Activar/desactivar sonido',
 
@@ -54,6 +72,35 @@ export const es: Partial<Translations> = {
   'paytable.symbol': 'Símbolo',
   'paytable.features': 'Funciones',
   'paytable.scrollRegion': 'Detalles de la tabla de pagos, desplazable',
+  'paytable.ofAKind': '{count} iguales',
+  'paytable.scatterTitle': 'Scatter — {name}',
+  'paytable.scatterBody': 'Paga en cualquier posición. {min}+ activan los giros gratis.',
+  'paytable.freeSpinsTitle': 'Giros gratis',
+  'paytable.freeSpinsBody': 'Consigue {min}+ scatters para ganar {minSpins}–{maxSpins} giros.',
+  'paytable.freeSpinsRetrigger': 'Las reactivaciones otorgan más giros.',
+  'paytable.ladderTitle': 'Escalera de multiplicadores',
+  'paytable.ladderBody':
+    'Las ganancias durante los giros gratis suben el multiplicador global de ×{start} hasta ×{max}.',
+  'paytable.multiplierWildsTitle': 'Comodines multiplicadores',
+  'paytable.multiplierWildsBody': 'En los giros gratis, los comodines llevan multiplicadores de {values}×.',
+  'paytable.expandingWildsTitle': 'Comodines expansivos',
+  'paytable.expandingWildsBody':
+    'En los giros gratis, los comodines pueden expandirse y cubrir todo su rodillo.',
+  'paytable.bonusBuyTitle': 'Compra de bono',
+  'paytable.bonusBuyBody': 'Compra giros gratis al instante por {cost}× tu apuesta.',
+  'paytable.paylines': 'Líneas de pago ({count})',
+  'paytable.rtpLine': 'RTP teórico: {rtp}% · Ganancia máxima: {maxWin}× · Volatilidad: {volatility}',
+  'paytable.desc.novaforged':
+    'Una tragamonedas de video premium de 5×3 con 20 líneas y estética neón-cósmica: comodines multiplicadores, giros gratis activados por scatters con escalera de multiplicadores, comodines expansivos y compra de bono.',
+  'paytable.desc.cosmicways':
+    'Una tragamonedas de video de 5×3 con 243 formas de ganar y estética neón-cósmica. Los símbolos pagan en rodillos adyacentes desde la izquierda, con giros gratis activados por scatters.',
+  'paytable.desc.stellarclusters':
+    'Una tragamonedas de pagos por grupos de 5×3 con estética neón-cósmica: los grupos conectados de un símbolo (los comodines sustituyen) pagan según su tamaño, con giros gratis activados por scatters.',
+
+  'volatility.low': 'Baja',
+  'volatility.medium': 'Media',
+  'volatility.high': 'Alta',
+  'volatility.veryHigh': 'Muy alta',
 
   'common.dismiss': 'Descartar',
   'common.close': 'Cerrar',

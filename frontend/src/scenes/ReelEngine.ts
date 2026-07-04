@@ -217,19 +217,38 @@ export class ReelEngine {
 
   /** Subscribe to bus intents. */
   private subscribe(): void {
-    bus.on('reels:spin', () => this.startSpin());
+    bus.on('reels:spin', (p) => this.startSpin(p.turbo));
     bus.on('board:reveal', (p) => this.revealBoard(p.board, p));
     bus.on('wins:lines', (p) => this.highlightWins(p.wins));
+    bus.on('reels:skip', () => this.skipToSettle());
   }
 
   /** Begin spinning every reel; returns when all reels are at full speed. */
-  startSpin(): void {
+  startSpin(turbo = false): void {
     this.clearHighlights();
+    this.turbo = turbo;
+    this.pendingSkip = false;
     for (let r = 0; r < NUM_REELS; r++) {
       const reel = this.reels[r];
       reel.spinning = true;
-      reel.speed = 2400 + r * 80;
+      reel.speed = (turbo ? 3200 : 2400) + r * 80;
       reel.pendingBoard = null;
+    }
+  }
+
+  /**
+   * Settle every spinning reel on the next tick (player skip). If the final
+   * board hasn't been revealed yet the skip is remembered and applied as soon
+   * as it arrives — a skip must never invent an outcome.
+   */
+  private skipToSettle(): void {
+    const revealed = this.reels.some((reel) => reel.pendingBoard !== null);
+    if (!revealed) {
+      this.pendingSkip = true;
+      return;
+    }
+    for (const reel of this.reels) {
+      if (reel.spinning) reel.stopAt = this.elapsed;
     }
   }
 
@@ -244,6 +263,7 @@ export class ReelEngine {
       expandedReels?: number[];
       multiplierWilds?: Array<{ reel: number; row: number; value: number }>;
       anticipation?: boolean;
+      turbo?: boolean;
     }
   ): Promise<void> {
     this.board = board.map((col) => [...col]);
@@ -257,22 +277,31 @@ export class ReelEngine {
     return new Promise<void>((resolve) => {
       this.spinResolve = resolve;
       const baseStop = this.elapsed;
+      const turbo = opts?.turbo ?? this.turbo;
       for (let r = 0; r < NUM_REELS; r++) {
         const reel = this.reels[r];
         reel.pendingBoard = displayBoard[r];
-        // Staggered stop; later reels stop later. Anticipation extends reels 3-4.
-        let delay = 300 + r * 240;
-        if (opts?.anticipation && r >= 3) delay += 900;
+        // Staggered stop; later reels stop later (turbo compresses the cascade).
+        // Anticipation extends reels 3-4.
+        let delay = turbo ? 120 + r * 80 : 300 + r * 240;
+        if (opts?.anticipation && r >= 3) delay += turbo ? 300 : 900;
         reel.stopAt = baseStop + delay;
       }
       // Mark multiplier badges to apply once stopped.
       this.pendingBadges = opts?.multiplierWilds ?? [];
       this.pendingExpanded = expanded;
+      // A skip that arrived while the outcome was still unknown applies now.
+      if (this.pendingSkip) {
+        this.pendingSkip = false;
+        this.skipToSettle();
+      }
     });
   }
 
   private pendingBadges: Array<{ reel: number; row: number; value: number }> = [];
   private pendingExpanded: Set<number> = new Set();
+  private turbo = false;
+  private pendingSkip = false;
 
   /** Stop a reel immediately, snapping it to its pending symbols. */
   private settleReel(reel: ReelState, reelIndex: number): void {

@@ -143,6 +143,7 @@ export class Stage {
       medium: 1,
       big: 1.5,
       mega: 2.2,
+      epic: 2.6,
       wincap: 3,
     };
     const count: Record<WinTier, number> = {
@@ -150,6 +151,7 @@ export class Stage {
       medium: 50,
       big: 90,
       mega: 140,
+      epic: 170,
       wincap: 200,
     };
     this.particles.burst(cx, cy, count[tier], power[tier]);

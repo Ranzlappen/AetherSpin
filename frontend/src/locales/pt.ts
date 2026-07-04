@@ -26,7 +26,18 @@ export const pt: Partial<Translations> = {
   'hud.demoTitle': 'Nenhum parâmetro de RGS detectado — executando no RGS simulado local',
 
   'spin.label': 'Girar',
+  'spin.skip': 'Pular',
   'spin.lowBalance': 'Saldo baixo',
+
+  'turbo.label': 'Modo turbo',
+  'turbo.on': 'Turbo ativado',
+  'turbo.off': 'Turbo desativado',
+
+  'win.big': 'GRANDE PRÊMIO',
+  'win.mega': 'MEGA PRÊMIO',
+  'win.epic': 'PRÊMIO ÉPICO',
+  'win.wincap': 'PRÊMIO MÁXIMO',
+  'win.tapToContinue': 'Toque para continuar',
 
   'bet.decrease': 'Diminuir aposta',
   'bet.increase': 'Aumentar aposta',
@@ -43,6 +54,13 @@ export const pt: Partial<Translations> = {
   'autoplay.stop': 'Parar giro automático',
   'autoplay.stopShort': 'Parar',
   'autoplay.spins': '{count} giros',
+  'autoplay.spinsLegend': 'Número de giros',
+  'autoplay.lossLimit': 'Limite de perda',
+  'autoplay.singleWinLimit': 'Limite de ganho único',
+  'autoplay.stopOnFeature': 'Parar nos giros grátis',
+  'autoplay.off': 'Não',
+  'autoplay.stoppedLossLimit': 'Giro automático parado: limite de perda atingido.',
+  'autoplay.stoppedWinLimit': 'Giro automático parado: limite de ganho atingido.',
 
   'sound.toggle': 'Ativar/desativar som',
 
@@ -53,6 +71,34 @@ export const pt: Partial<Translations> = {
   'paytable.symbol': 'Símbolo',
   'paytable.features': 'Recursos',
   'paytable.scrollRegion': 'Detalhes da tabela de pagamentos, rolável',
+  'paytable.ofAKind': '{count} iguais',
+  'paytable.scatterTitle': 'Scatter — {name}',
+  'paytable.scatterBody': 'Paga em qualquer posição. {min}+ ativam os giros grátis.',
+  'paytable.freeSpinsTitle': 'Giros grátis',
+  'paytable.freeSpinsBody': 'Acerte {min}+ scatters para ganhar {minSpins}–{maxSpins} giros.',
+  'paytable.freeSpinsRetrigger': 'Reativações concedem mais giros.',
+  'paytable.ladderTitle': 'Escada de multiplicadores',
+  'paytable.ladderBody':
+    'Ganhos durante os giros grátis elevam o multiplicador global de ×{start} até ×{max}.',
+  'paytable.multiplierWildsTitle': 'Curingas multiplicadores',
+  'paytable.multiplierWildsBody': 'Nos giros grátis, os curingas carregam multiplicadores de {values}×.',
+  'paytable.expandingWildsTitle': 'Curingas expansivos',
+  'paytable.expandingWildsBody': 'Nos giros grátis, os curingas podem se expandir e cobrir todo o seu rolo.',
+  'paytable.bonusBuyTitle': 'Compra de bônus',
+  'paytable.bonusBuyBody': 'Compre giros grátis instantaneamente por {cost}× sua aposta.',
+  'paytable.paylines': 'Linhas de pagamento ({count})',
+  'paytable.rtpLine': 'RTP teórico: {rtp}% · Ganho máximo: {maxWin}× · Volatilidade: {volatility}',
+  'paytable.desc.novaforged':
+    'Um caça-níquel de vídeo premium 5×3 com 20 linhas e visual neon-cósmico: curingas multiplicadores, giros grátis ativados por scatters com escada de multiplicadores, curingas expansivos e compra de bônus.',
+  'paytable.desc.cosmicways':
+    'Um caça-níquel de vídeo 5×3 com 243 formas de ganhar e visual neon-cósmico. Os símbolos pagam em rolos adjacentes a partir da esquerda, com giros grátis ativados por scatters.',
+  'paytable.desc.stellarclusters':
+    'Um caça-níquel de pagamentos por grupos 5×3 com visual neon-cósmico: grupos conectados de um símbolo (curingas substituem) pagam pelo tamanho, com giros grátis ativados por scatters.',
+
+  'volatility.low': 'Baixa',
+  'volatility.medium': 'Média',
+  'volatility.high': 'Alta',
+  'volatility.veryHigh': 'Muito alta',
 
   'common.dismiss': 'Dispensar',
   'common.close': 'Fechar',
