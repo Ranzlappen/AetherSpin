@@ -71,6 +71,36 @@ def _read_config(bundle_dir: Path) -> dict:
     return {}
 
 
+def _lookup_outcomes(bundle_dir: Path) -> dict[str, int]:
+    """Distinct-outcome count per mode, from the lookup tables' row counts."""
+    out: dict[str, int] = {}
+    for lut in sorted((bundle_dir / "math" / "lookup_tables").glob("lookUpTable_*.csv")):
+        if "IdToCriteria" in lut.name:
+            continue
+        mode = lut.stem.removeprefix("lookUpTable_")
+        with lut.open(encoding="utf-8") as fh:
+            rows = sum(1 for line in fh if line.strip())
+        # Discount a header row if present.
+        out[mode] = max(0, rows - 1) if rows else 0
+    return out
+
+
+def library_grade(config: dict) -> str:
+    """Classify the packaged library.
+
+    The standalone simulator stamps ``provenance.simulatorVersion``; the
+    official SDK's publish files don't carry that stamp. A standalone library
+    is dev/staging grade — the checklist requires the certified SDK library
+    for the real upload.
+    """
+    prov = config.get("provenance", {})
+    if prov.get("simulatorVersion"):
+        return "standalone-dev"
+    if config:
+        return "sdk-certified"
+    return "unknown"
+
+
 def write_manifest(
     bundle_dir: Path, game: str, version: str, hashes: dict[str, str]
 ) -> None:
@@ -88,6 +118,10 @@ def write_manifest(
             "wincap": config.get("wincap"),
             "bookAmountMultiplier": config.get("bookAmountMultiplier"),
             "betModes": config.get("betModes"),
+        },
+        "library": {
+            "grade": library_grade(config),
+            "outcomesPerMode": _lookup_outcomes(bundle_dir),
         },
         "provenance": config.get("provenance", {}),
         "artifacts": [
@@ -185,6 +219,39 @@ def write_sbom(bundle_dir: Path, game: str, version: str) -> None:
     )
 
 
+def _stamp_manifest_md(bundle_dir: Path) -> None:
+    """Append a library provenance/grade section to the bundle's MANIFEST.md."""
+    manifest_md = bundle_dir / "MANIFEST.md"
+    if not manifest_md.is_file():
+        return
+    config = _read_config(bundle_dir)
+    prov = config.get("provenance", {})
+    grade = library_grade(config)
+    certified = "yes" if grade == "sdk-certified" else "**NO — dev/staging library**"
+    outcomes = ", ".join(f"{mode}: {n:,}" for mode, n in _lookup_outcomes(bundle_dir).items()) or "n/a"
+    lines = [
+        "",
+        "## Library provenance",
+        "",
+        f"- **Grade:** `{grade}` · **Certified:** {certified}",
+        f"- **Distinct outcomes:** {outcomes}",
+        f"- **gitCommit:** `{prov.get('gitCommit', 'unknown')}`",
+        f"- **definitionHash:** `{prov.get('definitionHash', 'unknown')}`",
+        f"- **seed:** `{prov.get('seed', 'unknown')}`"
+        + (f" · **simulatorVersion:** `{prov['simulatorVersion']}`" if prov.get("simulatorVersion") else ""),
+        "",
+    ]
+    if grade != "sdk-certified":
+        lines += [
+            "> ⚠ This bundle packages the STANDALONE (dev/staging) library. For the",
+            "> real submission, generate the certified library with",
+            "> `bash scripts/run-certification.sh <game>` and re-package.",
+            "",
+        ]
+    with manifest_md.open("a", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--bundle-dir", required=True, help="assembled dist-stake/<game> dir")
@@ -196,15 +263,31 @@ def main() -> int:
     if not bundle_dir.is_dir():
         raise SystemExit(f"bundle dir not found: {bundle_dir}")
 
+    # Stamp the library grade/provenance into MANIFEST.md BEFORE checksumming,
+    # so the stamp is covered by SHA256SUMS/submission-manifest.json.
+    _stamp_manifest_md(bundle_dir)
+
     files = _bundle_files(bundle_dir)
     hashes = write_checksums(bundle_dir, files)
     write_manifest(bundle_dir, args.game, args.version, hashes)
     write_sbom(bundle_dir, args.game, args.version)
 
+    config = _read_config(bundle_dir)
+    grade = library_grade(config)
+    outcomes = _lookup_outcomes(bundle_dir)
+    certified = "yes" if grade == "sdk-certified" else "NO"
     print(
         f"    submission-manifest.json ({len(hashes)} artifacts), "
         f"SHA256SUMS, sbom.cdx.json written"
     )
+    print(f"    LIBRARY GRADE: {grade} — CERTIFIED: {certified}")
+    print(f"    outcomes per mode: {outcomes}")
+    if grade != "sdk-certified":
+        print(
+            "    WARNING: this bundle packages the STANDALONE (dev/staging) library.\n"
+            "             For the real submission generate the certified library with\n"
+            "             `bash scripts/run-certification.sh <game>` and re-package."
+        )
     return 0
 
 

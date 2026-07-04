@@ -39,15 +39,26 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       today. Namespacing keys per game needs a ~1-line change in
       `config/assets.ts` + `ReelEngine`.
 - [ ] **Recommended visual additions** (not wired) — background plates, board
-      frame, logos, loading screen, win/free-spin FX cards. Each needs a small,
+      frame, logos, loading screen, free-spin FX cards. Each needs a small,
       scoped hook; do per asset as art arrives.
+- [x] **Player-experience feature set** — turbo/quick-spin, tap-to-skip
+      presentation (never outcomes), tiered BIG/MEGA/EPIC/MAX win celebration
+      overlay (`WinCelebration.svelte`, art-agnostic with a `data-tier` art
+      hook), and autoplay **loss-limit / single-win-limit / stop-on-feature**
+      stop conditions (`core/autoplay.ts`, see `docs/RESPONSIBLE_GAMING.md`).
 - [ ] **Compliance copy review** — responsible-gaming / legal / jurisdictional
       text reviewed by compliance (human step). The age/legal gate exists but
       ships **off** (operators gate KYC upstream); enable per game if required.
-- [ ] **Localization** — `en` + `de` ship; add locales if target markets need them.
+- [x] **Localization** — `en`, `de`, `es`, `pt` ship, including the full
+      paytable/feature copy (built from definition numbers, not English
+      description fields) and all new feature strings; an i18n completeness
+      test guards the player-facing key families. Add locales if target
+      markets need more.
 
 ## 3. Process / submission
 
+- [ ] **Set real CODEOWNERS** — `.github/CODEOWNERS` still lists placeholder
+      owners; replace them with real GitHub usernames/teams before submission.
 - [ ] **Land PR #57.** Large PR (SDK ports + production hardening + optimizer),
       now **marked ready for review** (out of draft). Get review + required checks
       green, then decide: merge as-is or split.

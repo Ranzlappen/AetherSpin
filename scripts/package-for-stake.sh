@@ -8,7 +8,11 @@
 #   MANIFEST.md, upload-instructions.txt
 # Zipped to: dist-stake/<gameId>-v<version>.zip
 #
-# Usage: scripts/package-for-stake.sh [gameId]   (default: novaforged)
+# Usage: scripts/package-for-stake.sh [gameId] [--math-only] [--dev-library]
+#   (default game: novaforged)
+#   --math-only    allow a bundle without a frontend build
+#   --dev-library  if math/library/<game> is missing, generate a 100k-sim
+#                  STANDALONE library (dev/staging only — never submission-grade)
 #
 set -euo pipefail
 export PYTHONHASHSEED=0  # reproducible library generation
@@ -17,12 +21,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-# Args: <gameId> [--math-only]. --math-only allows a bundle without a frontend.
 GAME_ID="novaforged"
 MATH_ONLY=0
+DEV_LIBRARY=0
 for arg in "$@"; do
   case "$arg" in
     --math-only) MATH_ONLY=1 ;;
+    --dev-library) DEV_LIBRARY=1 ;;
     *) GAME_ID="$arg" ;;
   esac
 done
@@ -51,11 +56,25 @@ fi
 echo "    version:   v$VERSION"
 
 # ---------------------------------------------------------------------------
-# 1. Ensure the math library exists; generate it if missing.
+# 1. Ensure the math library exists. Fail closed when missing: a silently
+#    auto-generated 100k-sim standalone library is far too noisy for a 5000x
+#    wincap title and must never end up in a real upload by accident.
 # ---------------------------------------------------------------------------
 if [ ! -d "$LIBRARY_DIR" ] || [ -z "$(ls -A "$LIBRARY_DIR" 2>/dev/null)" ]; then
-  echo "==> Math library missing; generating (100,000 sims) ..."
-  python3 "$ROOT/math/scripts/generate_books.py" --game "$GAME_ID" --sims 100000
+  if [ "$DEV_LIBRARY" -eq 1 ]; then
+    echo "==> Math library missing; generating STANDALONE dev library (100,000 sims) ..."
+    echo "    (dev/staging only — not submission-grade)"
+    python3 "$ROOT/math/scripts/generate_books.py" --game "$GAME_ID" --sims 100000
+  else
+    echo "ERROR: no math library at math/library/$GAME_ID." >&2
+    echo "" >&2
+    echo "  For a SUBMISSION bundle, generate the certified library first:" >&2
+    echo "      bash scripts/run-certification.sh $GAME_ID" >&2
+    echo "  For a dev/staging bundle, either generate books explicitly:" >&2
+    echo "      python3 math/scripts/generate_books.py --game $GAME_ID --sims <N>" >&2
+    echo "  or re-run with --dev-library to auto-generate a 100k-sim library." >&2
+    exit 1
+  fi
 fi
 
 if [ ! -d "$LIBRARY_DIR" ]; then
