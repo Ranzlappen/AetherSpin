@@ -22,6 +22,21 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       [`docs/white-papers/<game>-white-paper.md`](white-papers/). Have a math
       reviewer sign off the hit/free-spin/win-cap frequencies and max-win before
       submission.
+- [x] **NovaForged certified run + strict parity re-verified** (2026-07-04,
+      against the volatility-reconciled definition, hash `8ccc93368f60…`):
+      full SDK pipeline (1e6 base / 2e5 bonus + Rust optimizer) → RTP
+      **0.9650 exact** both modes; SDK RGS verifier green (SHA-256 + payout
+      hash, 999,984 / 200,000 entries); `run-sdk-parity.sh --strict` **PASS**;
+      white paper regenerated; certified bundle packaged via
+      `package-for-stake.sh novaforged --certified` (grade `sdk-certified`
+      stamped in the manifest).
+- [ ] _(Known, informational)_ **SDK 3-star volatility limits — bonus mode.**
+      The SDK's `rgs_verification` warns that the 100× buy-bonus exceeds
+      3-star volatility limits (`etl40b` 1.04 > 0.9, `cvar` 2293 > 800) —
+      inherent to a 100× buy with a 5000× cap (bonus CV ≈ 207, documented in
+      the white paper). Base mode passes. If Stake's review requires the
+      bonus to fit a specific star rating, retune `game_optimization.py`'s
+      bonus distribution; otherwise disclose as-is.
 - [ ] _(Known, low priority)_ **Ways multiplier-wild reconciliation** — moot while
       Cosmic Ways disables multiplier wilds (`values: [1]`); only needed if it ever
       enables `>1` wilds (the SDK's ways `"symbol"` strategy differs from the

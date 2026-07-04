@@ -121,9 +121,9 @@ The web client must present, at minimum:
 1. **Build the artifacts**
 
    ```bash
-   bash scripts/run-certification.sh <game>          # certified SDK library (submission grade)
+   bash scripts/run-certification.sh <game>              # certified SDK library (submission grade)
    pnpm --filter @aetherspin/frontend build
-   bash scripts/package-for-stake.sh <game>          # -> dist-stake/<game>/
+   bash scripts/package-for-stake.sh <game> --certified  # -> dist-stake/<game>/ (SDK library)
    ```
 
    Packaging **fails closed** when `math/library/<game>` is missing — generate the
@@ -132,6 +132,7 @@ The web client must present, at minimum:
    stamp the **library grade** (`sdk-certified` vs `standalone-dev`) plus
    provenance and per-mode outcome counts — verify the grade says `sdk-certified`
    before a real upload.
+
 2. **Create the game** in the Stake Engine dashboard; set `id`, display name, provider, and
    **version 1.0**.
 3. **Upload the math library** — `books_<mode>.jsonl`, both lookup-table CSVs per mode, `config.json`,

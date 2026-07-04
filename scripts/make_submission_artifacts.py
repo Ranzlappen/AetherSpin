@@ -75,29 +75,38 @@ def _lookup_outcomes(bundle_dir: Path) -> dict[str, int]:
     """Distinct-outcome count per mode, from the lookup tables' row counts."""
     out: dict[str, int] = {}
     for lut in sorted((bundle_dir / "math" / "lookup_tables").glob("lookUpTable_*.csv")):
-        if "IdToCriteria" in lut.name:
+        if "IdToCriteria" in lut.name or "Segmented" in lut.name:
             continue
-        mode = lut.stem.removeprefix("lookUpTable_")
+        # Standalone tables are lookUpTable_<mode>.csv; the SDK's certified
+        # publish tables are lookUpTable_<mode>_<n>.csv.
+        mode = re.sub(r"_\d+$", "", lut.stem.removeprefix("lookUpTable_"))
+        rows = 0
         with lut.open(encoding="utf-8") as fh:
-            rows = sum(1 for line in fh if line.strip())
-        # Discount a header row if present.
-        out[mode] = max(0, rows - 1) if rows else 0
+            for i, line in enumerate(fh):
+                line = line.strip()
+                if not line:
+                    continue
+                # Discount a header row (first field non-numeric), if any.
+                if i == 0 and not line.split(",", 1)[0].strip().isdigit():
+                    continue
+                rows += 1
+        out[mode] = out.get(mode, 0) + rows
     return out
 
 
 def library_grade(config: dict) -> str:
     """Classify the packaged library.
 
-    The standalone simulator stamps ``provenance.simulatorVersion``; the
-    official SDK's publish files don't carry that stamp. A standalone library
-    is dev/staging grade — the checklist requires the certified SDK library
-    for the real upload.
+    ``run-certification.sh`` stamps ``provenance.generator: math-sdk`` into the
+    certified config; the standalone simulator stamps
+    ``provenance.simulatorVersion``. A standalone library is dev/staging grade —
+    the checklist requires the certified SDK library for the real upload.
     """
     prov = config.get("provenance", {})
+    if prov.get("generator") == "math-sdk":
+        return "sdk-certified"
     if prov.get("simulatorVersion"):
         return "standalone-dev"
-    if config:
-        return "sdk-certified"
     return "unknown"
 
 
@@ -237,10 +246,12 @@ def _stamp_manifest_md(bundle_dir: Path) -> None:
         f"- **Distinct outcomes:** {outcomes}",
         f"- **gitCommit:** `{prov.get('gitCommit', 'unknown')}`",
         f"- **definitionHash:** `{prov.get('definitionHash', 'unknown')}`",
-        f"- **seed:** `{prov.get('seed', 'unknown')}`"
-        + (f" · **simulatorVersion:** `{prov['simulatorVersion']}`" if prov.get("simulatorVersion") else ""),
-        "",
     ]
+    if prov.get("seed") is not None:
+        lines.append(f"- **seed:** `{prov['seed']}`")
+    if prov.get("simulatorVersion"):
+        lines.append(f"- **simulatorVersion:** `{prov['simulatorVersion']}`")
+    lines.append("")
     if grade != "sdk-certified":
         lines += [
             "> ⚠ This bundle packages the STANDALONE (dev/staging) library. For the",

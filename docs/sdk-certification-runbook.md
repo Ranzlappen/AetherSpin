@@ -14,13 +14,19 @@ scripts/run-certification.sh <game>
 
 It runs the full pipeline — `OptimizationSetup` → `create_books` →
 `generate_configs` → **Rust optimizer** → `generate_configs` → `execute_all_tests`
-— and prints the post-optimization RTP. Output lands in
+— stamps version + provenance (gitCommit, definitionHash) into the certified
+config, and prints the post-optimization RTP. Output lands in
 `math/engine/games/<game>/library/` (`publish_files/` holds the certified books +
-optimized lookup tables). Then package:
+optimized lookup tables). Then package the certified library:
 
 ```bash
-bash scripts/package-for-stake.sh <game>
+bash scripts/package-for-stake.sh <game> --certified
 ```
+
+The bundle's `MANIFEST.md` / `submission-manifest.json` will report
+`grade: sdk-certified` with the per-mode outcome counts; the packaging-time
+version/definitionHash guard proves the library was generated from the current
+definition.
 
 ## Prerequisites
 
