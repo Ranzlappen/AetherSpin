@@ -5,8 +5,9 @@
  * cache-busting); this module *loads* it through Pixi `Assets` at boot and lets
  * the renderer ask for a loaded texture by key. It is deliberately
  * fault-tolerant: a missing or undecodable asset is logged and skipped, never
- * thrown — so the game falls back to its procedural rendering and still runs in
- * environments with no art (the default today, where the manifest is empty).
+ * thrown — so the game falls back to its procedural rendering and still runs
+ * even if manifest entries (today: placeholder SVG symbols and WAV SFX) are
+ * missing from the deployment.
  *
  * Keys are the manifest's own asset keys (e.g. `"symbol:H1"`); the renderer
  * queries them via {@link AssetRegistry.getTexture}.

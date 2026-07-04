@@ -12,7 +12,7 @@
     "numRows": 3,
     "wincapMultiplier": 5000.0,
     "rtpTarget": 0.965,
-    "volatility": "high"
+    "volatility": "medium"
   },
   "currency": {
     "default": "USD",

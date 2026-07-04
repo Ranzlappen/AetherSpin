@@ -137,7 +137,7 @@ hardcoded in either side.
 **NovaForged's actual values (the flagship):**
 
 - **engine**: `type: "lines"`, `numReels: 5`, `numRows: 3`,
-  `wincapMultiplier: 5000`, `rtpTarget: 0.965`, `volatility: "high"`.
+  `wincapMultiplier: 5000`, `rtpTarget: 0.965`, `volatility: "medium"`.
 - **currency**: `apiAmountMultiplier: 1_000_000` (dollars→integer API amount),
   `bookAmountMultiplier: 100` (multiplier→integer book payout units).
 - **bet**: 10 levels (0.1 → 100.0), default index 2.
