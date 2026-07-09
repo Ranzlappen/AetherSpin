@@ -45,8 +45,8 @@ anything marked _wired_.
 To revise one, replace the file; keep the name. (The procedural fallback and
 `scripts/gen-placeholder-art.mjs` remain for scaffolded new games.)
 
-| Key (manifest) | File                    | Depicts (name) | Accent  | Kind    | Notes                                                  |
-| -------------- | ----------------------- | -------------- | ------- | ------- | ------------------------------------------------------ |
+| Key (manifest) | File                     | Depicts (name) | Accent  | Kind    | Notes                                                  |
+| -------------- | ------------------------ | -------------- | ------- | ------- | ------------------------------------------------------ |
 | `symbol:W`     | `public/symbols/W.webp`  | Aether Crystal | #7df9ff | wild    | Substitutes for all pays; reads as premium/iconic.     |
 | `symbol:S`     | `public/symbols/S.webp`  | Nova Sigil     | #ff45e0 | scatter | Triggers free spins; should pop against any reel cell. |
 | `symbol:H1`    | `public/symbols/H1.webp` | Nova Core      | #ffd166 | high    | Top high-pay.                                          |
