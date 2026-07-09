@@ -7,6 +7,14 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.10.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.9.0...v1.10.0) (2026-07-09)
+
+
+### Features
+
+* install final SFX set and upgrade win-line highlights to neon g… ([a0ffc7f](https://github.com/Ranzlappen/AetherSpin/commit/a0ffc7f0df0fcfb0c3504627bfa2536eb9a589ca))
+* install final SFX set and upgrade win-line highlights to neon glow presentation ([66e2855](https://github.com/Ranzlappen/AetherSpin/commit/66e285546742985249f0791ab84d1937e56f09d9))
+
 ## [1.9.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.8.0...v1.9.0) (2026-07-09)
 
 
