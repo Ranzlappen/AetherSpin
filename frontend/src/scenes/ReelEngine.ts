@@ -56,8 +56,10 @@ export class ReelEngine {
   readonly view = new Container();
 
   private readonly reels: ReelState[] = [];
+  private readonly reelContainers: Container[] = [];
   private readonly maskGfx = new Graphics();
   private readonly frame = new Graphics();
+  private frameArt: Sprite | null = null;
   private readonly lineOverlay = new Graphics();
   private readonly textureCache = new Map<string, Texture>();
   private readonly renderer: Renderer;
@@ -79,8 +81,39 @@ export class ReelEngine {
     return { width: BOARD_WIDTH, height: BOARD_HEIGHT };
   }
 
-  /** Build the neon frame around the reels. */
+  /**
+   * Footprint the stage should fit into the viewport: the art frame's full
+   * extent when it loaded, else the board plus the procedural frame margin.
+   */
+  get fitSize(): { width: number; height: number } {
+    if (this.frameArt) return { width: this.frameArt.width, height: this.frameArt.height };
+    return { width: BOARD_WIDTH + 24, height: BOARD_HEIGHT + 24 };
+  }
+
+  /**
+   * Build the frame around the reels: the final frame plate (`ui:frame`) when
+   * loaded — scaled so its transparent window wraps the board — with a dark
+   * board fill behind the symbols; otherwise the procedural neon frame.
+   */
   private buildFrame(): void {
+    const art = assetRegistry.getTexture('ui:frame');
+    if (art) {
+      // Window fractions measured from the delivered plate (transparent
+      // window ≈ 679×350 in a 1152×768 image, centered).
+      const WINDOW_X = 679 / 1152;
+      const WINDOW_Y = 350 / 768;
+      this.frameArt = new Sprite(art);
+      this.frameArt.width = (BOARD_WIDTH + 24) / WINDOW_X;
+      this.frameArt.height = (BOARD_HEIGHT + 44) / WINDOW_Y;
+      this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
+      this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
+      this.view.addChild(this.frameArt);
+      this.frame
+        .roundRect(-6, -6, BOARD_WIDTH + 12, BOARD_HEIGHT + 12, 14)
+        .fill({ color: 0x0a0420, alpha: 0.78 });
+      this.view.addChild(this.frame);
+      return;
+    }
     this.frame
       .roundRect(-12, -12, BOARD_WIDTH + 24, BOARD_HEIGHT + 24, 18)
       .stroke({ color: 0x7df9ff, width: 3, alpha: 0.8 });
@@ -96,10 +129,13 @@ export class ReelEngine {
       const reelContainer = new Container();
       reelContainer.x = r * REEL_WIDTH;
       this.view.addChild(reelContainer);
+      this.reelContainers.push(reelContainer);
       const cells: Cell[] = [];
-      // One extra cell above and below for seamless spin scroll.
+      // One extra cell above and below for seamless spin scroll. The idle
+      // board is cosmetic until the first reveal — vary it so boot doesn't
+      // show a wall of one symbol.
       for (let row = 0; row < NUM_ROWS + 2; row++) {
-        const cell = this.makeCell('L5');
+        const cell = this.makeCell(randomSpinSymbol());
         cell.container.x = SYMBOL_GAP / 2;
         cell.container.y = (row - 1) * CELL + SYMBOL_GAP / 2;
         reelContainer.addChild(cell.container);
@@ -120,9 +156,10 @@ export class ReelEngine {
   private applyMask(): void {
     this.maskGfx.rect(0, 0, BOARD_WIDTH, BOARD_HEIGHT).fill({ color: 0xffffff });
     this.view.addChild(this.maskGfx);
-    for (let r = 0; r < NUM_REELS; r++) {
-      (this.view.getChildAt(2 + r) as Container).mask = this.maskGfx;
+    for (const reelContainer of this.reelContainers) {
+      reelContainer.mask = this.maskGfx;
     }
+    this.lineOverlay.mask = this.maskGfx;
   }
 
   /** Create a single symbol cell. */
@@ -197,9 +234,12 @@ export class ReelEngine {
   private setCellSymbol(cell: Cell, symbolId: string): void {
     cell.symbolId = symbolId;
     cell.bg.clear();
-    // Use a sprite from the cached texture for the tile background.
+    // Use a sprite from the cached texture for the tile background, sized to
+    // the cell (art textures ship at 512×512; procedural ones at cell size).
     cell.bg.removeChildren();
     const tile = new Sprite(this.symbolTexture(symbolId));
+    tile.width = SYMBOL_SIZE;
+    tile.height = SYMBOL_SIZE;
     cell.bg.addChild(tile);
 
     // The procedural glyph letter is only a stand-in for missing art; when a

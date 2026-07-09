@@ -50,7 +50,9 @@ function show(tier: WinTier, amount: number): void {
  */
 export function initCelebrations(): () => void {
   const off = bus.on('celebrate', (p) => {
-    if (isOverlayTier(p.tier)) show(p.tier, p.amount);
+    // Only the round's settled aggregate win gets the full-screen overlay;
+    // mid-round wins celebrate via particles/sound (Stage) instead.
+    if (p.final && isOverlayTier(p.tier)) show(p.tier, p.amount);
   });
   return () => {
     off();

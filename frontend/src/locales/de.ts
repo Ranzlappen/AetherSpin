@@ -43,6 +43,7 @@ export const de: Partial<Translations> = {
   'buyBonus.confirmBody': 'Bonus kaufen für {cost} ({multiplier}× Ihres Einsatzes).',
 
   'freeSpins.won': 'Gewonnen {amount}',
+  'freeSpins.awarded': '{count} Freispiele',
 
   'autoplay.label': 'Autoplay',
   'autoplay.auto': 'Auto',

@@ -39,6 +39,7 @@
   import SoundToggle from './SoundToggle.svelte';
   import TurboToggle from './TurboToggle.svelte';
   import WinCelebration from './WinCelebration.svelte';
+  import FreeSpinsSplash from './FreeSpinsSplash.svelte';
   import RealityCheck from './RealityCheck.svelte';
   import AgeGate from './AgeGate.svelte';
 
@@ -301,6 +302,7 @@
       </div>
     </footer>
 
+    <FreeSpinsSplash />
     <WinCelebration />
 
     {#if usingMock}

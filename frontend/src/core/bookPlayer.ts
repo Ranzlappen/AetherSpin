@@ -259,15 +259,14 @@ export class BookPlayer {
   }
 
   /**
-   * Emit a win celebration for the tier of `winMultiplier`, play the matching
-   * sound, and — for overlay tiers (big and up) — hold playback while the
-   * celebration overlay presents (skippable like every other pause).
+   * Emit a mid-round win celebration (particles + sound) for the tier of
+   * `winMultiplier`. The full-screen overlay and its playback hold happen only
+   * on the round's final aggregate win (see the `finalWin` case).
    */
-  private async celebrate(winMultiplier: number, amountDollars: number): Promise<void> {
+  private celebrate(winMultiplier: number, amountDollars: number): void {
     const tier = classifyWin(winMultiplier);
-    bus.emit('celebrate', { tier, amount: amountDollars });
+    bus.emit('celebrate', { tier, amount: amountDollars, final: false });
     sound.play(tier === 'small' ? 'win' : 'bigWin');
-    if (isOverlayTier(tier)) await this.pause(this.timings.celebration, 600);
   }
 
   /** Replay every event of a book in order. `bet` is the stake in dollars. */
@@ -326,7 +325,7 @@ export class BookPlayer {
           bus.emit('wins:lines', { wins: event.wins, betPerLine });
           runningWin += event.amount * bet;
           totalWin.set(round2(runningWin));
-          await this.celebrate(event.amount, event.amount * bet);
+          this.celebrate(event.amount, event.amount * bet);
           await this.pause(this.timings.lineWins);
         }
         return runningWin;
@@ -367,7 +366,7 @@ export class BookPlayer {
           runningWin += event.amount * bet;
           totalWin.set(round2(runningWin));
           freeSpins.update((fs) => ({ ...fs, accumulated: round2(fs.accumulated + event.amount * bet) }));
-          await this.celebrate(event.amount, event.amount * bet);
+          this.celebrate(event.amount, event.amount * bet);
           await this.pause(this.timings.lineWins);
         }
         return runningWin;
@@ -409,7 +408,7 @@ export class BookPlayer {
         bus.emit('round:final', { amount: event.amount, wincap: event.wincap });
         if (event.amount > 0) {
           const tier = event.wincap ? 'wincap' : classifyWin(event.amount);
-          bus.emit('celebrate', { tier, amount: finalDollars });
+          bus.emit('celebrate', { tier, amount: finalDollars, final: true });
           if (isOverlayTier(tier)) await this.pause(this.timings.celebration, 600);
         }
         await this.pause(this.timings.settle);

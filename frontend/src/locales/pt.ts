@@ -47,6 +47,7 @@ export const pt: Partial<Translations> = {
   'buyBonus.confirmBody': 'Compre o bônus por {cost} ({multiplier}× sua aposta).',
 
   'freeSpins.won': 'Você ganhou {amount}',
+  'freeSpins.awarded': '{count} giros grátis',
 
   'autoplay.label': 'Giro automático',
   'autoplay.auto': 'Auto',

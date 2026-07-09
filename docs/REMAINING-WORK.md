@@ -47,15 +47,21 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 2. Frontend / product
 
-- [ ] **Final art + audio** — replace placeholders. Full list in
-      [`docs/artwork-checklist.md`](artwork-checklist.md) / `docs/asset-spec.md`.
-      The pipeline is a drop-in file swap for the required set.
-- [ ] **Per-game art theming** (optional) — all three games share one symbol set
-      today. Namespacing keys per game needs a ~1-line change in
-      `config/assets.ts` + `ReelEngine`.
-- [ ] **Recommended visual additions** (not wired) — background plates, board
-      frame, logos, loading screen, free-spin FX cards. Each needs a small,
-      scoped hook; do per asset as art arrives.
+- [x] **Final art** — integrated: all 11 symbols (512² WebP with alpha),
+      nebula background plate, reel-board frame, NovaForge logo (loading
+      screen), big-win burst (celebration overlay), free-spins intro card
+      (feature splash), and app icons (192/512 PNG + favicon links). Every
+      piece keeps its procedural fallback, and the missing-asset guards +
+      `e2e/assets.spec.ts` verify each loads.
+- [ ] **Final audio** — SFX are still synthesized placeholders
+      (`public/audio/*.wav`); no music track yet. Deliverables in
+      `docs/asset-spec.md` §2 (drop-in swap; music needs a small loop manager
+      in `sound.ts`).
+- [ ] **Per-game art theming** (optional) — all three games share the one
+      (NovaForged-themed) symbol set. The `THEMED_SYMBOL_SETS` seam in
+      `config/assets.ts` takes per-game overrides as a pure data change.
+- [ ] _(Note)_ The delivered logo reads "NovaForge" (no trailing "d") while the
+      game's display name is "NovaForged" — confirm or revise the wordmark.
 - [x] **Player-experience feature set** — turbo/quick-spin, tap-to-skip
       presentation (never outcomes), tiered BIG/MEGA/EPIC/MAX win celebration
       overlay (`WinCelebration.svelte`, art-agnostic with a `data-tier` art

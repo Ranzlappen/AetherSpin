@@ -1,8 +1,11 @@
 /**
- * Procedural animated neon-cosmic background: a vertical gradient, a parallax
- * starfield and slow-drifting nebula glows. No external art assets. Pixi-only.
+ * Animated neon-cosmic background. Prefers the loaded nebula art plate
+ * (`bg:main` in the asset manifest, cover-fit) and layers the parallax
+ * starfield on top; with no art it falls back to the fully procedural
+ * gradient + nebula glows. Pixi-only.
  */
 import { Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
+import { assetRegistry } from '../core/assetLoader';
 
 interface Star {
   sprite: Sprite;
@@ -24,9 +27,16 @@ export class Background {
   private height = 720;
   private elapsed = 0;
   private readonly starTexture: Texture;
+  /** Final nebula art plate (null → procedural gradient/glows only). */
+  private readonly plate: Sprite | null = null;
 
   constructor() {
     this.view.addChild(this.gradient);
+    const plateTexture = assetRegistry.getTexture('bg:main');
+    if (plateTexture) {
+      this.plate = new Sprite(plateTexture);
+      this.view.addChild(this.plate);
+    }
     this.view.addChild(this.nebula);
     this.view.addChild(this.starLayer);
     this.starTexture = Background.makeStarTexture();
@@ -66,7 +76,7 @@ export class Background {
     }
   }
 
-  /** Redraw resolution-dependent layers (gradient + nebula). */
+  /** Redraw resolution-dependent layers (gradient / art plate + nebula). */
   private draw(): void {
     this.gradient.clear();
     // Vertical gradient approximation using stacked bands.
@@ -75,6 +85,18 @@ export class Background {
       const t = i / (bands - 1);
       const color = lerpColor(0x05010f, 0x1a0533, t);
       this.gradient.rect(0, (this.height / bands) * i, this.width, this.height / bands + 1).fill({ color });
+    }
+
+    if (this.plate) {
+      // Cover-fit the art plate; the procedural glows stay off (the plate has
+      // its own nebulae), the starfield stays on for motion.
+      const tex = this.plate.texture;
+      const scale = Math.max(this.width / tex.width, this.height / tex.height);
+      this.plate.scale.set(scale);
+      this.plate.x = (this.width - tex.width * scale) / 2;
+      this.plate.y = (this.height - tex.height * scale) / 2;
+      this.nebula.clear();
+      return;
     }
 
     this.nebula.clear();

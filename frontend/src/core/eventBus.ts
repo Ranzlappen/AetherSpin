@@ -22,8 +22,12 @@ export interface GameEventMap {
   'wins:lines': { wins: Win[]; betPerLine: number };
   /** Show a scatter win celebration. */
   'wins:scatter': { count: number; amount: number };
-  /** A win celebration of the given magnitude should play. */
-  celebrate: { tier: WinTier; amount: number };
+  /**
+   * A win celebration of the given magnitude should play. `final` marks the
+   * round's settled aggregate win — the full-screen overlay only shows then;
+   * mid-round wins celebrate with particles/sound only.
+   */
+  celebrate: { tier: WinTier; amount: number; final: boolean };
   /** Free spins are about to begin. */
   'freespins:start': { awarded: number; startMultiplier: number };
   /** Additional free spins were awarded mid-feature. */

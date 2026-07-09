@@ -45,6 +45,7 @@ export const en = {
   'buyBonus.confirmBody': 'Purchase the bonus for {cost} ({multiplier}× your bet).',
 
   'freeSpins.won': 'Won {amount}',
+  'freeSpins.awarded': '{count} free spins',
 
   'autoplay.label': 'Autoplay',
   'autoplay.auto': 'Auto',

@@ -15,6 +15,7 @@
   } from '../core/celebration';
   import { currency } from '../core/gameState';
   import { formatCurrency } from '../config/gameConfig';
+  import { assetUrl } from '../config/assets';
   import { t, localeTag } from '../core/i18n';
   import { prefersReducedMotion } from '../core/a11y';
   import type { WinTier } from '../core/eventBus';
@@ -76,6 +77,7 @@
     aria-label={$t(titleKey($activeCelebration.tier))}
   >
     <button class="hit-area" on:click={dismissCelebration} aria-label={$t('common.dismiss')}>
+      <img class="burst" src={assetUrl('fx/win-plate.webp')} alt="" aria-hidden="true" />
       <div class="plate">
         <span class="title">{$t(titleKey($activeCelebration.tier))}</span>
         <span class="amount">{formatCurrency(displayed, $currency, $localeTag)}</span>
@@ -99,11 +101,37 @@
   .hit-area {
     all: unset;
     cursor: pointer;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
+  }
+  .burst {
+    position: absolute;
+    width: min(78vmin, 640px);
+    height: auto;
+    pointer-events: none;
+    animation: burstIn 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+  .plate {
+    position: relative;
+  }
+  @keyframes burstIn {
+    from {
+      transform: scale(0.4) rotate(-14deg);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .burst {
+      animation: none;
+    }
   }
   .plate {
     display: flex;

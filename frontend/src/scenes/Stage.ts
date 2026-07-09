@@ -173,9 +173,12 @@ export class Stage {
     this.background?.resize(w, h);
 
     const { width, height } = this.reels.boardSize;
-    // Leave headroom for DOM UI overlay; fit the board into ~86% of the viewport.
+    // Fit the full presentation footprint (board frame included, when its art
+    // loaded) into ~86% of the viewport, leaving headroom for the DOM HUD. The
+    // frame is symmetric around the board, so centering the board centers it.
+    const fit = this.reels.fitSize;
     const margin = 0.86;
-    const scale = Math.min((w * margin) / width, (h * margin) / height);
+    const scale = Math.min((w * margin) / fit.width, (h * margin) / fit.height);
     const x = (w - width * scale) / 2;
     const y = (h - height * scale) / 2;
     this.world.scale.set(scale);

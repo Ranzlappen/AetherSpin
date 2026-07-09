@@ -101,16 +101,19 @@ describe('asset singleton (boot path)', () => {
 
   it('preloadAssets() drives the shared registry over the real manifest', async () => {
     // Inject a fake loader so we exercise the *app* manifest without real I/O
-    // (jsdom can't rasterize SVGs). The renderer reads from this same singleton.
+    // (jsdom can't decode images). The renderer reads from this same singleton.
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
     const loaded = await preloadAssets({ load: async (url) => fakeTexture(url) });
 
+    // 11 symbols + the scene plates (background, reel frame).
     expect(loaded).toContain('symbol:W');
     expect(loaded).toContain('symbol:L5');
-    expect(loaded).toHaveLength(11);
+    expect(loaded).toContain('bg:main');
+    expect(loaded).toContain('ui:frame');
+    expect(loaded).toHaveLength(13);
     expect(assetRegistry.getTexture('symbol:H1')).not.toBeNull();
     // Readiness marker the E2E asset-load check asserts on in a real browser.
-    expect(info).toHaveBeenCalledWith('[assets] ready: 11/11 loaded');
+    expect(info).toHaveBeenCalledWith('[assets] ready: 13/13 loaded');
     info.mockRestore();
   });
 });
