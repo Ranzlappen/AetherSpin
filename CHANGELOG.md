@@ -7,6 +7,22 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.9.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.8.0...v1.9.0) (2026-07-09)
+
+
+### Features
+
+* certified-library packaging path, provenance stamping, and Python 3.12 SDK toolchain fixes ([5c335e3](https://github.com/Ranzlappen/AetherSpin/commit/5c335e329e386c2cd6315a4ffaa168cac97029dc))
+* fail-closed packaging with library grade + provenance stamped into the bundle ([f9af935](https://github.com/Ranzlappen/AetherSpin/commit/f9af9355a42ff60830249cd18c74c4514cd6e6f0))
+* integrate final artwork — symbols, background, frame, logo, win/free-spins plates, icons ([2ce2111](https://github.com/Ranzlappen/AetherSpin/commit/2ce2111477f1c38bb6bc558468b783845dc4b8c4))
+* turbo mode, tap-to-skip, tiered win celebrations, autoplay limits, full paytable i18n ([a014701](https://github.com/Ranzlappen/AetherSpin/commit/a01470138fc30776bad8c254a5c49253e1f749e2))
+
+
+### Bug Fixes
+
+* reconcile volatility labels with certified white papers and stale doc references ([b1798df](https://github.com/Ranzlappen/AetherSpin/commit/b1798dfee8faba9aa27319fe9c324f7e2d4fed46))
+* reconcile volatility labels with certified white papers and stale doc references ([5d8b221](https://github.com/Ranzlappen/AetherSpin/commit/5d8b221c77be5a2148c01d721fe89c9290e2df0d))
+
 ## [1.8.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.7.0...v1.8.0) (2026-07-01)
 
 
