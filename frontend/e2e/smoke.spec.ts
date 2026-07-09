@@ -26,6 +26,24 @@ const spinButton = (page: import('@playwright/test').Page) =>
 const skipButton = (page: import('@playwright/test').Page) =>
   page.getByRole('button', { name: 'Skip', exact: true });
 
+/**
+ * Settle the in-flight round in bounded time. Random mock books range from a
+ * ~1s no-win spin to a retriggered free-spins feature running well past 30s,
+ * so tap the skip control if it's still up (a short round may already have
+ * settled — then the click quietly finds nothing) and wait for the button to
+ * return to Spin. The strict skip-control contract itself is covered
+ * deterministically in features.spec.ts against a replayed bonus book.
+ */
+const settleRound = async (page: import('@playwright/test').Page): Promise<void> => {
+  // dispatchEvent fires the click on the button itself, so the free-spins
+  // splash / win-celebration overlays can't swallow it — and the Skip locator
+  // only matches while a round is in flight, so this can never start a spin.
+  await skipButton(page)
+    .dispatchEvent('click', {}, { timeout: 5_000 })
+    .catch(() => {});
+  await expect(spinButton(page)).toBeEnabled({ timeout: 30_000 });
+};
+
 test('boots on the mock RGS and shows the core HUD', async ({ page }) => {
   await page.goto('/');
 
@@ -38,7 +56,8 @@ test('boots on the mock RGS and shows the core HUD', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Paytable' })).toBeVisible();
 });
 
-test('plays a round: spin becomes skip, then returns once the round resolves', async ({ page }) => {
+test('plays a round to settlement', async ({ page }) => {
+  test.slow(); // slow-runner boot + a feature round can brush the default budget
   await page.goto('/');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
@@ -47,12 +66,9 @@ test('plays a round: spin becomes skip, then returns once the round resolves', a
 
   await spin.click();
 
-  // While resolving, the button becomes the skip control (the round is in flight)…
-  await expect(skipButton(page)).toBeVisible();
-
-  // …and once the full play → reveal → end-round cycle completes it is usable
-  // again, proving the round resolved without throwing / corrupting state.
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  // The full play → reveal → end-round cycle completes and the button is
+  // usable again, proving the round resolved without throwing/corrupting state.
+  await settleRound(page);
 });
 
 test('opens the paytable / rules modal', async ({ page }) => {
@@ -64,6 +80,7 @@ test('opens the paytable / rules modal', async ({ page }) => {
 });
 
 test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({ page }) => {
+  test.slow(); // slow-runner boot + a feature round can brush the default budget
   await page.goto('/?game=cosmicways');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
@@ -74,11 +91,11 @@ test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await spin.click();
-  await expect(skipButton(page)).toBeVisible();
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  await settleRound(page);
 });
 
 test('multi-game: mounts and plays the cluster game via ?game=stellarclusters', async ({ page }) => {
+  test.slow(); // slow-runner boot + a feature round can brush the default budget
   await page.goto('/?game=stellarclusters');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
@@ -89,8 +106,7 @@ test('multi-game: mounts and plays the cluster game via ?game=stellarclusters', 
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await spin.click();
-  await expect(skipButton(page)).toBeVisible();
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  await settleRound(page);
 });
 
 test('QA replay viewer: ?replay=base serves the committed corpus deterministically', async ({ page }) => {
@@ -110,6 +126,7 @@ test('QA replay viewer: ?replay=base serves the committed corpus deterministical
 });
 
 test('a11y: exposes a polite live region and spins via the keyboard', async ({ page }) => {
+  test.slow(); // slow-runner boot + a feature round can brush the default budget
   await page.goto('/');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
@@ -121,9 +138,8 @@ test('a11y: exposes a polite live region and spins via the keyboard', async ({ p
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await page.locator('body').press('Space');
-  await expect(skipButton(page)).toBeVisible();
 
   // The round resolves and the live region announces an outcome.
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  await settleRound(page);
   await expect(liveRegion).not.toBeEmpty({ timeout: 30_000 });
 });
