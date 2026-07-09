@@ -53,10 +53,12 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       (feature splash), and app icons (192/512 PNG + favicon links). Every
       piece keeps its procedural fallback, and the missing-asset guards +
       `e2e/assets.spec.ts` verify each loads.
-- [ ] **Final audio** — SFX are still synthesized placeholders
-      (`public/audio/*.wav`); no music track yet. Deliverables in
-      `docs/asset-spec.md` §2 (drop-in swap; music needs a small loop manager
-      in `sound.ts`).
+- [x] **Final SFX** — all 7 delivered clips installed (`public/audio/*.wav`,
+      44.1 kHz/16-bit, clean peaks); drop-in swap, no code change. Win-line
+      highlights upgraded to layered neon strokes + an additive cell-glow
+      flare (`fx/line-glow.webp`, generated + wired).
+- [ ] **Music** (optional) — no base/free-spins loops yet; needs a small loop
+      manager in `sound.ts` when tracks arrive (`docs/asset-spec.md` §3).
 - [ ] **Per-game art theming** (optional) — all three games share the one
       (NovaForged-themed) symbol set. The `THEMED_SYMBOL_SETS` seam in
       `config/assets.ts` takes per-game overrides as a pure data change.

@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  * declared asset loaded and none failed.
  */
 test('asset pipeline: every declared texture loads in the browser', async ({ page }) => {
-  test.slow(); // boot + decoding 13 textures under the software renderer
+  test.slow(); // boot + decoding 14 textures under the software renderer
 
   const logs: string[] = [];
   page.on('console', (msg) => logs.push(msg.text()));
@@ -24,7 +24,7 @@ test('asset pipeline: every declared texture loads in the browser', async ({ pag
   // The readiness marker reports all declared assets loaded (loaded === total).
   await expect
     .poll(() => logs.find((m) => m.includes('[assets] ready:')) ?? '', { timeout: 30_000 })
-    .toMatch(/\[assets\] ready: 13\/13 loaded/);
+    .toMatch(/\[assets\] ready: 14\/14 loaded/);
 
   // No asset failed to fetch/decode in Chromium.
   expect(logs.filter((m) => m.includes('[assets] failed to load'))).toEqual([]);
