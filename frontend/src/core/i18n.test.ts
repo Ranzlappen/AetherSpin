@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
-import { t, tn, locale, localeTag, setLocale, resolveLocale } from './i18n';
+import { t, tn, locale, localeTag, setLocale, resolveLocale, hasKey } from './i18n';
+import { en } from '../locales/en';
+import { de } from '../locales/de';
+import { es } from '../locales/es';
+import { pt } from '../locales/pt';
 
 describe('i18n', () => {
   beforeEach(() => locale.set('en'));
@@ -55,5 +59,30 @@ describe('i18n', () => {
 
   it('leaves unknown placeholders intact', () => {
     expect(tn('a11y.win')).toBe('You won {amount}.');
+  });
+
+  it('hasKey narrows arbitrary strings to defined translation keys', () => {
+    expect(hasKey('paytable.desc.novaforged')).toBe(true);
+    expect(hasKey('paytable.desc.someUnknownGame')).toBe(false);
+  });
+
+  describe('player-facing key completeness', () => {
+    // Locales are Partial by design, but the player-facing feature strings
+    // (turbo, skip, win tiers, autoplay limits, paytable/feature copy) must be
+    // fully translated in every shipped locale — English fallback there would
+    // read as a localization bug to a reviewer.
+    const families = ['turbo.', 'win.', 'spin.', 'autoplay.', 'paytable.', 'volatility.'];
+    const required = (Object.keys(en) as Array<keyof typeof en>).filter((k) =>
+      families.some((f) => k.startsWith(f))
+    );
+
+    it.each([
+      ['de', de],
+      ['es', es],
+      ['pt', pt],
+    ] as const)('%s translates every player-facing feature key', (_name, dict) => {
+      const missing = required.filter((k) => !(k in dict));
+      expect(missing).toEqual([]);
+    });
   });
 });

@@ -65,6 +65,25 @@ key) so an operator can drop in jurisdiction-specific wording without a rebuild.
 For QA without changing the definition, append `?ageGate=1` to force the gate on
 (covered by `frontend/e2e/agegate.spec.ts` on desktop + mobile).
 
+## Autoplay limits (in-game)
+
+Autoplay ships with per-run stop conditions in the autoplay menu
+(`frontend/src/components/Autoplay.svelte`, loop logic in
+`frontend/src/core/autoplay.ts`):
+
+- **Loss limit** — stops the run when cumulative net losses since it started
+  reach the limit. Presets are multiples of the current bet; **defaults on at
+  20× bet**.
+- **Single win limit** — stops after any round winning at least the limit
+  (presets as bet multiples; off by default).
+- **Stop on free spins** — on by default; any feature trigger ends the run.
+- A win-cap round always stops the run, and an unaffordable bet stops it with a
+  visible reason. Every stop reason is shown as a toast and announced to screen
+  readers.
+
+These are per-run, in-game player protections; account-level deposit/loss/time
+limits remain the operator's responsibility (below).
+
 ## What this is not
 
 This does not implement deposit/loss/time **limits enforcement**, self-exclusion,

@@ -36,7 +36,8 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
       it gates the book contract, **base RTP**, **bonus/free-game RTP**, and that
       free reveals carry realized `multiplierWilds`. The NovaForged multiplier-wild
       divergence is reconciled in code and unit-proven against the standalone
-      (`test_sdk_multiplier_wilds.py`); this gate is the real-SDK confirmation.
+      (`math/tests/test_sdk_book_contract.py`, `math/tests/test_parity.py`); this
+      gate is the real-SDK confirmation.
       Step-by-step: `docs/sdk-parity-runbook.md`; rationale: `docs/adr/0005`
 
 ---
@@ -65,11 +66,16 @@ The web client must present, at minimum:
 - [ ] **Win display** — per-spin and session win, with the payout multiplier
 - [ ] **Paytable / rules** screen — symbols, payouts, paylines, feature explanations (free spins,
       multiplier wilds, expanding wilds, the ×1→×3 ladder, bonus buy)
-- [ ] **Autoplay** with a stop control and sane limits
+- [ ] **Autoplay** with a stop control and sane limits — loss limit (default on at
+      20× bet), single-win limit, stop-on-feature, and always-stop on win cap
+      (`core/autoplay.ts`; see `docs/RESPONSIBLE_GAMING.md`)
 - [ ] **Bonus buy** entry (where enabled) clearly priced at `costMultiplier × bet`
 - [ ] **Responsible-gaming notes** — links/affordances per jurisdiction (session reminders,
       reality checks, links to help resources)
-- [ ] **Spin / stop** controls and a clear free-spins feature indicator (spins left, current multiplier)
+- [ ] **Spin / stop** controls and a clear free-spins feature indicator (spins left, current
+      multiplier) — the spin button doubles as tap-to-skip while a round plays (presentation
+      only, never outcomes), plus a turbo/quick-spin toggle and a tiered
+      BIG/MEGA/EPIC/MAX-WIN celebration overlay
 - [ ] Error/disconnect states surfaced to the player (see §4)
 
 ---
@@ -113,11 +119,20 @@ The web client must present, at minimum:
 ## 7. Dashboard upload steps (version 1.0)
 
 1. **Build the artifacts**
+
    ```bash
-   python3 math/scripts/generate_books.py --game <game> --sims <N>   # or the official-SDK run.py
+   bash scripts/run-certification.sh <game>              # certified SDK library (submission grade)
    pnpm --filter @aetherspin/frontend build
-   bash scripts/package-for-stake.sh <game>                          # -> dist-stake/<game>/
+   bash scripts/package-for-stake.sh <game> --certified  # -> dist-stake/<game>/ (SDK library)
    ```
+
+   Packaging **fails closed** when `math/library/<game>` is missing — generate the
+   library first (certified above, or `generate_books.py` / `--dev-library` for a
+   dev/staging bundle). The bundle's `MANIFEST.md` and `submission-manifest.json`
+   stamp the **library grade** (`sdk-certified` vs `standalone-dev`) plus
+   provenance and per-mode outcome counts — verify the grade says `sdk-certified`
+   before a real upload.
+
 2. **Create the game** in the Stake Engine dashboard; set `id`, display name, provider, and
    **version 1.0**.
 3. **Upload the math library** — `books_<mode>.jsonl`, both lookup-table CSVs per mode, `config.json`,

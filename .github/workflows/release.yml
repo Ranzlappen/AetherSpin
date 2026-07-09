@@ -40,7 +40,11 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Package for Stake Engine
-        run: bash scripts/package-for-stake.sh novaforged
+        # --dev-library: the release bundle carries the standalone (dev/staging)
+        # library — the certified SDK library is produced out-of-band by
+        # scripts/run-certification.sh and swapped in before the real upload.
+        # The bundle's MANIFEST.md/submission-manifest.json state the grade.
+        run: bash scripts/package-for-stake.sh novaforged --dev-library
 
       - name: Locate bundle
         id: bundle

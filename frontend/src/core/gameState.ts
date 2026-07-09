@@ -29,7 +29,23 @@ export interface AutoplayState {
   remaining: number;
   /** Stop autoplay automatically on any feature trigger. */
   stopOnFeature: boolean;
+  /** Stop when cumulative losses since the run started reach this (dollars); `null` = off. */
+  lossLimit: number | null;
+  /** Stop when a single round wins at least this (dollars); `null` = off. */
+  singleWinLimit: number | null;
+  /** Wallet balance when the run started (dollars), for loss-limit accounting. */
+  startBalance: number | null;
 }
+
+/** Idle autoplay state (no run active, jurisdiction-friendly defaults). */
+export const AUTOPLAY_IDLE: AutoplayState = {
+  active: false,
+  remaining: 0,
+  stopOnFeature: true,
+  lossLimit: null,
+  singleWinLimit: null,
+  startBalance: null,
+};
 
 /** A summary of the most recently completed round. */
 export interface RoundResult {
@@ -72,11 +88,10 @@ export const freeSpins: Writable<FreeSpinsState> = writable({
 });
 
 /** Autoplay state. */
-export const autoplay: Writable<AutoplayState> = writable({
-  active: false,
-  remaining: 0,
-  stopOnFeature: true,
-});
+export const autoplay: Writable<AutoplayState> = writable(AUTOPLAY_IDLE);
+
+/** Whether turbo (quick-spin) mode is on — shortens presentation delays only. */
+export const turbo: Writable<boolean> = writable(false);
 
 /** Result of the most recent round. */
 export const lastResult: Writable<RoundResult | null> = writable(null);

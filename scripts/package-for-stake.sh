@@ -8,7 +8,16 @@
 #   MANIFEST.md, upload-instructions.txt
 # Zipped to: dist-stake/<gameId>-v<version>.zip
 #
-# Usage: scripts/package-for-stake.sh [gameId]   (default: novaforged)
+# Usage: scripts/package-for-stake.sh [gameId] [--math-only] [--dev-library] [--certified]
+#   (default game: novaforged)
+#   --math-only    allow a bundle without a frontend build
+#   --dev-library  if math/library/<game> is missing, generate a 100k-sim
+#                  STANDALONE library (dev/staging only — never submission-grade)
+#   --certified    package the CERTIFIED SDK library from
+#                  math/engine/games/<game>/library/ (publish_files + configs),
+#                  produced by scripts/run-certification.sh. This is the
+#                  submission-grade path; the SDK's own RGS verifier already
+#                  validated these books (SHA-256 + payout hash).
 #
 set -euo pipefail
 export PYTHONHASHSEED=0  # reproducible library generation
@@ -17,12 +26,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-# Args: <gameId> [--math-only]. --math-only allows a bundle without a frontend.
 GAME_ID="novaforged"
 MATH_ONLY=0
+DEV_LIBRARY=0
+CERTIFIED=0
 for arg in "$@"; do
   case "$arg" in
     --math-only) MATH_ONLY=1 ;;
+    --dev-library) DEV_LIBRARY=1 ;;
+    --certified) CERTIFIED=1 ;;
     *) GAME_ID="$arg" ;;
   esac
 done
@@ -51,11 +63,52 @@ fi
 echo "    version:   v$VERSION"
 
 # ---------------------------------------------------------------------------
-# 1. Ensure the math library exists; generate it if missing.
+# 1. Locate the math library.
+#    --certified: use the SDK library produced by run-certification.sh
+#    (publish_files + configs), staged into the standalone layout so the rest
+#    of the pipeline (manifest, checksums, consistency guard) works unchanged.
+#    Otherwise: use math/library/<game>, failing closed when missing — a
+#    silently auto-generated 100k-sim standalone library is far too noisy for
+#    a 5000x wincap title and must never end up in a real upload by accident.
 # ---------------------------------------------------------------------------
-if [ ! -d "$LIBRARY_DIR" ] || [ -z "$(ls -A "$LIBRARY_DIR" 2>/dev/null)" ]; then
-  echo "==> Math library missing; generating (100,000 sims) ..."
-  python3 "$ROOT/math/scripts/generate_books.py" --game "$GAME_ID" --sims 100000
+SDK_LIBRARY="$ROOT/math/engine/games/$GAME_ID/library"
+if [ "$CERTIFIED" -eq 1 ]; then
+  if [ ! -d "$SDK_LIBRARY/publish_files" ] || [ ! -f "$SDK_LIBRARY/configs/config.json" ]; then
+    echo "ERROR: no certified library at math/engine/games/$GAME_ID/library/." >&2
+    echo "       Generate it first: bash scripts/run-certification.sh $GAME_ID" >&2
+    exit 1
+  fi
+  if ! python3 -c "import json,sys; cfg=json.load(open('$SDK_LIBRARY/configs/config.json')); sys.exit(0 if cfg.get('provenance',{}).get('definitionHash') else 1)"; then
+    echo "ERROR: certified config carries no provenance stamp (older run-certification.sh?)." >&2
+    echo "       Re-run: bash scripts/run-certification.sh $GAME_ID" >&2
+    exit 1
+  fi
+  echo "==> Staging CERTIFIED SDK library from math/engine/games/$GAME_ID/library ..."
+  STAGED="$OUT_ROOT/.certified-stage-$GAME_ID"
+  rm -rf "$STAGED"
+  mkdir -p "$STAGED/books" "$STAGED/lookup_tables" "$STAGED/configs"
+  cp "$SDK_LIBRARY"/publish_files/books_*.zst "$STAGED/books/"
+  cp "$SDK_LIBRARY"/publish_files/lookUpTable_*.csv "$STAGED/lookup_tables/"
+  cp -R "$SDK_LIBRARY/configs/." "$STAGED/configs/"
+  if [ -f "$SDK_LIBRARY/publish_files/index.json" ]; then
+    cp "$SDK_LIBRARY/publish_files/index.json" "$STAGED/index.json"
+  fi
+  LIBRARY_DIR="$STAGED"
+elif [ ! -d "$LIBRARY_DIR" ] || [ -z "$(ls -A "$LIBRARY_DIR" 2>/dev/null)" ]; then
+  if [ "$DEV_LIBRARY" -eq 1 ]; then
+    echo "==> Math library missing; generating STANDALONE dev library (100,000 sims) ..."
+    echo "    (dev/staging only — not submission-grade)"
+    python3 "$ROOT/math/scripts/generate_books.py" --game "$GAME_ID" --sims 100000
+  else
+    echo "ERROR: no math library at math/library/$GAME_ID." >&2
+    echo "" >&2
+    echo "  For a SUBMISSION bundle, generate the certified library first:" >&2
+    echo "      bash scripts/run-certification.sh $GAME_ID" >&2
+    echo "  For a dev/staging bundle, either generate books explicitly:" >&2
+    echo "      python3 math/scripts/generate_books.py --game $GAME_ID --sims <N>" >&2
+    echo "  or re-run with --dev-library to auto-generate a 100k-sim library." >&2
+    exit 1
+  fi
 fi
 
 if [ ! -d "$LIBRARY_DIR" ]; then
@@ -64,8 +117,14 @@ if [ ! -d "$LIBRARY_DIR" ]; then
 fi
 
 # Fail closed on book-integrity problems before assembling an upload bundle.
-echo "==> Validating generated books ..."
-python3 "$ROOT/math/scripts/validate_books.py" --game "$GAME_ID"
+# (Certified books were already validated by the SDK's own RGS verifier —
+# SHA-256 + payout-hash + lookup format — during run-certification.sh.)
+if [ "$CERTIFIED" -eq 1 ]; then
+  echo "==> Skipping standalone book validation (SDK RGS verifier already validated the certified books)"
+else
+  echo "==> Validating generated books ..."
+  python3 "$ROOT/math/scripts/validate_books.py" --game "$GAME_ID"
+fi
 
 # ---------------------------------------------------------------------------
 # 2. Build the frontend bundle (fatal unless --math-only).
@@ -90,6 +149,9 @@ mkdir -p "$OUT_DIR/math"
 
 # Copy the full library tree (books/, lookup_tables/, configs/, index.json).
 cp -R "$LIBRARY_DIR/." "$OUT_DIR/math/"
+if [ "$CERTIFIED" -eq 1 ]; then
+  rm -rf "$OUT_ROOT/.certified-stage-$GAME_ID"
+fi
 
 FRONTEND_INCLUDED="no"
 if [ -d "$FRONTEND_DIST" ] && [ -n "$(ls -A "$FRONTEND_DIST" 2>/dev/null)" ]; then

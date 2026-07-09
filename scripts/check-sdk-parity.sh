@@ -32,6 +32,10 @@ cd "$ROOT"
 ENGINE="$ROOT/math/engine"
 export PYTHONHASHSEED=0
 
+# The SDK requires Python >= 3.12 (3.12-only syntax); prefer it when present.
+# Standalone-side helpers below still use plain python3 (stdlib-only).
+SDK_PY="$(command -v python3.12 || command -v python3)"
+
 skip() {
   echo "SKIP (sdk-parity, $GAME): $1"
   echo "       This gate runs where the math-sdk is available; see docs/adr/0005."
@@ -48,10 +52,11 @@ fi
 [ -f "$ENGINE/games/$GAME/run.py" ] || skip "game '$GAME' not linked into the SDK"
 [ -f "$ENGINE/src/state/run_sims.py" ] || skip "vendored SDK is missing src/state/run_sims.py"
 
-# SDK Python deps (fail-soft).
-if [ -f "$ENGINE/requirements.txt" ]; then
-  pip install -q -r "$ENGINE/requirements.txt" >/tmp/sdk-pip.log 2>&1 || true
-fi
+# SDK runtime deps for the SDK interpreter (fail-soft; the full
+# requirements.txt self-references the stakeengine package and needs >=3.12,
+# so install just the runtime imports the pipeline needs).
+"$SDK_PY" -m pip install -q --break-system-packages numpy zstandard python-dotenv xlsxwriter >/tmp/sdk-pip.log 2>&1 || true
+"$SDK_PY" -c "import numpy, zstandard, dotenv, xlsxwriter" 2>/dev/null || skip "could not import SDK deps under $SDK_PY"
 
 # ---------------------------------------------------------------------------
 # 2. Generate a SMALL, COMPRESSED SDK library (create_books directly — skips the
@@ -68,7 +73,7 @@ REAL_GAME_DIR="$ROOT/math/games/$GAME"
 rm -rf "$ENGINE/games/$GAME/library"
 (
   cd "$ENGINE"
-  PYTHONHASHSEED=0 PYTHONPATH="$ENGINE" REAL_GAME_DIR="$REAL_GAME_DIR" python3 - "$SIMS" <<'PYEOF'
+  PYTHONHASHSEED=0 PYTHONPATH="$ENGINE" REAL_GAME_DIR="$REAL_GAME_DIR" "$SDK_PY" - "$SIMS" <<'PYEOF'
 import os, sys, warnings
 sys.path.insert(0, os.environ["REAL_GAME_DIR"])
 sims = int(sys.argv[1])

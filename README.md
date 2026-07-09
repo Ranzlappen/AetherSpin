@@ -30,7 +30,7 @@ The repo ships with **NovaForged** — a complete, polished reference title:
 > **NovaForged** — a premium **5×3, 20-line** neon-cosmic video slot. **Multiplier wilds**,
 > **scatter-triggered free spins** with an escalating **×1 → ×3 multiplier ladder**, **expanding
 > wilds** in free spins, and a **100× bonus buy**. RTP target **96.5%**, win cap **5000×**,
-> **high volatility**.
+> **medium volatility** (certified base CV ≈ 10.4).
 
 Clone NovaForged, retune the numbers, and you have your next game.
 

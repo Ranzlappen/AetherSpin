@@ -21,6 +21,11 @@ test.beforeEach(({ page }) => {
 const spinButton = (page: import('@playwright/test').Page) =>
   page.getByRole('button', { name: 'Spin', exact: true });
 
+// While a round plays the spin button becomes an enabled "Skip" control
+// (tap-to-stop); a round in flight is detected by that accessible-name swap.
+const skipButton = (page: import('@playwright/test').Page) =>
+  page.getByRole('button', { name: 'Skip', exact: true });
+
 test('boots on the mock RGS and shows the core HUD', async ({ page }) => {
   await page.goto('/');
 
@@ -33,7 +38,7 @@ test('boots on the mock RGS and shows the core HUD', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Paytable' })).toBeVisible();
 });
 
-test('plays a round: spin disables then re-enables once the round resolves', async ({ page }) => {
+test('plays a round: spin becomes skip, then returns once the round resolves', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
@@ -42,8 +47,8 @@ test('plays a round: spin disables then re-enables once the round resolves', asy
 
   await spin.click();
 
-  // While resolving, the button is disabled (the round is in flight)…
-  await expect(spin).toBeDisabled();
+  // While resolving, the button becomes the skip control (the round is in flight)…
+  await expect(skipButton(page)).toBeVisible();
 
   // …and once the full play → reveal → end-round cycle completes it is usable
   // again, proving the round resolved without throwing / corrupting state.
@@ -69,7 +74,7 @@ test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await spin.click();
-  await expect(spin).toBeDisabled();
+  await expect(skipButton(page)).toBeVisible();
   await expect(spin).toBeEnabled({ timeout: 30_000 });
 });
 
@@ -84,7 +89,7 @@ test('multi-game: mounts and plays the cluster game via ?game=stellarclusters', 
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await spin.click();
-  await expect(spin).toBeDisabled();
+  await expect(skipButton(page)).toBeVisible();
   await expect(spin).toBeEnabled({ timeout: 30_000 });
 });
 
@@ -116,7 +121,7 @@ test('a11y: exposes a polite live region and spins via the keyboard', async ({ p
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await page.locator('body').press('Space');
-  await expect(spin).toBeDisabled();
+  await expect(skipButton(page)).toBeVisible();
 
   // The round resolves and the live region announces an outcome.
   await expect(spin).toBeEnabled({ timeout: 30_000 });

@@ -14,13 +14,12 @@
     balance,
     currency,
     isSpinning,
-    autoplay,
-    insufficientFunds,
     gameMode,
     errorMessage,
     getCurrentBet,
     lastResult,
   } from '../core/gameState';
+  import { startAutoplay, stopAutoplay, type AutoplayRunOptions } from '../core/autoplay';
   import { sound } from '../core/sound';
   import { buyBonusMode, formatCurrency, availableGames, activeGameId } from '../config/gameConfig';
   import { t, tn, setLocale, localeTag } from '../core/i18n';
@@ -38,6 +37,9 @@
   import BuyBonusButton from './BuyBonusButton.svelte';
   import FreeSpinsBanner from './FreeSpinsBanner.svelte';
   import SoundToggle from './SoundToggle.svelte';
+  import TurboToggle from './TurboToggle.svelte';
+  import WinCelebration from './WinCelebration.svelte';
+  import FreeSpinsSplash from './FreeSpinsSplash.svelte';
   import RealityCheck from './RealityCheck.svelte';
   import AgeGate from './AgeGate.svelte';
 
@@ -52,7 +54,6 @@
   let usingMock = false;
   let paytableOpen = false;
   let fps = 0;
-  let autoplayToken = 0;
 
   onMount(async () => {
     const bootStart = performance.now();
@@ -196,7 +197,15 @@
     void spin('base');
   }
 
-  /** Space/Enter triggers a spin when no interactive control owns the focus. */
+  /** Fast-forward the current round's presentation (never its outcome). */
+  function onSkip(): void {
+    player?.skip();
+  }
+
+  /**
+   * Space/Enter starts a spin when no interactive control owns the focus, or
+   * skips the presentation while a round is playing.
+   */
   function onGlobalKeydown(event: KeyboardEvent): void {
     if (loading) return;
     const target = event.target as HTMLElement | null;
@@ -205,7 +214,8 @@
       return;
     if (event.code === 'Space' || event.key === 'Enter') {
       event.preventDefault();
-      onSpin();
+      if (get(isSpinning)) onSkip();
+      else onSpin();
     }
   }
 
@@ -215,36 +225,8 @@
 
   /* ------------------------------- autoplay ------------------------------- */
 
-  function startAutoplay(event: CustomEvent<{ count: number }>): void {
-    autoplay.set({ active: true, remaining: event.detail.count, stopOnFeature: true });
-    autoplayToken++;
-    void runAutoplay(autoplayToken);
-  }
-
-  function stopAutoplay(): void {
-    autoplayToken++;
-    autoplay.set({ active: false, remaining: 0, stopOnFeature: true });
-  }
-
-  /** Drive sequential autoplay spins until the count is exhausted or stopped. */
-  async function runAutoplay(token: number): Promise<void> {
-    while (token === autoplayToken && get(autoplay).active && get(autoplay).remaining > 0) {
-      if (get(insufficientFunds)) {
-        errorMessage.set(tn('error.autoplayInsufficient'));
-        break;
-      }
-      await spin('base');
-      if (token !== autoplayToken) return;
-      autoplay.update((a) => ({ ...a, remaining: a.remaining - 1 }));
-      const result = get(lastResult);
-      if (get(autoplay).stopOnFeature && result?.triggeredFeature) break;
-      await delay(450);
-    }
-    if (token === autoplayToken) stopAutoplay();
-  }
-
-  function delay(ms: number): Promise<void> {
-    return new Promise((r) => setTimeout(r, ms));
+  function onAutoplayStart(event: CustomEvent<AutoplayRunOptions>): void {
+    startAutoplay(event.detail, { spin: () => spin('base') });
   }
 
   /** Lightweight synchronous store read helper. */
@@ -292,6 +274,7 @@
             {/each}
           </select>
         {/if}
+        <TurboToggle />
         <SoundToggle />
         <button class="icon-btn" aria-label={$t('paytable.open')} on:click={() => (paytableOpen = true)}>
           i
@@ -312,12 +295,15 @@
         {/if}
       </div>
       <div class="center-controls">
-        <SpinButton on:spin={onSpin} />
+        <SpinButton on:spin={onSpin} on:skip={onSkip} />
       </div>
       <div class="right-controls">
-        <Autoplay on:start={startAutoplay} on:stop={stopAutoplay} />
+        <Autoplay on:start={onAutoplayStart} on:stop={stopAutoplay} />
       </div>
     </footer>
+
+    <FreeSpinsSplash />
+    <WinCelebration />
 
     {#if usingMock}
       <div class="dev-badge" title={$t('hud.demoTitle')}>

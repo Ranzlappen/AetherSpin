@@ -134,14 +134,15 @@ zig-zag shapes, e.g.:
 
 ## 7. RTP & volatility
 
-- **Target RTP 96.5%**, **high volatility**, **5000× win cap**. Volatility is driven by the reel
-  strips (`BR0.csv` base, `FR0.csv` free) plus the free-spin multiplier stack.
+- **Target RTP 96.5%**, **medium volatility** (certified base CV ≈ 10.4, per the white paper),
+  **5000× win cap**. Volatility is driven by the reel strips (`BR0.csv` base, `FR0.csv` free)
+  plus the free-spin multiplier stack.
 - Two-knob tuning (paytable scalar + `winScale`) pins **both** the base and the buy-bonus RTP to
   target; the buy is measured against its 100× cost. See
   [math-engine.md](math-engine.md#6-two-knob-rtp-tuning).
-- Distribution: frequent small base wins (~32% hit rate) with rare, high-value free-spin outcomes —
-  the signature of a high-volatility title. Generate the full histogram with
-  `generate_par_sheet.py`.
+- Distribution: frequent small base wins (~29% hit rate) with rare, high-value free-spin outcomes —
+  a medium-volatility base distribution with a long 5000× tail (the buy-bonus mode is far swingier,
+  CV ≈ 207). Generate the full histogram with `generate_par_sheet.py`.
 
 ## 8. Art direction
 

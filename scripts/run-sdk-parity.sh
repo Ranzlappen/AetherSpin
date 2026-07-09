@@ -15,8 +15,8 @@
 #     gate to really run and want setup gaps treated as errors).
 #
 # Prerequisites: git, a network path to github.com/StakeEngine/math-sdk, and
-# Python 3.11 + the SDK requirements. The Rust optimizer is NOT needed — the
-# parity check generates books via create_books and skips the optimizer.
+# Python 3.12 (the SDK's required interpreter). The Rust optimizer is NOT
+# needed — the parity check generates books via create_books and skips it.
 #
 #   bash scripts/run-sdk-parity.sh            # all games, SKIP is tolerated
 #   bash scripts/run-sdk-parity.sh --strict   # all games, SKIP counts as failure
@@ -73,13 +73,18 @@ if ! bash scripts/setup-math.sh; then
   exit 1
 fi
 
-if [ -f math/engine/requirements.txt ]; then
-  echo "==> installing the SDK's Python requirements…"
-  if ! pip install -q -r math/engine/requirements.txt; then
-    echo "ERROR: could not install math/engine/requirements.txt" >&2
-    exit 1
-  fi
+# The SDK requires Python >= 3.12; its requirements.txt also self-references
+# the stakeengine git package, so install just the runtime deps the pipeline
+# imports, under the SDK interpreter (mirrors scripts/run-certification.sh).
+SDK_PY="$(command -v python3.12 || command -v python3)"
+echo "==> ensuring SDK Python deps under $SDK_PY…"
+"$SDK_PY" -m pip install -q --break-system-packages numpy zstandard python-dotenv xlsxwriter || true
+if ! "$SDK_PY" -c "import numpy, zstandard, dotenv, xlsxwriter" 2>/dev/null; then
+  echo "ERROR: could not import the SDK's runtime deps under $SDK_PY" >&2
+  exit 1
 fi
+# The standalone-side helpers read .zst books under plain python3 as well.
+python3 -m pip install -q --break-system-packages zstandard >/dev/null 2>&1 || true
 
 # --- Run the gate per game ------------------------------------------------
 declare -a NAMES=() STATUSES=()

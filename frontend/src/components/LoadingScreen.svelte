@@ -1,10 +1,25 @@
 <script lang="ts">
-  /** Full-screen loading / boot splash with a neon spinner. */
+  /**
+   * Full-screen loading / boot splash: the game logo (art plate, with a neon
+   * wordmark fallback if it fails to load) over a spinner.
+   */
+  import { assetUrl } from '../config/assets';
+
   export let message = 'Initializing NovaForged…';
+  let logoFailed = false;
 </script>
 
 <div class="loading">
-  <div class="logo neon-text">NOVAFORGED</div>
+  {#if logoFailed}
+    <div class="logo neon-text">NOVAFORGED</div>
+  {:else}
+    <img
+      class="logo-img"
+      src={assetUrl('brand/novaforged-logo.webp')}
+      alt="NovaForged"
+      on:error={() => (logoFailed = true)}
+    />
+  {/if}
   <div class="spinner"></div>
   <div class="message">{message}</div>
 </div>
@@ -26,6 +41,11 @@
     font-weight: 900;
     letter-spacing: 0.3em;
     color: var(--neon-cyan);
+  }
+  .logo-img {
+    width: min(420px, 70vw);
+    height: auto;
+    filter: drop-shadow(0 0 24px rgba(125, 249, 255, 0.35));
   }
   .spinner {
     width: 56px;

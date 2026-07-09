@@ -15,13 +15,19 @@ export interface GameEventMap {
     /** Reel indices (0-based) carrying multiplier wilds, and their values. */
     multiplierWilds: Array<{ reel: number; row: number; value: number }>;
     anticipation: boolean;
+    /** Turbo mode: scenes compress the stop stagger/anticipation. */
+    turbo: boolean;
   };
   /** Highlight winning lines (lines games) or ways symbols (ways games). */
   'wins:lines': { wins: Win[]; betPerLine: number };
   /** Show a scatter win celebration. */
   'wins:scatter': { count: number; amount: number };
-  /** A win celebration of the given magnitude should play. */
-  celebrate: { tier: WinTier; amount: number };
+  /**
+   * A win celebration of the given magnitude should play. `final` marks the
+   * round's settled aggregate win — the full-screen overlay only shows then;
+   * mid-round wins celebrate with particles/sound only.
+   */
+  celebrate: { tier: WinTier; amount: number; final: boolean };
   /** Free spins are about to begin. */
   'freespins:start': { awarded: number; startMultiplier: number };
   /** Additional free spins were awarded mid-feature. */
@@ -33,13 +39,15 @@ export interface GameEventMap {
   /** The round settled with a final win. */
   'round:final': { amount: number; wincap: boolean };
   /** Request the reels to spin (drives the spin animation start). */
-  'reels:spin': { gameType: 'base' | 'free' };
+  'reels:spin': { gameType: 'base' | 'free'; turbo: boolean };
+  /** Skip the current presentation: settle spinning reels immediately. */
+  'reels:skip': Record<string, never>;
   /** Generic UI/log channel. */
   log: { message: string };
 }
 
 /** Win-magnitude tiers used to size celebrations. */
-export type WinTier = 'small' | 'medium' | 'big' | 'mega' | 'wincap';
+export type WinTier = 'small' | 'medium' | 'big' | 'mega' | 'epic' | 'wincap';
 
 type Handler<K extends keyof GameEventMap> = (payload: GameEventMap[K]) => void;
 

@@ -28,7 +28,7 @@ demo balance.
 | `pnpm preview`   | Preview the production build                       |
 | `pnpm test`      | Vitest unit tests (core + config)                  |
 | `pnpm check`     | `svelte-check` + `tsc --noEmit` (strict typecheck) |
-| `pnpm lint`      | ESLint (TS + Svelte)                               |
+| `pnpm lint`      | ESLint (TS + Svelte) — run from the repo root      |
 | `pnpm storybook` | Component explorer                                 |
 
 ## Architecture
@@ -101,11 +101,17 @@ reveal(base) → lineWins → scatterWin → freeSpinTrigger
 
 ## Assets & the Stake CDN
 
-The game ships with **zero required art/audio** — symbols, background and
-particles are drawn procedurally with Pixi `Graphics`/`Text`.
+The game ships with **final art** — WebP symbol tiles in `public/symbols/`,
+the nebula background (`public/bg/`), reel frame (`public/ui/`), logo
+(`public/brand/`), and win/free-spins FX plates (`public/fx/`), declared in
+`ASSET_MANIFEST` (`src/config/assets.ts`) — plus **placeholder audio**
+(synthesized WAVs in `public/audio/`, from `scripts/gen-placeholder-audio.mjs`).
+Every asset is optional: a missing or undecodable file is skipped and the
+renderer falls back to procedural Pixi `Graphics`/`Text`, so swapping any file
+is a pure drop-in (see `docs/asset-spec.md` for exact deliverables).
 
-To use real assets in production, set the CDN base and the client resolves all
-optional assets against it:
+To serve assets from a CDN in production, set the base and the client resolves
+all assets against it:
 
 ```sh
 # .env.production

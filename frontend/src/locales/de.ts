@@ -22,7 +22,18 @@ export const de: Partial<Translations> = {
   'hud.freeSpins': 'FREISPIELE',
 
   'spin.label': 'Drehen',
+  'spin.skip': 'Überspringen',
   'spin.lowBalance': 'Guthaben niedrig',
+
+  'turbo.label': 'Turbo-Modus',
+  'turbo.on': 'Turbo an',
+  'turbo.off': 'Turbo aus',
+
+  'win.big': 'GROSSER GEWINN',
+  'win.mega': 'MEGA-GEWINN',
+  'win.epic': 'EPISCHER GEWINN',
+  'win.wincap': 'MAXIMALGEWINN',
+  'win.tapToContinue': 'Tippen zum Fortfahren',
 
   'bet.decrease': 'Einsatz verringern',
   'bet.increase': 'Einsatz erhöhen',
@@ -32,6 +43,7 @@ export const de: Partial<Translations> = {
   'buyBonus.confirmBody': 'Bonus kaufen für {cost} ({multiplier}× Ihres Einsatzes).',
 
   'freeSpins.won': 'Gewonnen {amount}',
+  'freeSpins.awarded': '{count} Freispiele',
 
   'autoplay.label': 'Autoplay',
   'autoplay.auto': 'Auto',
@@ -39,6 +51,13 @@ export const de: Partial<Translations> = {
   'autoplay.stop': 'Autoplay stoppen',
   'autoplay.stopShort': 'Stopp',
   'autoplay.spins': '{count} Spins',
+  'autoplay.spinsLegend': 'Anzahl der Spins',
+  'autoplay.lossLimit': 'Verlustlimit',
+  'autoplay.singleWinLimit': 'Einzelgewinn-Limit',
+  'autoplay.stopOnFeature': 'Bei Freispielen stoppen',
+  'autoplay.off': 'Aus',
+  'autoplay.stoppedLossLimit': 'Autoplay gestoppt: Verlustlimit erreicht.',
+  'autoplay.stoppedWinLimit': 'Autoplay gestoppt: Gewinnlimit erreicht.',
 
   'sound.toggle': 'Ton umschalten',
 
@@ -49,6 +68,34 @@ export const de: Partial<Translations> = {
   'paytable.symbol': 'Symbol',
   'paytable.features': 'Funktionen',
   'paytable.scrollRegion': 'Gewinntabellen-Details, scrollbar',
+  'paytable.ofAKind': '{count} gleiche',
+  'paytable.scatterTitle': 'Scatter — {name}',
+  'paytable.scatterBody': 'Zahlt überall. Ab {min} Scattern werden Freispiele ausgelöst.',
+  'paytable.freeSpinsTitle': 'Freispiele',
+  'paytable.freeSpinsBody': 'Mit {min}+ Scattern gewinnen Sie {minSpins}–{maxSpins} Freispiele.',
+  'paytable.freeSpinsRetrigger': 'Erneute Auslösung vergibt weitere Freispiele.',
+  'paytable.ladderTitle': 'Multiplikator-Leiter',
+  'paytable.ladderBody':
+    'Gewinne in den Freispielen erhöhen den globalen Multiplikator von ×{start} bis auf ×{max}.',
+  'paytable.multiplierWildsTitle': 'Multiplikator-Wilds',
+  'paytable.multiplierWildsBody': 'In den Freispielen tragen Wilds {values}×-Multiplikatoren.',
+  'paytable.expandingWildsTitle': 'Expandierende Wilds',
+  'paytable.expandingWildsBody': 'In den Freispielen können Wilds ihre gesamte Walze bedecken.',
+  'paytable.bonusBuyTitle': 'Bonuskauf',
+  'paytable.bonusBuyBody': 'Kaufen Sie Freispiele sofort für das {cost}-Fache Ihres Einsatzes.',
+  'paytable.paylines': 'Gewinnlinien ({count})',
+  'paytable.rtpLine': 'Theoretischer RTP: {rtp}% · Maximalgewinn: {maxWin}× · Volatilität: {volatility}',
+  'paytable.desc.novaforged':
+    'Ein hochwertiger 5×3-Video-Slot mit 20 Gewinnlinien im Neon-Kosmos-Stil — mit Multiplikator-Wilds, Scatter-Freispielen mit ansteigender Multiplikator-Leiter, expandierenden Wilds und Bonuskauf.',
+  'paytable.desc.cosmicways':
+    'Ein 5×3-Video-Slot mit 243 Gewinnwegen im Neon-Kosmos-Stil. Symbole zahlen auf benachbarten Walzen von links, mit Scatter-Freispielen.',
+  'paytable.desc.stellarclusters':
+    'Ein 5×3-Cluster-Pays-Slot im Neon-Kosmos-Stil: verbundene Symbolgruppen (Wilds ersetzen) zahlen nach Größe, mit Scatter-Freispielen.',
+
+  'volatility.low': 'Niedrig',
+  'volatility.medium': 'Mittel',
+  'volatility.high': 'Hoch',
+  'volatility.veryHigh': 'Sehr hoch',
 
   'common.dismiss': 'Schließen',
   'common.close': 'Schließen',

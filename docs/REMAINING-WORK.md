@@ -22,6 +22,21 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       [`docs/white-papers/<game>-white-paper.md`](white-papers/). Have a math
       reviewer sign off the hit/free-spin/win-cap frequencies and max-win before
       submission.
+- [x] **NovaForged certified run + strict parity re-verified** (2026-07-04,
+      against the volatility-reconciled definition, hash `8ccc93368f60…`):
+      full SDK pipeline (1e6 base / 2e5 bonus + Rust optimizer) → RTP
+      **0.9650 exact** both modes; SDK RGS verifier green (SHA-256 + payout
+      hash, 999,984 / 200,000 entries); `run-sdk-parity.sh --strict` **PASS**;
+      white paper regenerated; certified bundle packaged via
+      `package-for-stake.sh novaforged --certified` (grade `sdk-certified`
+      stamped in the manifest).
+- [ ] _(Known, informational)_ **SDK 3-star volatility limits — bonus mode.**
+      The SDK's `rgs_verification` warns that the 100× buy-bonus exceeds
+      3-star volatility limits (`etl40b` 1.04 > 0.9, `cvar` 2293 > 800) —
+      inherent to a 100× buy with a 5000× cap (bonus CV ≈ 207, documented in
+      the white paper). Base mode passes. If Stake's review requires the
+      bonus to fit a specific star rating, retune `game_optimization.py`'s
+      bonus distribution; otherwise disclose as-is.
 - [ ] _(Known, low priority)_ **Ways multiplier-wild reconciliation** — moot while
       Cosmic Ways disables multiplier wilds (`values: [1]`); only needed if it ever
       enables `>1` wilds (the SDK's ways `"symbol"` strategy differs from the
@@ -32,22 +47,39 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 2. Frontend / product
 
-- [ ] **Final art + audio** — replace placeholders. Full list in
-      [`docs/artwork-checklist.md`](artwork-checklist.md) / `docs/asset-spec.md`.
-      The pipeline is a drop-in file swap for the required set.
-- [ ] **Per-game art theming** (optional) — all three games share one symbol set
-      today. Namespacing keys per game needs a ~1-line change in
-      `config/assets.ts` + `ReelEngine`.
-- [ ] **Recommended visual additions** (not wired) — background plates, board
-      frame, logos, loading screen, win/free-spin FX cards. Each needs a small,
-      scoped hook; do per asset as art arrives.
+- [x] **Final art** — integrated: all 11 symbols (512² WebP with alpha),
+      nebula background plate, reel-board frame, NovaForge logo (loading
+      screen), big-win burst (celebration overlay), free-spins intro card
+      (feature splash), and app icons (192/512 PNG + favicon links). Every
+      piece keeps its procedural fallback, and the missing-asset guards +
+      `e2e/assets.spec.ts` verify each loads.
+- [ ] **Final audio** — SFX are still synthesized placeholders
+      (`public/audio/*.wav`); no music track yet. Deliverables in
+      `docs/asset-spec.md` §2 (drop-in swap; music needs a small loop manager
+      in `sound.ts`).
+- [ ] **Per-game art theming** (optional) — all three games share the one
+      (NovaForged-themed) symbol set. The `THEMED_SYMBOL_SETS` seam in
+      `config/assets.ts` takes per-game overrides as a pure data change.
+- [ ] _(Note)_ The delivered logo reads "NovaForge" (no trailing "d") while the
+      game's display name is "NovaForged" — confirm or revise the wordmark.
+- [x] **Player-experience feature set** — turbo/quick-spin, tap-to-skip
+      presentation (never outcomes), tiered BIG/MEGA/EPIC/MAX win celebration
+      overlay (`WinCelebration.svelte`, art-agnostic with a `data-tier` art
+      hook), and autoplay **loss-limit / single-win-limit / stop-on-feature**
+      stop conditions (`core/autoplay.ts`, see `docs/RESPONSIBLE_GAMING.md`).
 - [ ] **Compliance copy review** — responsible-gaming / legal / jurisdictional
       text reviewed by compliance (human step). The age/legal gate exists but
       ships **off** (operators gate KYC upstream); enable per game if required.
-- [ ] **Localization** — `en` + `de` ship; add locales if target markets need them.
+- [x] **Localization** — `en`, `de`, `es`, `pt` ship, including the full
+      paytable/feature copy (built from definition numbers, not English
+      description fields) and all new feature strings; an i18n completeness
+      test guards the player-facing key families. Add locales if target
+      markets need more.
 
 ## 3. Process / submission
 
+- [ ] **Set real CODEOWNERS** — `.github/CODEOWNERS` still lists placeholder
+      owners; replace them with real GitHub usernames/teams before submission.
 - [ ] **Land PR #57.** Large PR (SDK ports + production hardening + optimizer),
       now **marked ready for review** (out of draft). Get review + required checks
       green, then decide: merge as-is or split.

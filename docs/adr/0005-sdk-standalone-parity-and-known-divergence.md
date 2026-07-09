@@ -47,10 +47,10 @@ The reconciliation has now **landed in the SDK module** (`math/games/novaforged/
 `reveal_event` emits `multiplierWilds`, and line evaluation sums the participating
 wild cells — mirroring `simulator/engine.py`/`mechanics.py`. The averaged
 `expected_wild_multiplier` is gone. Because the certified SDK can't run in this
-environment, the change is proven **here** by `test_sdk_multiplier_wilds.py`,
-which runs the reconciled SDK `get_line_wins` and the validated standalone
-`LinesMechanic` over thousands of random free-game boards on the **same** realized
-grid and asserts identical wins. The remaining step — a real SDK run confirming
+environment, the change is proven **here** by the SDK book-contract and parity
+tests (now `test_sdk_book_contract.py` / `test_parity.py`), which run the
+reconciled SDK `get_line_wins` and the validated standalone `LinesMechanic` over
+random free-game boards on the **same** realized grid and assert identical wins. The remaining step — a real SDK run confirming
 the end-to-end book/RTP parity — is what the (now free-game-aware) parity gate
 performs where the SDK is available.
 
@@ -61,7 +61,7 @@ performs where the SDK is available.
    the contract level. The reconciliation (realized multiplier wilds in the SDK
    `game_calculations` / `game_executables` / `game_events`, mirroring the
    standalone) is now **written and unit-proven against the standalone**
-   (`test_sdk_multiplier_wilds.py`); the certified-code change must still be
+   (now `test_sdk_book_contract.py` / `test_parity.py`); the certified-code change must still be
    **confirmed against a real SDK run** before submission — never trusted blind.
 2. **Ship the parity gate now, fail-soft — and make it free-game-aware.**
    `scripts/check-sdk-parity.sh` runs the SDK pipeline where it's available and

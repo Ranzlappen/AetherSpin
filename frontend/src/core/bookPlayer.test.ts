@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
-import { BookPlayer, classifyWin } from './bookPlayer';
+import { BookPlayer, classifyWin, isOverlayTier, TURBO_SCALE } from './bookPlayer';
 import type { Book } from '../../../shared/src/types/events';
 import {
   RgsError,
@@ -11,7 +11,16 @@ import {
   type Balance,
   type RoundState,
 } from './rgsClient';
-import { balance, totalWin, gameMode, freeSpins, isSpinning, lastResult, resetFreeSpins } from './gameState';
+import {
+  balance,
+  totalWin,
+  gameMode,
+  freeSpins,
+  isSpinning,
+  lastResult,
+  resetFreeSpins,
+  turbo,
+} from './gameState';
 
 /** A fake transport returning a fixed book, recording endRound calls. */
 class FakeTransport implements RgsTransport {
@@ -58,6 +67,7 @@ beforeEach(() => {
   gameMode.set('base');
   isSpinning.set(false);
   lastResult.set(null);
+  turbo.set(false);
   resetFreeSpins();
 });
 
@@ -67,7 +77,17 @@ describe('classifyWin', () => {
     expect(classifyWin(10)).toBe('medium');
     expect(classifyWin(25)).toBe('big');
     expect(classifyWin(80)).toBe('mega');
+    expect(classifyWin(150)).toBe('epic');
     expect(classifyWin(5000)).toBe('wincap');
+  });
+
+  it('marks big and up as overlay tiers', () => {
+    expect(isOverlayTier('small')).toBe(false);
+    expect(isOverlayTier('medium')).toBe(false);
+    expect(isOverlayTier('big')).toBe(true);
+    expect(isOverlayTier('mega')).toBe(true);
+    expect(isOverlayTier('epic')).toBe(true);
+    expect(isOverlayTier('wincap')).toBe(true);
   });
 });
 
@@ -181,6 +201,143 @@ describe('BookPlayer free-spins round', () => {
     expect(get(freeSpins).remaining).toBe(0);
     expect(get(gameMode)).toBe('base');
     expect(transport.endRoundCalls).toBe(1);
+  });
+});
+
+describe('BookPlayer turbo mode', () => {
+  const book: Book = {
+    id: 3,
+    payoutMultiplier: 0.5,
+    events: [
+      {
+        type: 'reveal',
+        gameType: 'base',
+        board: [
+          ['L3', 'L2', 'L1'],
+          ['L4', 'L3', 'L2'],
+          ['L5', 'L4', 'L3'],
+          ['L4', 'L3', 'L2'],
+          ['H4', 'L5', 'L4'],
+        ],
+        reelStops: [1, 2, 3, 4, 5],
+      },
+      {
+        type: 'lineWins',
+        gameType: 'base',
+        wins: [{ line: 3, symbol: 'L3', count: 4, wildMultiplier: 1, amount: 0.5 }],
+        amount: 0.5,
+      },
+      { type: 'finalWin', amount: 0.5, wincap: false },
+    ],
+  };
+
+  it('scales presentation waits by TURBO_SCALE without changing the outcome', async () => {
+    const play = async (turboOn: boolean): Promise<number[]> => {
+      const waits: number[] = [];
+      const recordingWait = async (ms: number): Promise<void> => {
+        waits.push(ms);
+      };
+      turbo.set(turboOn);
+      const player = new BookPlayer({ transport: new FakeTransport(book, 0.5), wait: recordingWait });
+      await player.play(10, 'base');
+      return waits;
+    };
+
+    const normal = await play(false);
+    const fast = await play(true);
+
+    // Same number of presentation pauses, each turbo wait scaled down.
+    expect(fast.length).toBe(normal.length);
+    fast.forEach((ms, i) => {
+      expect(ms).toBeLessThanOrEqual(Math.max(1, Math.round(normal[i] * TURBO_SCALE)));
+    });
+    // The money outcome is identical either way.
+    expect(get(totalWin)).toBeCloseTo(5, 4);
+  });
+});
+
+describe('BookPlayer skip', () => {
+  const book: Book = {
+    id: 4,
+    payoutMultiplier: 0.5,
+    events: [
+      {
+        type: 'reveal',
+        gameType: 'base',
+        board: [
+          ['L3', 'L2', 'L1'],
+          ['L4', 'L3', 'L2'],
+          ['L5', 'L4', 'L3'],
+          ['L4', 'L3', 'L2'],
+          ['H4', 'L5', 'L4'],
+        ],
+        reelStops: [1, 2, 3, 4, 5],
+      },
+      {
+        type: 'lineWins',
+        gameType: 'base',
+        wins: [{ line: 3, symbol: 'L3', count: 4, wildMultiplier: 1, amount: 0.5 }],
+        amount: 0.5,
+      },
+      { type: 'finalWin', amount: 0.5, wincap: false },
+    ],
+  };
+
+  it('collapses pending waits but settles with the identical final state', async () => {
+    // A wait gated on an external release; skip() must resolve it without it.
+    let releaseWait: (() => void) | null = null;
+    const gatedWait = (): Promise<void> =>
+      new Promise<void>((resolve) => {
+        releaseWait = resolve;
+      });
+
+    const transport = new FakeTransport(book, 0.5, 90, 100);
+    const player = new BookPlayer({ transport, wait: gatedWait });
+    const playing = player.play(10, 'base');
+
+    // Let playback reach the first gated wait, then skip.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(get(isSpinning)).toBe(true);
+    player.skip();
+
+    await playing;
+
+    // Identical final state to an unskipped round; settled exactly once.
+    expect(get(totalWin)).toBeCloseTo(5, 4);
+    expect(get(balance)).toBe(100);
+    expect(transport.endRoundCalls).toBe(1);
+    expect(get(isSpinning)).toBe(false);
+    // The gated wait was bypassed, never resolved by the test.
+    expect(releaseWait).not.toBeNull();
+  });
+
+  it('is a no-op when no round is playing', () => {
+    const player = new BookPlayer({ transport: new FakeTransport(book, 0.5), wait: instantWait });
+    expect(() => player.skip()).not.toThrow();
+  });
+
+  it('does not leak the skip into the next round', async () => {
+    const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+    const gatedWait = (): Promise<void> =>
+      new Promise<void>(() => {
+        /* resolves only via skip */
+      });
+    const transport = new FakeTransport(book, 0.5);
+    const player = new BookPlayer({ transport, wait: gatedWait });
+
+    const first = player.play(10, 'base');
+    await tick();
+    player.skip();
+    await first;
+
+    const second = player.play(10, 'base');
+    await tick();
+    // Round 2 is gated on its first pause again — the skip did not leak.
+    expect(get(isSpinning)).toBe(true);
+    player.skip();
+    await second;
+    expect(get(isSpinning)).toBe(false);
+    expect(transport.endRoundCalls).toBe(2);
   });
 });
 

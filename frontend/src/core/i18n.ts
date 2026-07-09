@@ -92,3 +92,12 @@ export const t: Readable<(key: TranslationKey, params?: TranslationParams) => st
 export function tn(key: TranslationKey, params?: TranslationParams): string {
   return translate(get(locale), key, params);
 }
+
+/**
+ * Whether an arbitrary string is a defined translation key. Lets callers build
+ * keys dynamically (e.g. `paytable.desc.<gameId>`) and fall back gracefully
+ * when a game has no dedicated copy.
+ */
+export function hasKey(key: string): key is TranslationKey {
+  return key in en;
+}

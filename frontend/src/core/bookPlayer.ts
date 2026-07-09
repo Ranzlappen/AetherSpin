@@ -22,6 +22,7 @@ import {
   lastResult,
   resetFreeSpins,
   getCurrentBet,
+  turbo,
 } from './gameState';
 import { sound } from './sound';
 
@@ -41,6 +42,8 @@ export interface PlaybackTimings {
   ladder: number;
   freeSpinEnd: number;
   settle: number;
+  /** Hold while the big-win (and up) celebration overlay plays. */
+  celebration: number;
 }
 
 /** Default timings used in production. */
@@ -53,15 +56,25 @@ export const DEFAULT_TIMINGS: PlaybackTimings = {
   ladder: 500,
   freeSpinEnd: 1600,
   settle: 400,
+  celebration: 1800,
 };
+
+/** Turbo mode multiplies presentation delays by this factor. */
+export const TURBO_SCALE = 0.35;
 
 /** Classify a win amount (as a multiple of the bet) into a celebration tier. */
 export function classifyWin(winMultiplier: number): WinTier {
   if (winMultiplier >= WINCAP_MULTIPLIER) return 'wincap';
+  if (winMultiplier >= 100) return 'epic';
   if (winMultiplier >= 50) return 'mega';
   if (winMultiplier >= 20) return 'big';
   if (winMultiplier >= 5) return 'medium';
   return 'small';
+}
+
+/** Tiers that warrant the full-screen celebration overlay (and playback hold). */
+export function isOverlayTier(tier: WinTier): boolean {
+  return tier === 'big' || tier === 'mega' || tier === 'epic' || tier === 'wincap';
 }
 
 /** Compute multiplier-wild badge positions from a board (free spins). */
@@ -104,11 +117,44 @@ export class BookPlayer {
   private readonly transport: RgsTransport;
   private readonly wait: WaitFn;
   private readonly timings: PlaybackTimings;
+  private skipRequested = false;
+  private skipSignal: (() => void) | null = null;
 
   constructor(options: BookPlayerOptions) {
     this.transport = options.transport;
     this.wait = options.wait ?? realWait;
     this.timings = { ...DEFAULT_TIMINGS, ...options.timings };
+  }
+
+  /**
+   * Skip the current round's remaining presentation. Collapses every pending
+   * delay of the in-flight book to zero and tells the reels to settle — event
+   * application, store updates and `endRound` settlement are untouched, so the
+   * final state is byte-identical to an unskipped round. No-op when idle.
+   */
+  skip(): void {
+    if (!get(isSpinning)) return;
+    this.skipRequested = true;
+    this.skipSignal?.();
+    bus.emit('reels:skip', {});
+  }
+
+  /**
+   * Interruptible, turbo-aware presentation delay. Turbo scales the delay by
+   * {@link TURBO_SCALE} (never below `turboFloor`, so feature banners stay
+   * readable); a skip request resolves it immediately and zeroes all delays
+   * until the round ends.
+   */
+  private async pause(ms: number, turboFloor = 0): Promise<void> {
+    if (this.skipRequested) return;
+    const effective = get(turbo) ? Math.max(turboFloor, Math.round(ms * TURBO_SCALE)) : ms;
+    await Promise.race([
+      this.wait(effective),
+      new Promise<void>((resolve) => {
+        this.skipSignal = resolve;
+      }),
+    ]);
+    this.skipSignal = null;
   }
 
   /**
@@ -121,7 +167,8 @@ export class BookPlayer {
   async play(bet: number, mode: string): Promise<RoundState> {
     isSpinning.set(true);
     totalWin.set(0);
-    bus.emit('reels:spin', { gameType: 'base' });
+    this.skipRequested = false;
+    bus.emit('reels:spin', { gameType: 'base', turbo: get(turbo) });
     sound.play('spin');
 
     try {
@@ -165,7 +212,8 @@ export class BookPlayer {
     if (!book) return;
     isSpinning.set(true);
     totalWin.set(0);
-    bus.emit('reels:spin', { gameType: 'base' });
+    this.skipRequested = false;
+    bus.emit('reels:spin', { gameType: 'base', turbo: get(turbo) });
     try {
       await this.replay(book, bet);
       await this.settleRound();
@@ -210,6 +258,17 @@ export class BookPlayer {
     }
   }
 
+  /**
+   * Emit a mid-round win celebration (particles + sound) for the tier of
+   * `winMultiplier`. The full-screen overlay and its playback hold happen only
+   * on the round's final aggregate win (see the `finalWin` case).
+   */
+  private celebrate(winMultiplier: number, amountDollars: number): void {
+    const tier = classifyWin(winMultiplier);
+    bus.emit('celebrate', { tier, amount: amountDollars, final: false });
+    sound.play(tier === 'small' ? 'win' : 'bigWin');
+  }
+
   /** Replay every event of a book in order. `bet` is the stake in dollars. */
   private async replay(book: Book, bet: number): Promise<void> {
     let runningWin = 0;
@@ -239,6 +298,7 @@ export class BookPlayer {
           expandedReels,
           multiplierWilds,
           anticipation: countScatters(event.board) >= 2,
+          turbo: get(turbo),
         });
         if (event.gameType === 'free') {
           gameMode.set('free');
@@ -250,49 +310,23 @@ export class BookPlayer {
               globalMultiplier: event.globalMultiplier ?? fs.globalMultiplier,
             }));
           }
-          await this.wait(this.timings.freeSpinReveal);
+          await this.pause(this.timings.freeSpinReveal);
         } else {
-          await this.wait(this.timings.reveal);
+          await this.pause(this.timings.reveal);
         }
         sound.play('reelStop');
         return runningWin;
       }
 
-      case 'lineWins': {
-        if (event.wins.length > 0) {
-          bus.emit('wins:lines', { wins: event.wins, betPerLine });
-          runningWin += event.amount * bet;
-          totalWin.set(round2(runningWin));
-          const tier = classifyWin(event.amount);
-          bus.emit('celebrate', { tier, amount: event.amount * bet });
-          sound.play(tier === 'small' ? 'win' : 'bigWin');
-          await this.wait(this.timings.lineWins);
-        }
-        return runningWin;
-      }
-
-      case 'wayWins': {
-        if (event.wins.length > 0) {
-          bus.emit('wins:lines', { wins: event.wins, betPerLine });
-          runningWin += event.amount * bet;
-          totalWin.set(round2(runningWin));
-          const tier = classifyWin(event.amount);
-          bus.emit('celebrate', { tier, amount: event.amount * bet });
-          sound.play(tier === 'small' ? 'win' : 'bigWin');
-          await this.wait(this.timings.lineWins);
-        }
-        return runningWin;
-      }
-
+      case 'lineWins':
+      case 'wayWins':
       case 'clusterWins': {
         if (event.wins.length > 0) {
           bus.emit('wins:lines', { wins: event.wins, betPerLine });
           runningWin += event.amount * bet;
           totalWin.set(round2(runningWin));
-          const tier = classifyWin(event.amount);
-          bus.emit('celebrate', { tier, amount: event.amount * bet });
-          sound.play(tier === 'small' ? 'win' : 'bigWin');
-          await this.wait(this.timings.lineWins);
+          this.celebrate(event.amount, event.amount * bet);
+          await this.pause(this.timings.lineWins);
         }
         return runningWin;
       }
@@ -302,7 +336,7 @@ export class BookPlayer {
         runningWin += event.amount * bet;
         totalWin.set(round2(runningWin));
         sound.play('scatter');
-        await this.wait(this.timings.scatter);
+        await this.pause(this.timings.scatter);
         return runningWin;
       }
 
@@ -320,7 +354,7 @@ export class BookPlayer {
           startMultiplier: event.startMultiplier,
         });
         sound.play('freeSpinStart');
-        await this.wait(this.timings.freeSpinTransition);
+        await this.pause(this.timings.freeSpinTransition, 500);
         return runningWin;
       }
 
@@ -332,10 +366,8 @@ export class BookPlayer {
           runningWin += event.amount * bet;
           totalWin.set(round2(runningWin));
           freeSpins.update((fs) => ({ ...fs, accumulated: round2(fs.accumulated + event.amount * bet) }));
-          const tier = classifyWin(event.amount);
-          bus.emit('celebrate', { tier, amount: event.amount * bet });
-          sound.play(tier === 'small' ? 'win' : 'bigWin');
-          await this.wait(this.timings.lineWins);
+          this.celebrate(event.amount, event.amount * bet);
+          await this.pause(this.timings.lineWins);
         }
         return runningWin;
       }
@@ -343,7 +375,7 @@ export class BookPlayer {
       case 'ladderStep': {
         freeSpins.update((fs) => ({ ...fs, globalMultiplier: event.globalMultiplier }));
         bus.emit('ladder:step', { globalMultiplier: event.globalMultiplier });
-        await this.wait(this.timings.ladder);
+        await this.pause(this.timings.ladder);
         return runningWin;
       }
 
@@ -358,13 +390,13 @@ export class BookPlayer {
           spinsTotal: event.spinsTotal,
         });
         sound.play('scatter');
-        await this.wait(this.timings.scatter);
+        await this.pause(this.timings.scatter);
         return runningWin;
       }
 
       case 'freeSpinEnd': {
         bus.emit('freespins:end', { totalWin: event.totalWin });
-        await this.wait(this.timings.freeSpinEnd);
+        await this.pause(this.timings.freeSpinEnd, 600);
         gameMode.set('base');
         resetFreeSpins();
         return runningWin;
@@ -375,12 +407,11 @@ export class BookPlayer {
         totalWin.set(finalDollars);
         bus.emit('round:final', { amount: event.amount, wincap: event.wincap });
         if (event.amount > 0) {
-          bus.emit('celebrate', {
-            tier: event.wincap ? 'wincap' : classifyWin(event.amount),
-            amount: finalDollars,
-          });
+          const tier = event.wincap ? 'wincap' : classifyWin(event.amount);
+          bus.emit('celebrate', { tier, amount: finalDollars, final: true });
+          if (isOverlayTier(tier)) await this.pause(this.timings.celebration, 600);
         }
-        await this.wait(this.timings.settle);
+        await this.pause(this.timings.settle);
         return finalDollars;
       }
 

@@ -57,8 +57,38 @@ rm -rf "$ENGINE/games/$GAME/library"
   PYTHONPATH="$ENGINE" PYTHONHASHSEED=0 "$PY" "games/$GAME/run.py"
 ) || { echo "FAIL: certified pipeline errored for $GAME."; exit 1; }
 
+# Stamp version + provenance into the certified config so the packaging-time
+# version/definitionHash consistency guard can prove the library was generated
+# from the CURRENT definition (mirrors the standalone library writer's stamp).
+echo "==> stamping provenance into the certified config…"
+python3 - "$GAME" <<'PY'
+import hashlib, json, subprocess, sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+game = sys.argv[1]
+root = Path.cwd()
+definition = json.loads((root / "shared/games" / game / "game-definition.json").read_text(encoding="utf-8"))
+canonical = json.dumps(definition, sort_keys=True, separators=(",", ":")).encode("utf-8")
+def_hash = hashlib.sha256(canonical).hexdigest()
+commit = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"
+
+cfg_path = root / "math/engine/games" / game / "library/configs/config.json"
+cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.is_file() else {}
+cfg["version"] = definition.get("version")
+cfg["provenance"] = {
+    "generator": "math-sdk",
+    "gitCommit": commit,
+    "definitionHash": def_hash,
+    "stampedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+}
+cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+print(f"    stamped {cfg_path.relative_to(root)} (definitionHash {def_hash[:12]}…, commit {commit[:12]})")
+PY
+
 # Report the post-optimization RTP from the optimized lookup tables.
-"$PY" - "$GAME" <<'PY'
+# (PYTHONPATH must include the engine so game_config's `src.*` imports resolve.)
+PYTHONPATH="$ENGINE" "$PY" - "$GAME" <<'PY'
 import sys, csv, glob, os
 sys.path.insert(0, "math/games/" + sys.argv[1])
 from game_config import GameConfig

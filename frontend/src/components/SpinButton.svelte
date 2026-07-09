@@ -1,14 +1,22 @@
 <script lang="ts">
-  /** The main spin button. Disabled while spinning or when funds are short. */
+  /**
+   * The main spin button. While idle it starts a round (disabled when funds are
+   * short or autoplay owns the loop); while a round plays it becomes a skip
+   * control that fast-forwards the presentation.
+   */
   import { isSpinning, insufficientFunds, autoplay } from '../core/gameState';
   import { t } from '../core/i18n';
   import { createEventDispatcher } from 'svelte';
 
-  const dispatch = createEventDispatcher<{ spin: void }>();
+  const dispatch = createEventDispatcher<{ spin: void; skip: void }>();
 
-  $: disabled = $isSpinning || $insufficientFunds || $autoplay.active;
+  $: disabled = $isSpinning ? false : $insufficientFunds || $autoplay.active;
 
   function onClick(): void {
+    if ($isSpinning) {
+      dispatch('skip');
+      return;
+    }
     if (disabled) return;
     dispatch('spin');
   }
@@ -18,11 +26,11 @@
   class="spin-btn"
   class:spinning={$isSpinning}
   {disabled}
-  aria-label={$t('spin.label')}
+  aria-label={$isSpinning ? $t('spin.skip') : $t('spin.label')}
   on:click={onClick}
 >
   <div class="ring"></div>
-  <span class="glyph">{$isSpinning ? '' : $t('spin.label')}</span>
+  <span class="glyph">{$isSpinning ? '■' : $t('spin.label')}</span>
   {#if $insufficientFunds && !$isSpinning}
     <span class="hint">{$t('spin.lowBalance')}</span>
   {/if}
