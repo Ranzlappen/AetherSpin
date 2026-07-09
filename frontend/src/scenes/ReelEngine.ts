@@ -61,6 +61,8 @@ export class ReelEngine {
   private readonly frame = new Graphics();
   private frameArt: Sprite | null = null;
   private readonly lineOverlay = new Graphics();
+  /** Additive glow sprites over winning cells (uses the `fx:cellGlow` art). */
+  private readonly glowLayer = new Container();
   private readonly textureCache = new Map<string, Texture>();
   private readonly renderer: Renderer;
   private elapsed = 0;
@@ -72,6 +74,7 @@ export class ReelEngine {
     this.buildFrame();
     this.buildReels();
     this.view.addChild(this.lineOverlay);
+    this.view.addChild(this.glowLayer);
     this.applyMask();
     this.subscribe();
   }
@@ -377,34 +380,62 @@ export class ReelEngine {
     }
   }
 
+  /**
+   * Neon-tube payline stroke: a wide soft halo, a saturated mid pass and a hot
+   * near-white core, so lines read as lit tubes rather than flat strokes.
+   */
+  private strokeNeon(points: number[], color: number): void {
+    this.lineOverlay.poly(points, false).stroke({ color, width: 16, alpha: 0.18 });
+    this.lineOverlay.poly(points, false).stroke({ color, width: 8, alpha: 0.55 });
+    this.lineOverlay.poly(points, false).stroke({ color: 0xffffff, width: 3, alpha: 0.9 });
+  }
+
+  /** Additive glow flare over one winning cell, tinted to the symbol color. */
+  private addCellGlow(reel: number, row: number, color: number): void {
+    const tex = assetRegistry.getTexture('fx:cellGlow');
+    if (!tex) return; // strokes/pulses still highlight the win without the art
+    const glow = new Sprite(tex);
+    glow.anchor.set(0.5);
+    glow.width = CELL * 1.7;
+    glow.height = CELL * 1.7;
+    glow.x = reel * REEL_WIDTH + CELL / 2;
+    glow.y = row * CELL + CELL / 2;
+    glow.tint = color;
+    glow.alpha = 0.85;
+    glow.blendMode = 'add';
+    this.glowLayer.addChild(glow);
+  }
+
   /** Highlight wins: draw the payline for lines games, pulse the matching cells
    * across the winning reels for ways games, or pulse the exact connected cluster
-   * cells for cluster games. */
+   * cells for cluster games. Winning cells get an additive glow flare. */
   highlightWins(wins: Win[]): void {
     this.lineOverlay.clear();
+    this.clearGlows();
     for (const win of wins) {
+      const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
       if ('line' in win) {
         const line = paylines[win.line];
         if (!line) continue;
-        const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
         const points: number[] = [];
         for (let reel = 0; reel < win.count; reel++) {
           const row = line[reel];
           points.push(reel * REEL_WIDTH + CELL / 2, row * CELL + CELL / 2);
           const cell = this.reels[reel]?.cells[row + 1];
           if (cell) cell.container.scale.set(1.12);
+          this.addCellGlow(reel, row, color);
         }
-        this.lineOverlay.poly(points, false).stroke({ color, width: 5, alpha: 0.85 });
+        this.strokeNeon(points, color);
       } else if ('cells' in win) {
         // Cluster win: pulse the connected cells the math reported and outline
         // each with a symbol-coloured rounded rect so the cluster reads as a group.
-        const color = parseInt(getSymbolColor(win.symbol).replace('#', ''), 16);
         for (const { reel, row } of win.cells) {
           const cell = this.reels[reel]?.cells[row + 1];
           if (cell) cell.container.scale.set(1.12);
           this.lineOverlay
             .roundRect(reel * REEL_WIDTH + 2, row * CELL + 2, CELL - 4, CELL - 4, 6)
             .stroke({ color, width: 4, alpha: 0.85 });
+          this.addCellGlow(reel, row, color);
         }
       } else {
         // Ways win: pulse all matching (or wild) cells on the first `count` reels.
@@ -414,6 +445,7 @@ export class ReelEngine {
             if (sym === win.symbol || sym === wildSymbolId) {
               const cell = this.reels[reel]?.cells[row + 1];
               if (cell) cell.container.scale.set(1.12);
+              this.addCellGlow(reel, row, color);
             }
           }
         }
@@ -421,9 +453,15 @@ export class ReelEngine {
     }
   }
 
+  /** Remove and destroy the per-win glow sprites (textures are shared). */
+  private clearGlows(): void {
+    for (const glow of this.glowLayer.removeChildren()) glow.destroy();
+  }
+
   /** Clear win-line overlays and reset cell scales. */
   clearHighlights(): void {
     this.lineOverlay.clear();
+    this.clearGlows();
     for (const reel of this.reels) {
       for (const cell of reel.cells) {
         cell.container.scale.set(1);

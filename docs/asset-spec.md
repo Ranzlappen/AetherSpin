@@ -5,11 +5,12 @@ Everything a designer needs to deliver or replace assets. The pipeline is live
 audio), so most of this is a **drop-in file swap** — no code changes for
 anything marked _wired_.
 
-> **Status:** final ART is integrated — symbols (WebP), background plate
-> (`bg/nebula.webp`), reel frame (`ui/reel-frame.webp`), logo
+> **Status:** final ART and final SFX are integrated — symbols (WebP),
+> background plate (`bg/nebula.webp`), reel frame (`ui/reel-frame.webp`), logo
 > (`brand/novaforged-logo.webp`), big-win burst (`fx/win-plate.webp`),
-> free-spins card (`fx/freespins-card.webp`), app icons (`icon-192/512.png`).
-> AUDIO is still the synthesized placeholder set (§2).
+> free-spins card (`fx/freespins-card.webp`), win-line glow
+> (`fx/line-glow.webp`), app icons (`icon-192/512.png`), and the 7 SFX (§2).
+> Still open: optional music loops (§3).
 
 ## How assets plug in (read first)
 
@@ -44,19 +45,19 @@ anything marked _wired_.
 To revise one, replace the file; keep the name. (The procedural fallback and
 `scripts/gen-placeholder-art.mjs` remain for scaffolded new games.)
 
-| Key (manifest) | File                    | Depicts (name) | Accent  | Kind    | Notes                                                  |
-| -------------- | ----------------------- | -------------- | ------- | ------- | ------------------------------------------------------ |
-| `symbol:W`     | `public/symbols/W.svg`  | Aether Crystal | #7df9ff | wild    | Substitutes for all pays; reads as premium/iconic.     |
-| `symbol:S`     | `public/symbols/S.svg`  | Nova Sigil     | #ff45e0 | scatter | Triggers free spins; should pop against any reel cell. |
-| `symbol:H1`    | `public/symbols/H1.svg` | Nova Core      | #ffd166 | high    | Top high-pay.                                          |
-| `symbol:H2`    | `public/symbols/H2.svg` | Starforge      | #ff7b54 | high    |                                                        |
-| `symbol:H3`    | `public/symbols/H3.svg` | Pulsar         | #b388ff | high    |                                                        |
-| `symbol:H4`    | `public/symbols/H4.svg` | Comet          | #4dd0e1 | high    |                                                        |
-| `symbol:L1`    | `public/symbols/L1.svg` | Cyan Shard     | #26c6da | low     | Low-pays read as gem/rune; keep them visually quieter. |
-| `symbol:L2`    | `public/symbols/L2.svg` | Violet Shard   | #7e57c2 | low     |                                                        |
-| `symbol:L3`    | `public/symbols/L3.svg` | Amber Shard    | #ffb300 | low     |                                                        |
-| `symbol:L4`    | `public/symbols/L4.svg` | Rose Shard     | #ec407a | low     |                                                        |
-| `symbol:L5`    | `public/symbols/L5.svg` | Lime Shard     | #9ccc65 | low     |                                                        |
+| Key (manifest) | File                     | Depicts (name) | Accent  | Kind    | Notes                                                  |
+| -------------- | ------------------------ | -------------- | ------- | ------- | ------------------------------------------------------ |
+| `symbol:W`     | `public/symbols/W.webp`  | Aether Crystal | #7df9ff | wild    | Substitutes for all pays; reads as premium/iconic.     |
+| `symbol:S`     | `public/symbols/S.webp`  | Nova Sigil     | #ff45e0 | scatter | Triggers free spins; should pop against any reel cell. |
+| `symbol:H1`    | `public/symbols/H1.webp` | Nova Core      | #ffd166 | high    | Top high-pay.                                          |
+| `symbol:H2`    | `public/symbols/H2.webp` | Starforge      | #ff7b54 | high    |                                                        |
+| `symbol:H3`    | `public/symbols/H3.webp` | Pulsar         | #b388ff | high    |                                                        |
+| `symbol:H4`    | `public/symbols/H4.webp` | Comet          | #4dd0e1 | high    |                                                        |
+| `symbol:L1`    | `public/symbols/L1.webp` | Cyan Shard     | #26c6da | low     | Low-pays read as gem/rune; keep them visually quieter. |
+| `symbol:L2`    | `public/symbols/L2.webp` | Violet Shard   | #7e57c2 | low     |                                                        |
+| `symbol:L3`    | `public/symbols/L3.webp` | Amber Shard    | #ffb300 | low     |                                                        |
+| `symbol:L4`    | `public/symbols/L4.webp` | Rose Shard     | #ec407a | low     |                                                        |
+| `symbol:L5`    | `public/symbols/L5.webp` | Lime Shard     | #9ccc65 | low     |                                                        |
 
 **Per-symbol spec**
 
@@ -91,10 +92,11 @@ ways-cosmic (brighter/expansive), **Stellar Clusters** cluster-cosmic
 
 ---
 
-## 2. Audio — wired now
+## 2. Audio — DELIVERED (final SFX)
 
-7 SFX in `frontend/public/audio/`. Replace the files; keep the names.
-Placeholders today are synthesized WAVs (`scripts/gen-placeholder-audio.mjs`).
+7 final SFX ship in `frontend/public/audio/<name>.wav` (44.1 kHz/16-bit mono,
+peaks ≈ −1 dBFS). To revise one, replace the file; keep the name. Still open:
+optional base/free-spins music loops (needs a small loop manager in `sound.ts`).
 
 | Sound name      | File                             | Plays when…                        | Suggested character            | Length    |
 | --------------- | -------------------------------- | ---------------------------------- | ------------------------------ | --------- |

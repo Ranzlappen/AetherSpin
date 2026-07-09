@@ -105,15 +105,15 @@ describe('asset singleton (boot path)', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
     const loaded = await preloadAssets({ load: async (url) => fakeTexture(url) });
 
-    // 11 symbols + the scene plates (background, reel frame).
+    // 11 symbols + the scene plates (background, reel frame, cell glow).
     expect(loaded).toContain('symbol:W');
     expect(loaded).toContain('symbol:L5');
     expect(loaded).toContain('bg:main');
     expect(loaded).toContain('ui:frame');
-    expect(loaded).toHaveLength(13);
+    expect(loaded).toHaveLength(14);
     expect(assetRegistry.getTexture('symbol:H1')).not.toBeNull();
     // Readiness marker the E2E asset-load check asserts on in a real browser.
-    expect(info).toHaveBeenCalledWith('[assets] ready: 13/13 loaded');
+    expect(info).toHaveBeenCalledWith('[assets] ready: 14/14 loaded');
     info.mockRestore();
   });
 });

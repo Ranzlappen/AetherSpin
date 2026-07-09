@@ -26,17 +26,24 @@ test('turbo toggle flips its pressed state', async ({ page }) => {
   await expect(turbo).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('skip fast-forwards a round to settlement', async ({ page }) => {
-  await boot(page);
+test('skip fast-forwards a long feature round to settlement', async ({ page }) => {
+  // A random base book can resolve in ~1s, which races the Skip assertions on
+  // a loaded runner. The replay corpus' bonus books run a full free-spins
+  // feature (tens of seconds unskipped), so the skip window is deterministic.
+  await page.goto('/?replay=bonus');
+  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
+
   const spin = page.getByRole('button', { name: 'Spin', exact: true });
   await spin.click();
 
   const skip = page.getByRole('button', { name: 'Skip', exact: true });
   await expect(skip).toBeVisible();
+  // Playwright retries while the free-spins splash briefly overlays the HUD.
   await skip.click();
 
-  // The round settles (presentation collapsed, outcome untouched).
-  await expect(spin).toBeEnabled({ timeout: 30_000 });
+  // Far sooner than the unskipped feature could finish, the round settles
+  // (presentation collapsed, outcome untouched) and the button returns to Spin.
+  await expect(spin).toBeEnabled({ timeout: 15_000 });
 });
 
 test('autoplay menu exposes loss-limit and single-win-limit controls', async ({ page }) => {

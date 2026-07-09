@@ -73,6 +73,8 @@ const SHARED_SYMBOLS: Record<string, string> = {
 const SCENE_ART: Record<string, string> = {
   'bg:main': 'bg/nebula.webp',
   'ui:frame': 'ui/reel-frame.webp',
+  // White radial glow with a star flare, tinted per symbol for win highlights.
+  'fx:cellGlow': 'fx/line-glow.webp',
 };
 
 /**

@@ -25,6 +25,7 @@ describe('assets', () => {
       ...['W', 'S', 'H1', 'H2', 'H3', 'H4', 'L1', 'L2', 'L3', 'L4', 'L5'].map((id) => `symbol:${id}`),
       'bg:main',
       'ui:frame',
+      'fx:cellGlow',
     ];
     expect(new Set(keys)).toEqual(new Set(expected));
     // manifestPaths/manifestUrls mirror the declared assets (bundle-relative here).
