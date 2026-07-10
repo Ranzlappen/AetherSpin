@@ -7,6 +7,13 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.10.1](https://github.com/Ranzlappen/AetherSpin/compare/v1.10.0...v1.10.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* install toml for the SDK optimizer driver on fresh runners ([74fbcae](https://github.com/Ranzlappen/AetherSpin/commit/74fbcae1f7fe9ee042ac04bb8c646fbb403cb368))
+
 ## [1.10.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.9.0...v1.10.0) (2026-07-09)
 
 
