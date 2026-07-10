@@ -10,7 +10,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -19,11 +19,11 @@ on:
       base_sims:
         description: Base-mode sim count for the certified run
         required: false
-        default: "1000000"
+        default: '1000000'
       bonus_sims:
         description: Bonus-mode sim count for the certified run
         required: false
-        default: "200000"
+        default: '200000'
 
 permissions:
   contents: write
@@ -39,7 +39,7 @@ jobs:
     # Production-count sims + the Rust optimizer take a while on a 4-core runner.
     timeout-minutes: 240
     env:
-      PYTHONHASHSEED: "0"
+      PYTHONHASHSEED: '0'
       SDK_BASE_SIMS: ${{ inputs.base_sims || '1000000' }}
       SDK_BONUS_SIMS: ${{ inputs.bonus_sims || '200000' }}
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
@@ -51,7 +51,7 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
           cache: pip
 
       - name: Install Rust toolchain (SDK optimizer)
