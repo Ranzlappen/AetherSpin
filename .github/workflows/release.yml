@@ -1,9 +1,29 @@
 name: Release
 
+# Builds the SUBMISSION-GRADE bundle and attaches it (plus its audit
+# artifacts and the certified white paper) to the GitHub release:
+# certified SDK math run (production sims + Rust optimizer) → RTP assertion →
+# package-for-stake --certified.
+#
+# Runs on every release tag, and on demand (workflow_dispatch) to attach a
+# freshly built certified bundle to an existing release.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to attach the certified bundle to (e.g. v1.10.0)
+        required: true
+      base_sims:
+        description: Base-mode sim count for the certified run
+        required: false
+        default: "1000000"
+      bonus_sims:
+        description: Bonus-mode sim count for the certified run
+        required: false
+        default: "200000"
 
 permissions:
   contents: write
@@ -14,16 +34,30 @@ concurrency:
 
 jobs:
   package:
-    name: Package Stake Engine bundle
+    name: Certified Stake Engine bundle
     runs-on: ubuntu-latest
+    # Production-count sims + the Rust optimizer take a while on a 4-core runner.
+    timeout-minutes: 240
+    env:
+      PYTHONHASHSEED: "0"
+      SDK_BASE_SIMS: ${{ inputs.base_sims || '1000000' }}
+      SDK_BONUS_SIMS: ${{ inputs.bonus_sims || '200000' }}
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Set up Python 3.11
+      # Python 3.12 is the SDK's required interpreter; the standalone scripts
+      # (stdlib-only) run fine under it too.
+      - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
+
+      - name: Install Rust toolchain (SDK optimizer)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -39,26 +73,38 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Package for Stake Engine
-        # --dev-library: the release bundle carries the standalone (dev/staging)
-        # library — the certified SDK library is produced out-of-band by
-        # scripts/run-certification.sh and swapped in before the real upload.
-        # The bundle's MANIFEST.md/submission-manifest.json state the grade.
-        run: bash scripts/package-for-stake.sh novaforged --dev-library
+      - name: Certified math run (official SDK + Rust optimizer)
+        run: bash scripts/run-certification.sh novaforged
 
-      - name: Locate bundle
-        id: bundle
-        run: echo "zip=$(ls dist-stake/*.zip | head -n1)" >> "$GITHUB_OUTPUT"
+      - name: Assert certified RTP converged to target
+        run: python3.12 scripts/assert_certified_rtp.py --tol 0.03 novaforged
+
+      - name: Package the certified bundle
+        run: bash scripts/package-for-stake.sh novaforged --certified
+
+      - name: Stage release assets
+        id: assets
+        run: |
+          mkdir -p release-assets
+          cp dist-stake/*.zip release-assets/
+          cp dist-stake/novaforged/MANIFEST.md release-assets/novaforged-MANIFEST.md
+          cp dist-stake/novaforged/submission-manifest.json release-assets/novaforged-submission-manifest.json
+          cp dist-stake/novaforged/SHA256SUMS release-assets/novaforged-SHA256SUMS.txt
+          cp dist-stake/novaforged/sbom.cdx.json release-assets/novaforged-sbom.cdx.json
+          cp dist-stake/novaforged/upload-instructions.txt release-assets/novaforged-upload-instructions.txt
+          cp docs/white-papers/novaforged-white-paper.md release-assets/novaforged-white-paper.md
+          ls -la release-assets/
 
       - name: Upload bundle as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: stake-bundle
-          path: dist-stake/*.zip
+          path: release-assets/
           if-no-files-found: error
 
-      - name: Attach bundle to GitHub release
+      - name: Attach certified bundle + audit artifacts to the GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          files: ${{ steps.bundle.outputs.zip }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: release-assets/*
           fail_on_unmatched_files: true
