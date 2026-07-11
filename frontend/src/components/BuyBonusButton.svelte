@@ -63,6 +63,7 @@
     font-weight: 800;
     font-size: 0.8rem;
     color: var(--neon-magenta);
+    white-space: nowrap;
   }
   .price {
     font-size: 0.95rem;
@@ -93,5 +94,18 @@
     gap: 0.8rem;
     justify-content: center;
     margin-top: 1rem;
+  }
+
+  /* Narrow phones: trim the buy button so the bet + buy row fits the width. */
+  @media (max-width: 380px) {
+    .buy {
+      padding: 0.4rem 0.6rem;
+    }
+    .title {
+      font-size: 0.72rem;
+    }
+    .price {
+      font-size: 0.85rem;
+    }
   }
 </style>
