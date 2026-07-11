@@ -43,7 +43,11 @@ export default defineConfig({
     { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
+    // The e2e suite drives a PRODUCTION build (vite preview) with no RGS
+    // session, so it must opt into the mock RGS — production fails closed on
+    // the mock otherwise (see core/transportMode.ts). This is exactly the
+    // hosted-demo scenario VITE_ENABLE_MOCK_RGS exists for.
+    command: `VITE_ENABLE_MOCK_RGS=true pnpm build && pnpm preview --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     timeout: 120_000,
     reuseExistingServer: !isCI,
