@@ -129,6 +129,14 @@ VITE_ASSET_BASE=https://cdn.stake-engine.com/novaforged/v1
 `vite.config.ts` sets `base: "./"` so the built bundle works from any path inside
 the Stake CDN iframe.
 
+## Environment variables
+
+| Variable               | Purpose                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_ASSET_BASE`      | CDN base for art/audio (empty = bundle-relative).                                                                                                                                                                                                                                         |
+| `VITE_ASSET_VERSION`   | Cache-busting suffix for CDN assets.                                                                                                                                                                                                                                                      |
+| `VITE_ENABLE_MOCK_RGS` | Opt in to the in-browser **mock (fake-money) RGS** in a _production_ build. Off by default: a production build with no real `rgs_url`/`sessionID` refuses to run rather than serve the demo (`core/transportMode.ts`). Only set this for a hosted demo. Dev builds always allow the mock. |
+
 ## Testing
 
 Vitest covers the core logic and config:

@@ -7,6 +7,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { Stage } from '../scenes/Stage';
   import { parseRgsParams, RgsClient, RgsError, type RgsTransport } from '../core/rgsClient';
+  import { resolveTransportMode } from '../core/transportMode';
   import { MockRgsClient } from '../core/mockRgs';
   import { parseReplayMode, loadReplayBooks, makeReplayProvider, replayStatus } from '../core/replayRgs';
   import { BookPlayer } from '../core/bookPlayer';
@@ -62,7 +63,14 @@
 
     const params = parseRgsParams();
     setLocale(params.lang); // RGS lang param → UI locale (falls back to English)
-    usingMock = !params.rgsUrl || !params.sessionID;
+    // Decide the transport. A production build refuses the fake-money mock RGS
+    // unless VITE_ENABLE_MOCK_RGS is set — so a missing rgs_url/sessionID in a
+    // real deployment fails visibly instead of silently serving the demo.
+    const decision = resolveTransportMode(params, {
+      prod: import.meta.env.PROD,
+      enableMock: import.meta.env.VITE_ENABLE_MOCK_RGS,
+    });
+    usingMock = decision.mode === 'mock';
 
     // Build the stage first so the canvas is visible behind the loader. A stuck
     // GPU/driver must never deadlock boot, so bound renderer init with a timeout:
@@ -87,7 +95,16 @@
     // Follow OS reduce-motion changes mid-session.
     reducedMotionOff = prefersReducedMotion.subscribe((v) => stage?.setReducedMotion(v));
 
-    if (usingMock) {
+    if (decision.mode === 'refused') {
+      // Production build with no real RGS session and no mock opt-in: refuse to
+      // run rather than serve a fake-money game. Surface it and stop booting.
+      track({ type: 'rgs:error', code: `transport-refused:${decision.reason}` });
+      errorMessage.set(tn('error.noSession'));
+      loading = false;
+      return;
+    }
+
+    if (decision.mode === 'mock') {
       // QA replay viewer: ?replay=base|bonus serves the committed golden-book
       // corpus deterministically (one book per spin) for the active game.
       const replayMode = parseReplayMode(new URLSearchParams(window.location.search).get('replay'));

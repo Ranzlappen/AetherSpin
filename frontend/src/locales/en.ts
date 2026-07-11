@@ -12,6 +12,7 @@ export const en = {
   'app.rendererFailed': 'Renderer failed to start: {message}',
 
   'error.connect': 'Failed to connect to the game server.',
+  'error.noSession': 'No game session. Please launch the game from your operator.',
   'error.spinFailed': 'Spin failed.',
   'error.autoplayInsufficient': 'Autoplay stopped: insufficient balance.',
   'error.renderLost': 'Graphics paused — restoring…',

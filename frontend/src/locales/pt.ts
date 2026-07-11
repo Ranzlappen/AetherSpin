@@ -14,6 +14,7 @@ export const pt: Partial<Translations> = {
   'app.rendererFailed': 'Falha ao iniciar o renderizador: {message}',
 
   'error.connect': 'Falha ao conectar ao servidor do jogo.',
+  'error.noSession': 'Nenhuma sessão de jogo. Inicie o jogo pelo seu operador.',
   'error.spinFailed': 'O giro falhou.',
   'error.autoplayInsufficient': 'Giro automático interrompido: saldo insuficiente.',
   'error.renderLost': 'Gráficos pausados — restaurando…',
