@@ -42,6 +42,9 @@ export class Stage {
   private resizeObserver: ResizeObserver | null = null;
   private celebrateOff: (() => void) | null = null;
   private reducedMotion = false;
+  /** Reserved DOM-HUD bands (CSS px) the board must not sit under. */
+  private insetTop = 0;
+  private insetBottom = 0;
   private canvasEl: HTMLCanvasElement | null = null;
   private onContextLost?: (e: Event) => void;
   private onContextRestored?: () => void;
@@ -129,6 +132,22 @@ export class Stage {
     this.reducedMotion = reduced;
   }
 
+  /**
+   * Reserve the space the DOM HUD occupies at the top and bottom of the viewport
+   * (in CSS px) so the board is fit into — and centred within — the clear band
+   * between them, never underneath the controls. Re-fits immediately. The host
+   * measures the live HUD (which wraps/grows on narrow screens) and feeds the
+   * numbers here, keeping the layout watertight across viewports.
+   */
+  setInsets(top: number, bottom: number): void {
+    const nextTop = Math.max(0, top);
+    const nextBottom = Math.max(0, bottom);
+    if (nextTop === this.insetTop && nextBottom === this.insetBottom) return;
+    this.insetTop = nextTop;
+    this.insetBottom = nextBottom;
+    this.resize();
+  }
+
   /** Fire a particle burst sized to the win tier. */
   private onCelebrate(tier: WinTier): void {
     if (!this.particles || !this.reels) return;
@@ -174,16 +193,21 @@ export class Stage {
 
     const { width, height } = this.reels.boardSize;
     // Fit the full presentation footprint (board frame included, when its art
-    // loaded) into ~86% of the viewport, leaving headroom for the DOM HUD. The
-    // frame is symmetric around the board, so centering the board centers it.
+    // loaded) into the clear band between the reserved HUD insets, with a small
+    // side gutter so it never touches the screen edge. Centring the board within
+    // that band centres the whole footprint (the frame is symmetric around it) —
+    // this keeps the board clear of the top HUD and bottom controls at every
+    // viewport instead of centring in the full viewport (which overlapped the
+    // controls in short/landscape and wasted space in portrait).
     const fit = this.reels.fitSize;
-    const margin = 0.86;
-    const scale = Math.min((w * margin) / fit.width, (h * margin) / fit.height);
-    const x = (w - width * scale) / 2;
-    const y = (h - height * scale) / 2;
+    const sideGutter = Math.min(24, w * 0.03);
+    const availW = Math.max(80, w - sideGutter * 2);
+    const availH = Math.max(80, h - this.insetTop - this.insetBottom);
+    const scale = Math.min(availW / fit.width, availH / fit.height);
+    const centerY = this.insetTop + availH / 2;
     this.world.scale.set(scale);
-    this.world.x = x;
-    this.world.y = y;
+    this.world.x = (w - width * scale) / 2;
+    this.world.y = centerY - (height * scale) / 2;
   }
 
   /** The underlying Pixi application (null before {@link init}). */

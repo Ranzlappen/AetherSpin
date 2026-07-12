@@ -68,4 +68,22 @@
     min-width: 84px;
     text-align: center;
   }
+
+  /* Narrow phones: compact the stepper so the bet + buy row fits the width. */
+  @media (max-width: 380px) {
+    .bet {
+      padding: 0.35rem 0.55rem;
+    }
+    .stepper {
+      gap: 0.35rem;
+    }
+    .step {
+      width: 28px;
+      height: 28px;
+    }
+    .value {
+      font-size: 0.95rem;
+      min-width: 58px;
+    }
+  }
 </style>

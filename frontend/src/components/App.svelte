@@ -56,6 +56,40 @@
   let paytableOpen = false;
   let fps = 0;
 
+  // The DOM HUD is absolute-positioned over the canvas. Measure how much space
+  // it occupies at the top and bottom (it wraps/grows on narrow screens) and
+  // reserve those bands in the Pixi stage, so the board is always fit into — and
+  // centred within — the clear area between the controls, never underneath them.
+  const insetEls: { top?: HTMLElement; bottom?: HTMLElement } = {};
+  let insetObserver: ResizeObserver | null = null;
+
+  function updateInsets(): void {
+    if (!stage) return;
+    const breathing = 8;
+    const top = insetEls.top ? insetEls.top.getBoundingClientRect().height : 0;
+    const bottom = insetEls.bottom ? insetEls.bottom.getBoundingClientRect().height : 0;
+    stage.setInsets(top + breathing, bottom + breathing);
+  }
+
+  /**
+   * Svelte action: track a HUD band's live height and keep the stage insets in
+   * sync (re-fires on wrap/resize). Attached to the top header and bottom footer.
+   */
+  function trackInset(node: HTMLElement, which: 'top' | 'bottom') {
+    insetEls[which] = node;
+    if (typeof ResizeObserver !== 'undefined') {
+      insetObserver ??= new ResizeObserver(() => updateInsets());
+      insetObserver.observe(node);
+    }
+    updateInsets();
+    return {
+      destroy(): void {
+        insetObserver?.unobserve(node);
+        if (insetEls[which] === node) delete insetEls[which];
+      },
+    };
+  }
+
   onMount(async () => {
     const bootStart = performance.now();
     sound.load();
@@ -137,6 +171,7 @@
 
   onDestroy(() => {
     reducedMotionOff?.();
+    insetObserver?.disconnect();
     stopSession();
     stage?.destroy();
     sound.dispose();
@@ -278,7 +313,7 @@
 
   {#if !loading}
     <!-- Top HUD -->
-    <header class="hud-top">
+    <header class="hud-top" use:trackInset={'top'}>
       <BalanceDisplay />
       <div class="top-center">
         <FreeSpinsBanner />
@@ -304,7 +339,7 @@
     </div>
 
     <!-- Bottom control bar -->
-    <footer class="hud-bottom">
+    <footer class="hud-bottom" use:trackInset={'bottom'}>
       <div class="left-controls">
         <BetSelector />
         {#if $gameMode === 'base'}
@@ -506,6 +541,36 @@
       order: -1;
       flex: 1 1 100%;
       display: flex;
+      justify-content: center;
+    }
+  }
+
+  /* Narrow phones: reclaim the horizontal budget so the HUD clusters never spill
+     past the screen edge. Controls shrink in their own scoped styles; here we
+     trim the gutters and let each cluster wrap as a graceful last resort. */
+  @media (max-width: 380px) {
+    .hud-top {
+      flex-wrap: wrap;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    .top-right {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .game-select {
+      max-width: 116px;
+    }
+    .hud-bottom {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+      gap: 0.4rem;
+    }
+    .left-controls,
+    .right-controls {
+      gap: 0.4rem;
+      min-width: 0;
+      flex-wrap: wrap;
       justify-content: center;
     }
   }
