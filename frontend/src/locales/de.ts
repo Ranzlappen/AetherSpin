@@ -12,6 +12,7 @@ export const de: Partial<Translations> = {
   'app.rendererFailed': 'Renderer konnte nicht starten: {message}',
 
   'error.connect': 'Verbindung zum Spielserver fehlgeschlagen.',
+  'error.noSession': 'Keine Spielsitzung. Bitte starten Sie das Spiel über Ihren Betreiber.',
   'error.spinFailed': 'Spin fehlgeschlagen.',
   'error.autoplayInsufficient': 'Autoplay gestoppt: Guthaben zu niedrig.',
   'error.renderLost': 'Grafik pausiert — wird wiederhergestellt…',

@@ -220,6 +220,47 @@ python3 "$ROOT/scripts/check-version-consistency.py" "$GAME_ID" --bundle "$OUT_D
 }
 
 # ---------------------------------------------------------------------------
+# 4d. Independently re-verify SHA256SUMS: re-hash every bundle file and confirm
+#     it matches the manifest. This detects any tampering/corruption between the
+#     build and this point, so the checksums shipped to the lab are provably
+#     consistent with the exact bytes packaged. Fail closed on any mismatch.
+# ---------------------------------------------------------------------------
+echo "==> Re-verifying bundle checksums (SHA256SUMS ↔ packaged bytes) ..."
+if command -v sha256sum >/dev/null 2>&1; then
+  ( cd "$OUT_DIR" && sha256sum -c --strict --quiet SHA256SUMS ) || {
+    echo "ERROR: bundle checksum verification failed — a file changed after packaging." >&2
+    exit 1
+  }
+else
+  # Portable fallback (macOS / no coreutils): re-hash in Python.
+  python3 - "$OUT_DIR" <<'PY' || { echo "ERROR: bundle checksum verification failed." >&2; exit 1; }
+import hashlib, sys
+from pathlib import Path
+bundle = Path(sys.argv[1])
+sums = bundle / "SHA256SUMS"
+bad = 0
+for line in sums.read_text(encoding="utf-8").splitlines():
+    line = line.strip()
+    if not line:
+        continue
+    digest, rel = line.split(None, 1)
+    f = bundle / rel
+    if not f.is_file():
+        print(f"  MISSING: {rel}"); bad += 1; continue
+    h = hashlib.sha256()
+    with f.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    if h.hexdigest() != digest:
+        print(f"  MISMATCH: {rel}"); bad += 1
+if bad:
+    print(f"{bad} checksum problem(s).")
+    sys.exit(1)
+print("  all bundle files match SHA256SUMS")
+PY
+fi
+
+# ---------------------------------------------------------------------------
 # 5. Zip it.
 # ---------------------------------------------------------------------------
 ZIP_PATH="$OUT_ROOT/$GAME_ID-v$VERSION.zip"

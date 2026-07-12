@@ -13,6 +13,13 @@ Stake Engine game.
   **authoritative from the RGS**. The client must treat its local mock
   (`frontend/src/core/mockRgs.ts`) as a dev-only convenience and never as a
   source of truth in production.
+- **Production fails closed on the mock.** `resolveTransportMode`
+  (`frontend/src/core/transportMode.ts`) refuses the in-browser mock RGS in a
+  production build (`import.meta.env.PROD`) when no real `rgs_url` + `sessionID`
+  are present — so a mis-launched or param-less production deploy shows a
+  "no session" error instead of silently serving a playable fake-money game.
+  Hosting a public demo build is the only case that needs the mock in
+  production; opt in explicitly with `VITE_ENABLE_MOCK_RGS=true`.
 - Never compute a win, RNG value, or balance on the client and send it to the
   server. The RGS ignores client-asserted outcomes by design.
 
