@@ -12,7 +12,19 @@
     NUM_ROWS,
     formatMultiplier,
   } from '../config/gameConfig';
+  import { symbolAssetPath, assetUrl } from '../config/assets';
   import { t, hasKey } from '../core/i18n';
+
+  /** Resolve a symbol's art URL (same webp the reels use), or null if unthemed. */
+  function symbolIcon(id: string): string | null {
+    const path = symbolAssetPath(id);
+    return path ? assetUrl(path) : null;
+  }
+
+  /** Drop a broken/missing image so the color-chip fallback shows through. */
+  function hideBrokenIcon(event: Event): void {
+    (event.currentTarget as HTMLImageElement).style.display = 'none';
+  }
 
   export let open = false;
   import { createEventDispatcher } from 'svelte';
@@ -89,7 +101,15 @@
             {/each}
             {#each paySymbols as sym (sym.id)}
               <div class="sym">
-                <span class="chip" style:background={getSymbolColor(sym.id)}></span>
+                <span
+                  class="chip"
+                  style:--sym-color={getSymbolColor(sym.id)}
+                  style:background={symbolIcon(sym.id) ? undefined : getSymbolColor(sym.id)}
+                >
+                  {#if symbolIcon(sym.id)}
+                    <img class="chip-img" src={symbolIcon(sym.id)} alt="" on:error={hideBrokenIcon} />
+                  {/if}
+                </span>
                 <span class="sym-name">{sym.name}</span>
               </div>
               {#each counts as c (c)}
@@ -274,10 +294,22 @@
     gap: 0.5rem;
   }
   .chip {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    box-shadow: 0 0 8px currentColor;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: rgba(10, 4, 32, 0.55);
+    border: 1px solid color-mix(in srgb, var(--sym-color, #7df9ff) 55%, transparent);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--sym-color, #7df9ff) 45%, transparent);
+  }
+  .chip-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
   }
   .sym-name {
     font-size: 0.85rem;
