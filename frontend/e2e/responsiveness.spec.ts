@@ -20,25 +20,52 @@ import { test, expect, type Page } from '@playwright/test';
 const spinButton = (page: Page) => page.getByRole('button', { name: 'Spin', exact: true });
 
 // Span the range that exposed layout defects: desktop, laptop, both tablet
-// orientations, mobile portrait/landscape, and the smallest phones.
+// orientations, mobile portrait/landscape, and the smallest phones. `phone`
+// viewports run on both projects (the mobile project's high devicePixelRatio is
+// where the DPR-scaling bug lived); the larger desktop/tablet sizes run only on
+// the desktop project — a 1920-wide viewport on a DPR-2.6 phone profile is both
+// unrealistic and pathologically slow to render under CI's CPU renderer.
 const VIEWPORTS = [
-  { name: 'desktop', width: 1920, height: 1080 },
-  { name: 'laptop', width: 1280, height: 800 },
-  { name: 'tablet-landscape', width: 1024, height: 768 },
-  { name: 'tablet-portrait', width: 768, height: 1024 },
-  { name: 'mobile-portrait', width: 390, height: 844 },
-  { name: 'mobile-landscape', width: 844, height: 390 },
-  { name: 'small-mobile', width: 360, height: 640 },
-  { name: 'tiny', width: 320, height: 568 },
+  { name: 'desktop', width: 1920, height: 1080, phone: false },
+  { name: 'laptop', width: 1280, height: 800, phone: false },
+  { name: 'tablet-landscape', width: 1024, height: 768, phone: false },
+  { name: 'tablet-portrait', width: 768, height: 1024, phone: false },
+  { name: 'mobile-portrait', width: 390, height: 844, phone: true },
+  { name: 'mobile-landscape', width: 844, height: 390, phone: true },
+  { name: 'small-mobile', width: 360, height: 640, phone: true },
+  { name: 'tiny', width: 320, height: 568, phone: true },
 ] as const;
 
 for (const vp of VIEWPORTS) {
-  test(`layout is watertight at ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+  test(`layout is watertight at ${vp.name} (${vp.width}x${vp.height})`, async ({ page }, testInfo) => {
+    // Skip the large desktop/tablet viewports on the high-DPR mobile project.
+    test.skip(
+      !vp.phone && testInfo.project.name === 'mobile-chromium',
+      'desktop/tablet sizes are covered on the desktop project'
+    );
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await page.goto('/');
 
     // Wait for the HUD to mount (mock auth resolved).
     await expect(spinButton(page)).toBeVisible({ timeout: 30_000 });
+
+    // (0) The Pixi board is laid out against the full CSS viewport, not a
+    // DPR-scaled fraction of it. The mobile project runs at devicePixelRatio > 1,
+    // where the historical bug (dividing the logical size by `resolution`) put
+    // the board at a quarter size in the top-left. The stage stamps the logical
+    // size it used onto the canvas host; it must match the viewport.
+    const host = page.locator('.canvas-host');
+    await expect(host).toHaveAttribute('data-stage-w', /\d+/, { timeout: 30_000 });
+    const stageW = Number(await host.getAttribute('data-stage-w'));
+    const stageH = Number(await host.getAttribute('data-stage-h'));
+    expect(
+      Math.abs(stageW - vp.width),
+      'stage width must match the viewport (not a DPR fraction)'
+    ).toBeLessThanOrEqual(2);
+    expect(
+      Math.abs(stageH - vp.height),
+      'stage height must match the viewport (not a DPR fraction)'
+    ).toBeLessThanOrEqual(2);
 
     // (1) No horizontal overflow.
     const overflowsX = await page.evaluate(

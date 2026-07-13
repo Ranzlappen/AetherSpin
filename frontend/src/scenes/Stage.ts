@@ -46,6 +46,8 @@ export class Stage {
   private insetTop = 0;
   private insetBottom = 0;
   private canvasEl: HTMLCanvasElement | null = null;
+  /** Canvas host element — stamped with the logical layout size for tests. */
+  private hostEl: HTMLElement | null = null;
   private onContextLost?: (e: Event) => void;
   private onContextRestored?: () => void;
 
@@ -57,6 +59,7 @@ export class Stage {
   async init(options: StageInitOptions): Promise<void> {
     this.onFps = options.onFps;
     this.reducedMotion = options.reducedMotion ?? false;
+    this.hostEl = options.container;
     const app = new Application();
     await app.init({
       antialias: true,
@@ -186,8 +189,13 @@ export class Stage {
   /** Scale and center the reel board within the available viewport. */
   resize(): void {
     if (!this.app || !this.reels) return;
-    const w = this.app.renderer.width / this.app.renderer.resolution;
-    const h = this.app.renderer.height / this.app.renderer.resolution;
+    // Use the logical screen size (CSS px). In Pixi v8 `renderer.width/height`
+    // already return the logical size, so dividing by `resolution` (as the v7
+    // API required) halves the layout on any DPR>=2 device — which put the board
+    // at a quarter size in the top-left on real phones while desktop/CI (DPR 1)
+    // looked fine. `app.screen` is the canonical logical viewport rectangle.
+    const w = this.app.screen.width;
+    const h = this.app.screen.height;
 
     this.background?.resize(w, h);
 
@@ -208,6 +216,15 @@ export class Stage {
     this.world.scale.set(scale);
     this.world.x = (w - width * scale) / 2;
     this.world.y = centerY - (height * scale) / 2;
+
+    // Record the logical viewport the board was laid out against. This must
+    // equal the CSS viewport at every device pixel ratio; the e2e responsiveness
+    // guard asserts it, catching the class of bug where a DPR>1 device halves
+    // the layout (Pixi v8 `renderer.width` is already logical — see above).
+    if (this.hostEl) {
+      this.hostEl.dataset.stageW = String(Math.round(w));
+      this.hostEl.dataset.stageH = String(Math.round(h));
+    }
   }
 
   /** The underlying Pixi application (null before {@link init}). */
