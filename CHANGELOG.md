@@ -7,6 +7,21 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.11.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.10.1...v1.11.0) (2026-07-12)
+
+
+### Features
+
+* defense-in-depth — fail-closed mock RGS, bundle checksum re-verify, pinned release actions ([11f217e](https://github.com/Ranzlappen/AetherSpin/commit/11f217e68c47a42392c5b0e7d9abbb27c8f2eca4))
+* defense-in-depth — fail-closed mock RGS, bundle checksum re-verify, pinned release actions ([4c01d82](https://github.com/Ranzlappen/AetherSpin/commit/4c01d82c188b4795b5d17ede8809230f5a696a50))
+
+
+### Bug Fixes
+
+* **frontend:** make board layout watertight across all viewports ([0212646](https://github.com/Ranzlappen/AetherSpin/commit/021264650eea9eb917e8f07d1401c817f8e017a9))
+* **frontend:** make board layout watertight across all viewports ([2e8d0ec](https://github.com/Ranzlappen/AetherSpin/commit/2e8d0ec07c3a243f742e789439b8507c2baf084e))
+* opt e2e + Pages demo builds into the mock RGS (fail-closed regression) ([1e1aff2](https://github.com/Ranzlappen/AetherSpin/commit/1e1aff2e0d183ddbc10e6188ec11bd321220681e))
+
 ## [1.10.1](https://github.com/Ranzlappen/AetherSpin/compare/v1.10.0...v1.10.1) (2026-07-10)
 
 
