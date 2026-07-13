@@ -59,6 +59,8 @@ export class ReelEngine {
   private readonly reelContainers: Container[] = [];
   private readonly maskGfx = new Graphics();
   private readonly frame = new Graphics();
+  /** Solid, opaque reel-cabinet backdrop drawn behind the symbols. */
+  private readonly boardBackdrop = new Graphics();
   private frameArt: Sprite | null = null;
   private readonly lineOverlay = new Graphics();
   /** Additive glow sprites over winning cells (uses the `fx:cellGlow` art). */
@@ -94,11 +96,16 @@ export class ReelEngine {
   }
 
   /**
-   * Build the frame around the reels: the final frame plate (`ui:frame`) when
-   * loaded — scaled so its transparent window wraps the board — with a dark
-   * board fill behind the symbols; otherwise the procedural neon frame.
+   * Build the frame around the reels: a solid reel-cabinet backdrop, then the
+   * final frame plate (`ui:frame`) on top of it when loaded — scaled so its
+   * transparent window wraps the board; otherwise the procedural neon frame.
+   *
+   * The backdrop sits *behind* the metal plate and deliberately overfills the
+   * plate's transparent window, so the metal hides its edges and no nebula shows
+   * through the seam between the board and the frame.
    */
   private buildFrame(): void {
+    this.buildBoardBackdrop();
     const art = assetRegistry.getTexture('ui:frame');
     if (art) {
       // Window fractions measured from the delivered plate (transparent
@@ -111,19 +118,45 @@ export class ReelEngine {
       this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
       this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
       this.view.addChild(this.frameArt);
-      this.frame
-        .roundRect(-6, -6, BOARD_WIDTH + 12, BOARD_HEIGHT + 12, 14)
-        .fill({ color: 0x0a0420, alpha: 0.78 });
-      this.view.addChild(this.frame);
       return;
     }
     this.frame
       .roundRect(-12, -12, BOARD_WIDTH + 24, BOARD_HEIGHT + 24, 18)
       .stroke({ color: 0x7df9ff, width: 3, alpha: 0.8 });
-    this.frame
-      .roundRect(-6, -6, BOARD_WIDTH + 12, BOARD_HEIGHT + 12, 14)
-      .fill({ color: 0x0a0420, alpha: 0.55 });
     this.view.addChild(this.frame);
+  }
+
+  /**
+   * Draw the opaque reel-cabinet backdrop: a solid base overfilling the frame
+   * window (so no background shows through), five distinct reel columns with
+   * darker gutters and a soft centre sheen, and top/bottom inner shadows for
+   * depth — so the board reads as five real spinning reels rather than a
+   * translucent pane.
+   */
+  private buildBoardBackdrop(): void {
+    const padX = 18;
+    const padY = 28;
+    const x = -padX;
+    const y = -padY;
+    const w = BOARD_WIDTH + padX * 2;
+    const h = BOARD_HEIGHT + padY * 2;
+    const g = this.boardBackdrop;
+    g.clear();
+    // Solid, fully opaque base (no alpha) — the reels must not be see-through.
+    g.roundRect(x, y, w, h, 22).fill({ color: 0x0a0522 });
+    for (let r = 0; r < NUM_REELS; r++) {
+      const cx = r * REEL_WIDTH;
+      // Lighter reel face.
+      g.rect(cx + 3, y, REEL_WIDTH - 6, h).fill({ color: 0x17103f });
+      // Soft vertical sheen down the reel centre (tube highlight).
+      g.rect(cx + REEL_WIDTH / 2 - 22, y, 44, h).fill({ color: 0x241a5c, alpha: 0.45 });
+      // Dark gutter between reels.
+      if (r > 0) g.rect(cx - 1.5, y, 3, h).fill({ color: 0x04010e });
+    }
+    // Inner top/bottom shadows for depth.
+    g.rect(x, y, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    g.rect(x, BOARD_HEIGHT + padY - 18, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    this.view.addChild(g);
   }
 
   /** Construct every reel and cell with placeholder symbols. */
@@ -317,10 +350,25 @@ export class ReelEngine {
       expanded.has(reel) ? col.map(() => wildSymbolId) : col
     );
 
+    // Free-spin reveals arrive with the reels already stopped (the base spin
+    // settled them and nothing re-emits `reels:spin`). Kick any idle reel back
+    // into motion and clear the previous board's win highlights, so every free
+    // spin visibly spins to its result instead of silently snapping the board.
+    const turbo = opts?.turbo ?? this.turbo;
+    if (this.reels.some((reel) => !reel.spinning)) {
+      this.clearHighlights();
+      for (let r = 0; r < NUM_REELS; r++) {
+        const reel = this.reels[r];
+        if (reel.spinning) continue;
+        reel.spinning = true;
+        reel.speed = (turbo ? 3200 : 2400) + r * 80;
+        reel.offset = 0;
+      }
+    }
+
     return new Promise<void>((resolve) => {
       this.spinResolve = resolve;
       const baseStop = this.elapsed;
-      const turbo = opts?.turbo ?? this.turbo;
       for (let r = 0; r < NUM_REELS; r++) {
         const reel = this.reels[r];
         reel.pendingBoard = displayBoard[r];
