@@ -7,6 +7,14 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.11.1](https://github.com/Ranzlappen/AetherSpin/compare/v1.11.0...v1.11.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* **frontend:** correct board scaling on high-DPR devices + real payta… ([2ccb806](https://github.com/Ranzlappen/AetherSpin/commit/2ccb806028ce9acb55101e9a37356c8d104d8996))
+* **frontend:** correct board scaling on high-DPR devices + real paytable art ([05884f9](https://github.com/Ranzlappen/AetherSpin/commit/05884f99d8c3ce2a3d6bb1b72eac38d7c10ffde5))
+
 ## [1.11.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.10.1...v1.11.0) (2026-07-12)
 
 
