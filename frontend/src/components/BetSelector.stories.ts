@@ -6,13 +6,13 @@ import { betLevelIndex } from '../core/gameState';
  * The bet stepper reads/writes the shared `betLevelIndex` store. Stories set the
  * store before rendering to demonstrate the min/middle/max states.
  */
-const meta: Meta<BetSelector> = {
+const meta = {
   title: 'Controls/BetSelector',
   component: BetSelector,
-};
+} satisfies Meta<typeof BetSelector>;
 export default meta;
 
-type Story = StoryObj<BetSelector>;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   play: () => betLevelIndex.set(2),
