@@ -7,6 +7,16 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [1.11.2](https://github.com/Ranzlappen/AetherSpin/compare/v1.11.1...v1.11.2) (2026-07-14)
+
+
+### Bug Fixes
+
+* **ci:** read compressed SDK books with the SDK interpreter in sdk-parity ([2d438ef](https://github.com/Ranzlappen/AetherSpin/commit/2d438effe7b0a5221050246a6aa0f21f7702a097))
+* **ci:** unbreak SDK Parity — read compressed books with the SDK interpreter ([eb25f3d](https://github.com/Ranzlappen/AetherSpin/commit/eb25f3df144c12b61780e14d9d4fb51fcb9f35f2))
+* **frontend:** animate free spins + solid, gap-free reel cabinet ([eedc288](https://github.com/Ranzlappen/AetherSpin/commit/eedc28814315cfc44da56717ee45d49139e72fc3))
+* **frontend:** animate free spins + solid, gap-free reel cabinet ([1f61457](https://github.com/Ranzlappen/AetherSpin/commit/1f61457587e149fa42ae21784152b50be00f7b15))
+
 ## [1.11.1](https://github.com/Ranzlappen/AetherSpin/compare/v1.11.0...v1.11.1) (2026-07-13)
 
 
