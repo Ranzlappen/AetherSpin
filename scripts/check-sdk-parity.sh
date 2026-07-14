@@ -111,7 +111,11 @@ echo "    SDK books: ${SDK_BASE#$ROOT/}${SDK_BONUS:+, ${SDK_BONUS#$ROOT/}}"
 #    frontend replays (the RGS treats events as opaque, so this is OUR guard).
 # ---------------------------------------------------------------------------
 echo "==> check #2: SDK books conform to the BookEvent contract…"
-python3 math/scripts/validate_sdk_books.py "$SDK_BASE" ${SDK_BONUS:+"$SDK_BONUS"} \
+# Read the compressed .zst publish books with $SDK_PY — it's the interpreter we
+# verified has `zstandard` (line ~59). `python3` (e.g. setup-python's 3.11) can
+# differ from $SDK_PY (e.g. the runner's system 3.12) and lack the module, which
+# turned an unreadable book into a false contract FAILURE (ModuleNotFoundError).
+"$SDK_PY" math/scripts/validate_sdk_books.py "$SDK_BASE" ${SDK_BONUS:+"$SDK_BONUS"} \
   || { echo "FAIL: SDK books violate the shared book contract (docs/adr/0005)."; exit 1; }
 
 # ---------------------------------------------------------------------------
@@ -120,7 +124,8 @@ python3 math/scripts/validate_sdk_books.py "$SDK_BASE" ${SDK_BONUS:+"$SDK_BONUS"
 # ---------------------------------------------------------------------------
 if [ -n "$SDK_BONUS" ]; then
   echo "==> check #3: realized multiplierWilds on free reveals…"
-  python3 - "$GAME" "$SDK_BONUS" <<'PYEOF' || exit 1
+  # $SDK_PY reads the compressed .zst books (has zstandard); see check #2.
+  "$SDK_PY" - "$GAME" "$SDK_BONUS" <<'PYEOF' || exit 1
 import json, sys
 sys.path.insert(0, "math/simulator"); sys.path.insert(0, "math"); sys.path.insert(0, "math/scripts")
 from simulator.definition import load_definition
@@ -163,7 +168,7 @@ m = next((m for m in cfg.get("betModes", []) if m.get("name") == "base"), {})
 print(m.get("measuredRtp", m.get("rtp", "")))
 PY
 )"
-  python3 - "$SDK_BASE" "$STD_RTP" "$RTP_TOL" <<'PY' || exit 1
+  "$SDK_PY" - "$SDK_BASE" "$STD_RTP" "$RTP_TOL" <<'PY' || exit 1
 import sys
 sys.path.insert(0, "math/scripts")
 from validate_sdk_books import _load_books
