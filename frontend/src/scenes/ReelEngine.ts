@@ -27,6 +27,12 @@ const CELL = SYMBOL_SIZE + SYMBOL_GAP;
 const REEL_WIDTH = CELL;
 const BOARD_WIDTH = REEL_WIDTH * NUM_REELS;
 const BOARD_HEIGHT = CELL * NUM_ROWS;
+/**
+ * Scale applied to the delivered frame plate so its metal opening hugs the
+ * reels. The plate's visible opening is much larger than its transparent core,
+ * so mapping the core to the board left a wide gap; ~0.85 tightens it.
+ */
+const FRAME_SCALE = 0.85;
 
 /** A single symbol cell sprite (background tile + glyph). */
 interface Cell {
@@ -112,9 +118,14 @@ export class ReelEngine {
       // window ≈ 679×350 in a 1152×768 image, centered).
       const WINDOW_X = 679 / 1152;
       const WINDOW_Y = 350 / 768;
+      // The plate's *visible* metal opening is considerably larger than its fully
+      // transparent core, so mapping the core to board+margins left a wide gap of
+      // backdrop/nebula between the outer symbols and the frame. Scale the whole
+      // plate down (centred on the board) so the metal hugs the reels — the
+      // backdrop below overfills generously to keep the seam covered.
       this.frameArt = new Sprite(art);
-      this.frameArt.width = (BOARD_WIDTH + 24) / WINDOW_X;
-      this.frameArt.height = (BOARD_HEIGHT + 44) / WINDOW_Y;
+      this.frameArt.width = ((BOARD_WIDTH + 24) / WINDOW_X) * FRAME_SCALE;
+      this.frameArt.height = ((BOARD_HEIGHT + 44) / WINDOW_Y) * FRAME_SCALE;
       this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
       this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
       this.view.addChild(this.frameArt);
@@ -134,8 +145,12 @@ export class ReelEngine {
    * translucent pane.
    */
   private buildBoardBackdrop(): void {
-    const padX = 18;
-    const padY = 28;
+    // Overfill well past the (now tighter) frame window so the metal hides the
+    // backdrop edges and no nebula leaks through the seam — the plate is scaled
+    // down (FRAME_SCALE) to hug the reels, so the backdrop must reach further out
+    // than the board to stay under the metal lip on every side.
+    const padX = 52;
+    const padY = 60;
     const x = -padX;
     const y = -padY;
     const w = BOARD_WIDTH + padX * 2;
@@ -153,9 +168,11 @@ export class ReelEngine {
       // Dark gutter between reels.
       if (r > 0) g.rect(cx - 1.5, y, 3, h).fill({ color: 0x04010e });
     }
-    // Inner top/bottom shadows for depth.
-    g.rect(x, y, w, 18).fill({ color: 0x000000, alpha: 0.4 });
-    g.rect(x, BOARD_HEIGHT + padY - 18, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    // Inner top/bottom shadows anchored to the visible board edge (the wide
+    // overfill above sits under the metal, so edge-anchored shadows keep the
+    // depth cue inside the frame window).
+    g.rect(x, -8, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    g.rect(x, BOARD_HEIGHT - 10, w, 18).fill({ color: 0x000000, alpha: 0.4 });
     this.view.addChild(g);
   }
 
