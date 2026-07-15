@@ -32,7 +32,7 @@ const BOARD_HEIGHT = CELL * NUM_ROWS;
  * reels. The plate's visible opening is much larger than its transparent core,
  * so mapping the core to the board left a wide gap; ~0.85 tightens it.
  */
-const FRAME_SCALE = 0.85;
+const FRAME_SCALE = 0.83;
 
 /** A single symbol cell sprite (background tile + glyph). */
 interface Cell {
@@ -84,6 +84,10 @@ export class ReelEngine {
     this.view.addChild(this.lineOverlay);
     this.view.addChild(this.glowLayer);
     this.applyMask();
+    // Lift the metal plate to the foreground so the reels spin *behind* the
+    // frame (its inner lip overlaps the reel edges) rather than the symbols
+    // floating on top of it. Re-adding moves the existing child to the top.
+    if (this.frameArt) this.view.addChild(this.frameArt);
     this.subscribe();
   }
 
