@@ -28,11 +28,16 @@ const REEL_WIDTH = CELL;
 const BOARD_WIDTH = REEL_WIDTH * NUM_REELS;
 const BOARD_HEIGHT = CELL * NUM_ROWS;
 /**
- * Scale applied to the delivered frame plate so its metal opening hugs the
- * reels. The plate's visible opening is much larger than its transparent core,
- * so mapping the core to the board left a wide gap; ~0.85 tightens it.
+ * The delivered frame plate's transparent opening, measured (flood-filled) from
+ * the 1152×768 art: x 220–932 (712 wide), y 180–588 (408 tall), centred. The
+ * frame is sized so this opening lands `FRAME_MARGIN` px outside the board on
+ * every side — the reels sit fully inside the window with a small clean gap, and
+ * the foreground plate never slices a symbol.
  */
-const FRAME_SCALE = 0.83;
+const FRAME_WINDOW_X = 712 / 1152;
+const FRAME_WINDOW_Y = 408 / 768;
+/** Clean gap (px) between the board edge and the metal opening, each side. */
+const FRAME_MARGIN = 16;
 
 /** A single symbol cell sprite (background tile + glyph). */
 interface Cell {
@@ -118,18 +123,12 @@ export class ReelEngine {
     this.buildBoardBackdrop();
     const art = assetRegistry.getTexture('ui:frame');
     if (art) {
-      // Window fractions measured from the delivered plate (transparent
-      // window ≈ 679×350 in a 1152×768 image, centered).
-      const WINDOW_X = 679 / 1152;
-      const WINDOW_Y = 350 / 768;
-      // The plate's *visible* metal opening is considerably larger than its fully
-      // transparent core, so mapping the core to board+margins left a wide gap of
-      // backdrop/nebula between the outer symbols and the frame. Scale the whole
-      // plate down (centred on the board) so the metal hugs the reels — the
-      // backdrop below overfills generously to keep the seam covered.
+      // Size the plate so its measured opening lands FRAME_MARGIN px outside the
+      // board on every side: the reels sit fully inside the window (the
+      // foreground plate never clips a symbol) with only a thin backdrop gap.
       this.frameArt = new Sprite(art);
-      this.frameArt.width = ((BOARD_WIDTH + 24) / WINDOW_X) * FRAME_SCALE;
-      this.frameArt.height = ((BOARD_HEIGHT + 44) / WINDOW_Y) * FRAME_SCALE;
+      this.frameArt.width = (BOARD_WIDTH + FRAME_MARGIN * 2) / FRAME_WINDOW_X;
+      this.frameArt.height = (BOARD_HEIGHT + FRAME_MARGIN * 2) / FRAME_WINDOW_Y;
       this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
       this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
       this.view.addChild(this.frameArt);
