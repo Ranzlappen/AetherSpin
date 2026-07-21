@@ -8,8 +8,8 @@ describe('age/legal gate', () => {
     localStorage.clear();
   });
 
-  it('is OFF by default for NovaForged (operator gates KYC upstream)', () => {
-    // NovaForged does not set responsibleGaming.requireAgeAck, so the gate is
+  it('is OFF by default for NovaForge (operator gates KYC upstream)', () => {
+    // NovaForge does not set responsibleGaming.requireAgeAck, so the gate is
     // disabled and never blocks play — the default for operator-embedded games.
     expect(ageGateEnabled).toBe(false);
     expect(get(ageGateOpen)).toBe(false);

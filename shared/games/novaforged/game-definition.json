@@ -1,7 +1,7 @@
 {
   "$schema": "../../schemas/game-definition.schema.json",
   "id": "novaforged",
-  "displayName": "NovaForged",
+  "displayName": "NovaForge",
   "version": "1.0.0",
   "studio": "AetherSpin",
   "theme": "neon-cosmic",

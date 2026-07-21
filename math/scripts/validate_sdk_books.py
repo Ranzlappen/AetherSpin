@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate SDK-generated NovaForged books against the shared `BookEvent` contract.
+"""Validate SDK-generated NovaForge books against the shared `BookEvent` contract.
 
 The official math-sdk produces the *certified* books; this checks that those
 books speak the exact event vocabulary the frontend replays

@@ -1,6 +1,6 @@
-# @aetherspin/frontend — NovaForged web client
+# @aetherspin/frontend — NovaForge web client
 
-Production web game client for the flagship **NovaForged** slot, part of the
+Production web game client for the flagship **NovaForge** slot, part of the
 AetherSpin Stake Engine monorepo. Built with **Vite + Svelte 4 + TypeScript
 (strict)** and **PixiJS v8** for WebGL reel rendering, targeting 60fps.
 

@@ -6,7 +6,7 @@
  * Placeholders use `{name}` syntax and are filled by the `t()` helper.
  */
 export const en = {
-  'app.initializing': 'Initializing NovaForged…',
+  'app.initializing': 'Initializing NovaForge…',
   'app.authenticating': 'Authenticating…',
   'app.startingDemo': 'Starting local demo session…',
   'app.rendererFailed': 'Renderer failed to start: {message}',
@@ -23,6 +23,9 @@ export const en = {
   'hud.freeSpins': 'FREE SPINS',
   'hud.demoBadge': 'DEMO · mock RGS · {fps} fps',
   'hud.demoTitle': 'No RGS params detected — running on the local mock RGS',
+  'hud.clock': 'Local time',
+  'hud.maxWin': 'Max win {max}×',
+  'hud.spaceHint': 'Press Space to spin',
 
   'spin.label': 'Spin',
   'spin.skip': 'Skip',
@@ -40,6 +43,8 @@ export const en = {
 
   'bet.decrease': 'Decrease bet',
   'bet.increase': 'Increase bet',
+  'bet.max': 'Set maximum bet',
+  'bet.maxShort': 'Max',
 
   'buyBonus.label': 'Buy Free Spins',
   'buyBonus.confirmTitle': 'Buy Free Spins?',
@@ -93,10 +98,6 @@ export const en = {
   'paytable.rtpLine': 'Theoretical RTP: {rtp}% · Max win: {maxWin}× · Volatility: {volatility}',
   'paytable.desc.novaforged':
     'A premium 5×3, 20-line neon-cosmic video slot featuring multiplier wilds, scatter-triggered free spins with an escalating multiplier ladder, expanding wilds, and a bonus buy.',
-  'paytable.desc.cosmicways':
-    'A 5×3, 243-ways neon-cosmic video slot. Symbols pay on any adjacent reels from the left, with scatter-triggered free spins.',
-  'paytable.desc.stellarclusters':
-    'A 5×3 cluster-pays neon-cosmic slot: connected groups of a symbol (wilds substitute) pay by size, with scatter-triggered free spins.',
 
   'volatility.low': 'Low',
   'volatility.medium': 'Medium',

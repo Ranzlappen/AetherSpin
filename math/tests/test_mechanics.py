@@ -59,8 +59,11 @@ def test_registry_is_extensible() -> None:
 
 
 def test_ways_mechanic_counts_ways_as_product_of_per_reel_occurrences() -> None:
-    definition = load_definition("cosmicways")
-    assert definition.engine_type == "ways"
+    # The ways mechanic stays available as an engine plugin even though no
+    # shipped title uses it; exercise it on the flagship definition with the
+    # engine type overridden (mechanics only read symbols/paytable/wild/scatter).
+    definition = load_definition("novaforged")
+    definition.raw["engine"]["type"] = "ways"
     mechanic = build_mechanic(definition)
     assert isinstance(mechanic, WaysMechanic)
 
@@ -84,21 +87,9 @@ def test_ways_mechanic_counts_ways_as_product_of_per_reel_occurrences() -> None:
     assert win["wildMultiplier"] == 1
 
 
-def test_cosmicways_simulates_to_valid_books() -> None:
-    """The second game runs end-to-end through the shared engine + book contract."""
-    definition = load_definition("cosmicways")
-    _, engine = build_engine("cosmicways")
-    rng = Rng(0)
-    for i in range(2000):
-        rng.reseed(i)
-        result = engine.play_round(i + 1, rng)
-        book = {"id": i + 1, "payoutMultiplier": result.payout_multiplier, "events": result.events}
-        assert not validate_book(book, wincap=definition.wincap), f"sim {i}"
-
-
 def test_cluster_mechanic_pays_connected_groups() -> None:
-    definition = load_definition("stellarclusters")
-    assert definition.engine_type == "cluster"
+    definition = load_definition("novaforged")
+    definition.raw["engine"]["type"] = "cluster"
     mechanic = build_mechanic(definition)
     assert isinstance(mechanic, ClusterMechanic)
 
@@ -120,7 +111,8 @@ def test_cluster_mechanic_pays_connected_groups() -> None:
 
 
 def test_cluster_mechanic_ignores_groups_below_three() -> None:
-    definition = load_definition("stellarclusters")
+    definition = load_definition("novaforged")
+    definition.raw["engine"]["type"] = "cluster"
     mechanic = build_mechanic(definition)
     target = next(s for s in definition.paytable if s not in (definition.wild, definition.scatter))
     fill = definition.scatter
@@ -130,9 +122,10 @@ def test_cluster_mechanic_ignores_groups_below_three() -> None:
     assert not any(w["symbol"] == target for w in wins)
 
 
-def test_stellarclusters_simulates_to_valid_books() -> None:
-    definition = load_definition("stellarclusters")
-    _, engine = build_engine("stellarclusters")
+def test_flagship_simulates_to_valid_books() -> None:
+    """The shipped game runs end-to-end through the shared engine + book contract."""
+    definition = load_definition("novaforged")
+    _, engine = build_engine("novaforged")
     rng = Rng(0)
     for i in range(2000):
         rng.reseed(i)

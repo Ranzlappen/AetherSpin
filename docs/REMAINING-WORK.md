@@ -22,7 +22,7 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       [`docs/white-papers/<game>-white-paper.md`](white-papers/). Have a math
       reviewer sign off the hit/free-spin/win-cap frequencies and max-win before
       submission.
-- [x] **NovaForged certified run + strict parity re-verified** (2026-07-04,
+- [x] **NovaForge certified run + strict parity re-verified** (2026-07-04,
       against the volatility-reconciled definition, hash `8ccc93368f60…`):
       full SDK pipeline (1e6 base / 2e5 bonus + Rust optimizer) → RTP
       **0.9650 exact** both modes; SDK RGS verifier green (SHA-256 + payout
@@ -57,13 +57,15 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
       44.1 kHz/16-bit, clean peaks); drop-in swap, no code change. Win-line
       highlights upgraded to layered neon strokes + an additive cell-glow
       flare (`fx/line-glow.webp`, generated + wired).
-- [ ] **Music** (optional) — no base/free-spins loops yet; needs a small loop
-      manager in `sound.ts` when tracks arrive (`docs/asset-spec.md` §3).
+- [x] **Music** — placeholder seamless ambient loops shipped for base + free
+      spins (`scripts/gen-placeholder-music.mjs` → `public/audio/music/*.wav`)
+      with a cross-fading loop manager in `sound.ts`; a composer's final
+      webm/mp3 loops are a pure file swap (`docs/asset-spec.md` §3).
 - [ ] **Per-game art theming** (optional) — all three games share the one
-      (NovaForged-themed) symbol set. The `THEMED_SYMBOL_SETS` seam in
+      (NovaForge-themed) symbol set. The `THEMED_SYMBOL_SETS` seam in
       `config/assets.ts` takes per-game overrides as a pure data change.
-- [ ] _(Note)_ The delivered logo reads "NovaForge" (no trailing "d") while the
-      game's display name is "NovaForged" — confirm or revise the wordmark.
+- [x] _(Resolved)_ The game is named **NovaForge** to match the delivered
+      wordmark (display name renamed; the internal id stays `novaforged`).
 - [x] **Player-experience feature set** — turbo/quick-spin, tap-to-skip
       presentation (never outcomes), tiered BIG/MEGA/EPIC/MAX win celebration
       overlay (`WinCelebration.svelte`, art-agnostic with a `data-tier` art
@@ -80,8 +82,8 @@ path, pass the SDK's own RGS verification, and the optimizer solves RTP to 0.965
 
 ## 3. Process / submission
 
-- [ ] **Set real CODEOWNERS** — `.github/CODEOWNERS` still lists placeholder
-      owners; replace them with real GitHub usernames/teams before submission.
+- [x] **Set real CODEOWNERS** — `.github/CODEOWNERS` lists `@Ranzlappen` for
+      every area.
 - [ ] **Land PR #57.** Large PR (SDK ports + production hardening + optimizer),
       now **marked ready for review** (out of draft). Get review + required checks
       green, then decide: merge as-is or split.

@@ -1,4 +1,4 @@
-"""Entry point for generating NovaForged results in the official math-sdk.
+"""Entry point for generating NovaForge results in the official math-sdk.
 
 Run from within a cloned math-sdk (see scripts/setup-math.sh):
 

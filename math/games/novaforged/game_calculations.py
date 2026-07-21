@@ -1,7 +1,7 @@
-"""NovaForged calculation layer (real math-sdk API).
+"""NovaForge calculation layer (real math-sdk API).
 
 Inherits the SDK's `Executables` (board drawing, free-spin lifecycle, win
-manager, event helpers); NovaForged-specific calculations are added here as the
+manager, event helpers); NovaForge-specific calculations are added here as the
 port grows. Mirrors `0_0_lines/game_calculations.py`.
 """
 

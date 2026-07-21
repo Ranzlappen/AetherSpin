@@ -1,5 +1,5 @@
 """Per-round state, special-symbol functions, and contract-event lifecycle
-overrides for NovaForged (real SDK API).
+overrides for NovaForge (real SDK API).
 
 The wild carries a realized `multiplier` attribute in the free game (the SDK's
 native multiplier-wild mechanism). The free-spin lifecycle methods are overridden

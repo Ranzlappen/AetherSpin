@@ -5,7 +5,7 @@ Guidance for AI assistants and developers working in this repository.
 ## What this is
 
 AetherSpin — a production-grade **Stake Engine game studio monorepo**. It is a
-reusable math + web engine scaffold plus a complete flagship game, **NovaForged**
+reusable math + web engine scaffold plus a complete flagship game, **NovaForge**
 (5×3, 20-line neon-cosmic slot).
 
 ## Layout

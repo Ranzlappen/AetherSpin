@@ -13,7 +13,7 @@
 **AetherSpin** is a production-grade **Stake Engine game-studio monorepo** — a
 reusable, future-proof starter kit for building and publishing premium online
 slot games on the **Stake Engine** RGS (Remote Gaming Server) platform. It ships
-with a complete flagship game, **NovaForged**, a 5×3, 20-line neon-cosmic video
+with a complete flagship game, **NovaForge**, a 5×3, 20-line neon-cosmic video
 slot.
 
 The core idea: a **single source of truth** (`game-definition.json`) drives
@@ -25,7 +25,7 @@ levels, or features.
 
 1. A studio that wants a clean foundation to ship many certified Stake Engine
    titles.
-2. The flagship NovaForged game itself, demonstrating best practices end-to-end.
+2. The flagship NovaForge game itself, demonstrating best practices end-to-end.
 
 ---
 
@@ -134,7 +134,7 @@ hardcoded in either side.
 `description`, `engine`, `currency`, `bet`, `betModes`, `symbols`, `paytable`,
 `paylines`, `scatter`, `features`.
 
-**NovaForged's actual values (the flagship):**
+**NovaForge's actual values (the flagship):**
 
 - **engine**: `type: "lines"`, `numReels: 5`, `numRows: 3`,
   `wincapMultiplier: 5000`, `rtpTarget: 0.965`, `volatility: "medium"`.
@@ -289,7 +289,7 @@ bash scripts/package-for-stake.sh novaforged                         # upload bu
 
 ## 9. Current state (metrics)
 
-- **Games:** 1 complete (NovaForged) + 1 template.
+- **Games:** 1 complete (NovaForge) + 1 template.
 - **Tests:** math 7 (pytest); frontend ~34 (Vitest, 6 core test files); shared 3.
 - **CI:** all green on the latest commit (math + frontend + lint).
 - **Docs:** ~1,450 lines across guides, ADRs, templates, and the submission checklist.
@@ -329,7 +329,7 @@ ultimate Stake Engine starter kit":
 - **Book** — one fully-simulated round (id + payoutMultiplier + ordered events).
 - **Lookup table** — weighted index mapping book ids to payouts; the RGS samples it.
 - **Bet mode** — a way to play (`base`, or `bonus` = buy the feature).
-- **Win cap** — maximum payout as a multiple of the bet (NovaForged: 5000×).
+- **Win cap** — maximum payout as a multiple of the bet (NovaForge: 5000×).
 - **RTP** — Return To Player (target 96.5%).
 - **PAR sheet** — Probability Accounting Report; the math documentation submitted
   for certification.

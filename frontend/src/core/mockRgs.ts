@@ -1,6 +1,6 @@
 /**
  * In-browser mock of the RGS, used for local development when no `rgsUrl`/
- * `sessionID` is present in the URL. It makes NovaForged fully playable with no
+ * `sessionID` is present in the URL. It makes NovaForge fully playable with no
  * backend.
  *
  * Strategy:

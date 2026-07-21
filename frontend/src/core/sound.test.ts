@@ -2,22 +2,26 @@ import { describe, it, expect, vi } from 'vitest';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { SOUND_SOURCES, SoundManager, type SoundName } from './sound';
+import { SOUND_SOURCES, MUSIC_SOURCES, SoundManager, type SoundName, type MusicName } from './sound';
 
 const PUBLIC = resolve(dirname(fileURLToPath(import.meta.url)), '../../public');
 const NAMES: SoundName[] = ['spin', 'reelStop', 'win', 'bigWin', 'scatter', 'freeSpinStart', 'buttonClick'];
+const MUSIC_NAMES: MusicName[] = ['base', 'freespins'];
 
 describe('sound', () => {
   it('registers at least one source for every named sound', () => {
     for (const name of NAMES) {
       expect(SOUND_SOURCES[name].length, `${name} has no source`).toBeGreaterThan(0);
     }
+    for (const name of MUSIC_NAMES) {
+      expect(MUSIC_SOURCES[name].length, `music ${name} has no source`).toBeGreaterThan(0);
+    }
   });
 
   // Missing-audio guard: every referenced bundle-relative clip must actually
   // ship under frontend/public/ — a dangling reference fails CI.
   it('every referenced bundle-relative audio file exists under public/', () => {
-    const refs = Object.values(SOUND_SOURCES).flat();
+    const refs = [...Object.values(SOUND_SOURCES).flat(), ...Object.values(MUSIC_SOURCES).flat()];
     const missing = refs
       .filter((u) => !/^https?:\/\//.test(u)) // CDN urls can't be checked here
       .filter((u) => !existsSync(resolve(PUBLIC, u)));
@@ -37,6 +41,13 @@ describe('sound', () => {
       expect(m.muted).toBe(true);
       m.play('win', 0.5); // muted → no-op
       m.setMuted(false);
+      m.playMusic('base');
+      expect(m.currentMusic).toBe('base');
+      m.playMusic('base'); // idempotent for the active loop
+      m.playMusic('freespins');
+      expect(m.currentMusic).toBe('freespins');
+      m.stopMusic();
+      expect(m.currentMusic).toBeNull();
       m.dispose();
     }).not.toThrow();
     vi.restoreAllMocks();

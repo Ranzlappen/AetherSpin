@@ -79,30 +79,11 @@ test('opens the paytable / rules modal', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible();
 });
 
-test('multi-game: mounts and plays the ways game via ?game=cosmicways', async ({ page }) => {
-  test.slow(); // slow-runner boot + a feature round can brush the default budget
-  await page.goto('/?game=cosmicways');
+test('an unknown ?game= id falls back safely to the flagship game', async ({ page }) => {
+  await page.goto('/?game=doesnotexist');
   await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
 
-  // The registry resolved the requested game and the switcher reflects it.
-  await expect(page.getByLabel('Switch game (demo)')).toHaveValue('cosmicways');
-
-  // A round plays end-to-end (the mock emits wayWins; the player handles them).
-  const spin = spinButton(page);
-  await expect(spin).toBeEnabled();
-  await spin.click();
-  await settleRound(page);
-});
-
-test('multi-game: mounts and plays the cluster game via ?game=stellarclusters', async ({ page }) => {
-  test.slow(); // slow-runner boot + a feature round can brush the default budget
-  await page.goto('/?game=stellarclusters');
-  await expect(page.getByText(/mock RGS/i)).toBeVisible({ timeout: 30_000 });
-
-  // The registry resolved the requested game and the switcher reflects it.
-  await expect(page.getByLabel('Switch game (demo)')).toHaveValue('stellarclusters');
-
-  // A round plays end-to-end (the mock emits clusterWins; the player handles them).
+  // The registry falls back to the only shipped game and a round still plays.
   const spin = spinButton(page);
   await expect(spin).toBeEnabled();
   await spin.click();

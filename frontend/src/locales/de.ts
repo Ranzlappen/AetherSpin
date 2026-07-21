@@ -6,7 +6,7 @@ import type { Translations } from '../core/i18n';
  * locale; extend or add new locale files the same way.
  */
 export const de: Partial<Translations> = {
-  'app.initializing': 'NovaForged wird initialisiert…',
+  'app.initializing': 'NovaForge wird initialisiert…',
   'app.authenticating': 'Authentifizierung…',
   'app.startingDemo': 'Lokale Demo-Sitzung wird gestartet…',
   'app.rendererFailed': 'Renderer konnte nicht starten: {message}',
@@ -21,6 +21,9 @@ export const de: Partial<Translations> = {
   'hud.bet': 'Einsatz',
   'hud.win': 'Gewinn',
   'hud.freeSpins': 'FREISPIELE',
+  'hud.clock': 'Ortszeit',
+  'hud.maxWin': 'Max. Gewinn {max}×',
+  'hud.spaceHint': 'Leertaste zum Drehen',
 
   'spin.label': 'Drehen',
   'spin.skip': 'Überspringen',
@@ -38,6 +41,8 @@ export const de: Partial<Translations> = {
 
   'bet.decrease': 'Einsatz verringern',
   'bet.increase': 'Einsatz erhöhen',
+  'bet.max': 'Maximaleinsatz setzen',
+  'bet.maxShort': 'Max',
 
   'buyBonus.label': 'Freispiele kaufen',
   'buyBonus.confirmTitle': 'Freispiele kaufen?',
@@ -92,10 +97,6 @@ export const de: Partial<Translations> = {
   'paytable.rtpLine': 'Theoretischer RTP: {rtp}% · Maximalgewinn: {maxWin}× · Volatilität: {volatility}',
   'paytable.desc.novaforged':
     'Ein hochwertiger 5×3-Video-Slot mit 20 Gewinnlinien im Neon-Kosmos-Stil — mit Multiplikator-Wilds, Scatter-Freispielen mit ansteigender Multiplikator-Leiter, expandierenden Wilds und Bonuskauf.',
-  'paytable.desc.cosmicways':
-    'Ein 5×3-Video-Slot mit 243 Gewinnwegen im Neon-Kosmos-Stil. Symbole zahlen auf benachbarten Walzen von links, mit Scatter-Freispielen.',
-  'paytable.desc.stellarclusters':
-    'Ein 5×3-Cluster-Pays-Slot im Neon-Kosmos-Stil: verbundene Symbolgruppen (Wilds ersetzen) zahlen nach Größe, mit Scatter-Freispielen.',
 
   'volatility.low': 'Niedrig',
   'volatility.medium': 'Mittel',

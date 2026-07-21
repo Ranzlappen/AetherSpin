@@ -14,6 +14,22 @@ interface Star {
   twinkle: number;
 }
 
+/** One radial warp mote: drifts outward from the centre, accelerating. */
+interface WarpMote {
+  sprite: Sprite;
+  /** Direction from the screen centre (radians). */
+  angle: number;
+  /** Current distance from the centre (px). */
+  radius: number;
+  baseAlpha: number;
+  size: number;
+}
+
+/** Exponential outward growth rate (s⁻¹): centre→edge in roughly 10–14 s. */
+const WARP_GROWTH = 0.24;
+/** Constant outward push (px/s) so freshly spawned motes near r≈0 still move. */
+const WARP_PUSH = 9;
+
 /** Animated background layer for the stage. */
 export class Background {
   /** Root container to add to the stage. */
@@ -26,6 +42,10 @@ export class Background {
   private readonly modeOverlay = new Graphics();
   private overlayAlpha = 0;
   private overlayTarget = 0;
+  /** Faint radial warp field: motes accelerating outward from the centre. */
+  private readonly warpLayer = new Container();
+  private readonly warp: WarpMote[] = [];
+  private reducedMotion = false;
   private readonly stars: Star[] = [];
   private width = 1280;
   private height = 720;
@@ -43,9 +63,11 @@ export class Background {
     }
     this.view.addChild(this.nebula);
     this.view.addChild(this.modeOverlay);
+    this.view.addChild(this.warpLayer);
     this.view.addChild(this.starLayer);
     this.starTexture = Background.makeStarTexture();
     this.buildStars(160);
+    this.buildWarp(70);
     this.draw();
   }
 
@@ -114,6 +136,44 @@ export class Background {
   }
 
   /**
+   * Populate the radial warp field. Motes spawn near the screen centre and
+   * accelerate exponentially outward in every direction — a slow, faint
+   * star-drift that keeps the scene alive without competing with the reels.
+   */
+  private buildWarp(count: number): void {
+    for (let i = 0; i < count; i++) {
+      const sprite = new Sprite(this.starTexture);
+      sprite.anchor.set(0.5);
+      sprite.tint = Math.random() > 0.7 ? 0xb388ff : 0xffffff;
+      const mote = this.spawnMote(sprite);
+      // Stagger the field on boot so it doesn't start as a clump in the centre.
+      mote.radius *= 1 + Math.random() * 30;
+      this.warpLayer.addChild(sprite);
+      this.warp.push(mote);
+    }
+  }
+
+  /** (Re)initialize a mote just off the centre with a fresh direction. */
+  private spawnMote(sprite: Sprite): WarpMote {
+    const size = 0.8 + Math.random() * 1.8;
+    sprite.width = size;
+    sprite.height = size;
+    return {
+      sprite,
+      angle: Math.random() * Math.PI * 2,
+      radius: 2 + Math.random() * 24,
+      baseAlpha: 0.1 + Math.random() * 0.28,
+      size,
+    };
+  }
+
+  /** Suppress the ambient warp drift under OS "reduce motion". */
+  setReducedMotion(reduced: boolean): void {
+    this.reducedMotion = reduced;
+    this.warpLayer.visible = !reduced;
+  }
+
+  /**
    * Shift the ambience for free spins: a violet-magenta wash cross-fades over
    * the plate so the bonus reads as its own place, and fades back out when the
    * feature ends. Presentation-only.
@@ -161,12 +221,35 @@ export class Background {
     this.nebula.x = Math.sin(this.elapsed * 0.1) * 20;
     this.nebula.y = Math.cos(this.elapsed * 0.08) * 16;
 
-    // Ease the bonus ambience toward its target (~0.5s cross-fade).
+    // Radial warp drift: each mote's outward speed grows with its distance
+    // (r' = k·r + push ⇒ exponential acceleration), so motion is glacial near
+    // the centre and streams away at the edges. Faint by design.
+    if (!this.reducedMotion) {
+      const cx = this.width / 2;
+      const cy = this.height / 2;
+      const maxR = Math.hypot(cx, cy) + 24;
+      for (const mote of this.warp) {
+        mote.radius += (mote.radius * WARP_GROWTH + WARP_PUSH) * dt;
+        if (mote.radius > maxR) Object.assign(mote, this.spawnMote(mote.sprite));
+        const emerge = Math.min(1, mote.radius / 140); // ease in while leaving the centre
+        const depth = 1 + mote.radius / maxR; // subtle grow/brighten as it travels
+        mote.sprite.alpha = mote.baseAlpha * emerge * (0.55 + 0.45 * depth);
+        mote.sprite.width = mote.size * depth;
+        mote.sprite.height = mote.size * depth;
+        mote.sprite.x = cx + Math.cos(mote.angle) * mote.radius;
+        mote.sprite.y = cy + Math.sin(mote.angle) * mote.radius;
+      }
+    }
+
+    // Ease the bonus ambience toward its target (~0.5s cross-fade). Keep the
+    // full-screen overlay out of the render pass entirely while invisible —
+    // that's the whole base game, and software renderers pay for every layer.
     const delta = this.overlayTarget - this.overlayAlpha;
     if (Math.abs(delta) > 0.001) {
       this.overlayAlpha += delta * Math.min(1, dt * 4);
       this.modeOverlay.alpha = this.overlayAlpha;
     }
+    this.modeOverlay.visible = this.overlayAlpha > 0.004;
   }
 
   /** Tear down resources. */

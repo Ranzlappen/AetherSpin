@@ -98,6 +98,7 @@ export class Stage {
     await preloadAssets();
 
     this.background = new Background();
+    this.background.setReducedMotion(this.reducedMotion);
     this.reels = new ReelEngine(app.renderer);
     this.particles = new Particles();
 
@@ -138,6 +139,7 @@ export class Stage {
   /** Allow the host to follow OS "reduce motion" changes after init. */
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
+    this.background?.setReducedMotion(reduced);
   }
 
   /**

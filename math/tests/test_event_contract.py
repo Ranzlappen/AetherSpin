@@ -22,8 +22,6 @@ from simulator.bookcontract import validate_event  # noqa: E402
 
 GAMES = {
     "novaforged": "lineWins",
-    "cosmicways": "wayWins",
-    "stellarclusters": "clusterWins",
 }
 
 

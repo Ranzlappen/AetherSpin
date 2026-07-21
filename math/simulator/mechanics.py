@@ -38,7 +38,7 @@ class WinMechanic(ABC):
 
 
 class LinesMechanic(WinMechanic):
-    """Fixed-payline, left-aligned line evaluation (NovaForged's mechanic)."""
+    """Fixed-payline, left-aligned line evaluation (NovaForge's mechanic)."""
 
     win_event_type = "lineWins"
 

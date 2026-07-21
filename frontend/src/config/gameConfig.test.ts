@@ -16,10 +16,8 @@ import {
 } from './gameConfig';
 
 describe('gameConfig registry', () => {
-  it('bundles multiple games and hides scaffolds', () => {
-    expect(availableGames).toContain('novaforged');
-    expect(availableGames).toContain('cosmicways');
-    expect(availableGames).toContain('stellarclusters'); // cluster-pays, now client-renderable
+  it('ships the flagship game only and hides scaffolds', () => {
+    expect(availableGames).toEqual(['novaforged']);
     expect(availableGames).not.toContain('template'); // scaffold is hidden
   });
 

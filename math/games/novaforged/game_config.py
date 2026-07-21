@@ -1,4 +1,4 @@
-"""NovaForged config for the official StakeEngine math-sdk (real API).
+"""NovaForge config for the official StakeEngine math-sdk (real API).
 
 Ported from the SDK's own `0_0_lines` example to the **current** SDK `Config`
 API (see ADR 0005 Update 2): numbers are loaded from the canonical
@@ -30,11 +30,11 @@ def _load_shared_definition() -> dict:
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
                 return json.load(f)
-    raise FileNotFoundError("Could not locate shared game-definition.json for NovaForged")
+    raise FileNotFoundError("Could not locate shared game-definition.json for NovaForge")
 
 
 class GameConfig(Config):
-    """NovaForged — 5x3, 20-line neon-cosmic slot (official math-sdk path)."""
+    """NovaForge — 5x3, 20-line neon-cosmic slot (official math-sdk path)."""
 
     def read_reels_csv(self, file_path):
         """Read a reelstrip CSV, dropping the shared `R1,R2,…` header row.
@@ -59,7 +59,7 @@ class GameConfig(Config):
 
         self.game_id = "novaforged"
         self.provider_number = 0
-        self.working_name = "NovaForged"
+        self.working_name = "NovaForge"
         self.wincap = float(eng["wincapMultiplier"])
         self.win_type = "lines"
         self.rtp = float(eng["rtpTarget"])

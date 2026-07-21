@@ -1,6 +1,6 @@
 # Math Engine Deep Dive
 
-This is a deep dive on the **standalone math engine** (`math/simulator/`) that powers NovaForged:
+This is a deep dive on the **standalone math engine** (`math/simulator/`) that powers NovaForge:
 how one round is simulated, how lines and scatters are evaluated with wild substitution, how the
 free game is orchestrated (the escalating multiplier ladder, multiplier wilds, expanding wilds), the
 two-knob RTP tuning, why the buy-bonus is balanced separately, and how the generated books and
@@ -120,7 +120,7 @@ flowchart TD
 
 `features.freeSpins.multiplierLadder` defines a **global** multiplier applied to every free spin:
 
-| Field   | NovaForged value |
+| Field   | NovaForge value |
 | ------- | ---------------- |
 | `start` | 1                |
 | `step`  | 1                |
@@ -147,7 +147,7 @@ its base value × this factor × the global ladder multiplier.
 
 ## 6. Two-knob RTP tuning
 
-NovaForged must hit its RTP target in **two modes at once**: the base game and the 100× buy-bonus.
+NovaForge must hit its RTP target in **two modes at once**: the base game and the 100× buy-bonus.
 That's two equations, so the engine exposes **two decoupled knobs**:
 
 | Knob                         | Where                             | Affects                          |

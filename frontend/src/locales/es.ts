@@ -8,7 +8,7 @@ import type { Translations } from '../core/i18n';
  * the copy (esp. responsible-gaming/legal lines) before shipping to a market.
  */
 export const es: Partial<Translations> = {
-  'app.initializing': 'Inicializando NovaForged…',
+  'app.initializing': 'Inicializando NovaForge…',
   'app.authenticating': 'Autenticando…',
   'app.startingDemo': 'Iniciando sesión de demostración local…',
   'app.rendererFailed': 'No se pudo iniciar el renderizador: {message}',
@@ -25,6 +25,9 @@ export const es: Partial<Translations> = {
   'hud.freeSpins': 'GIROS GRATIS',
   'hud.demoBadge': 'DEMO · RGS simulado · {fps} fps',
   'hud.demoTitle': 'No se detectaron parámetros de RGS — ejecutando en el RGS simulado local',
+  'hud.clock': 'Hora local',
+  'hud.maxWin': 'Ganancia máx. {max}×',
+  'hud.spaceHint': 'Pulsa Espacio para girar',
 
   'spin.label': 'Girar',
   'spin.skip': 'Saltar',
@@ -42,6 +45,8 @@ export const es: Partial<Translations> = {
 
   'bet.decrease': 'Disminuir apuesta',
   'bet.increase': 'Aumentar apuesta',
+  'bet.max': 'Apuesta máxima',
+  'bet.maxShort': 'Máx',
 
   'buyBonus.label': 'Comprar giros gratis',
   'buyBonus.confirmTitle': '¿Comprar giros gratis?',
@@ -98,10 +103,6 @@ export const es: Partial<Translations> = {
   'paytable.rtpLine': 'RTP teórico: {rtp}% · Ganancia máxima: {maxWin}× · Volatilidad: {volatility}',
   'paytable.desc.novaforged':
     'Una tragamonedas de video premium de 5×3 con 20 líneas y estética neón-cósmica: comodines multiplicadores, giros gratis activados por scatters con escalera de multiplicadores, comodines expansivos y compra de bono.',
-  'paytable.desc.cosmicways':
-    'Una tragamonedas de video de 5×3 con 243 formas de ganar y estética neón-cósmica. Los símbolos pagan en rodillos adyacentes desde la izquierda, con giros gratis activados por scatters.',
-  'paytable.desc.stellarclusters':
-    'Una tragamonedas de pagos por grupos de 5×3 con estética neón-cósmica: los grupos conectados de un símbolo (los comodines sustituyen) pagan según su tamaño, con giros gratis activados por scatters.',
 
   'volatility.low': 'Baja',
   'volatility.medium': 'Media',
