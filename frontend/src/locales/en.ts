@@ -44,9 +44,13 @@ export const en = {
   'buyBonus.label': 'Buy Free Spins',
   'buyBonus.confirmTitle': 'Buy Free Spins?',
   'buyBonus.confirmBody': 'Purchase the bonus for {cost} ({multiplier}× your bet).',
+  'buyBonus.featSpins': 'Awards {min}–{max} free spins',
+  'buyBonus.featLadder': 'Win multiplier climbs up to ×{max}',
+  'buyBonus.featWilds': 'Multiplier & expanding wilds',
 
   'freeSpins.won': 'Won {amount}',
   'freeSpins.awarded': '{count} free spins',
+  'freeSpins.totalWin': 'Total win',
 
   'autoplay.label': 'Autoplay',
   'autoplay.auto': 'Auto',

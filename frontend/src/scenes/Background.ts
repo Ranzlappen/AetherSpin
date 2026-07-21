@@ -22,6 +22,10 @@ export class Background {
   private readonly gradient = new Graphics();
   private readonly nebula = new Graphics();
   private readonly starLayer = new Container();
+  /** Bonus-mode ambience tint, cross-faded in during free spins. */
+  private readonly modeOverlay = new Graphics();
+  private overlayAlpha = 0;
+  private overlayTarget = 0;
   private readonly stars: Star[] = [];
   private width = 1280;
   private height = 720;
@@ -38,6 +42,7 @@ export class Background {
       this.view.addChild(this.plate);
     }
     this.view.addChild(this.nebula);
+    this.view.addChild(this.modeOverlay);
     this.view.addChild(this.starLayer);
     this.starTexture = Background.makeStarTexture();
     this.buildStars(160);
@@ -108,6 +113,27 @@ export class Background {
       .fill({ color: 0xff45e0, alpha: 0.1 });
   }
 
+  /**
+   * Shift the ambience for free spins: a violet-magenta wash cross-fades over
+   * the plate so the bonus reads as its own place, and fades back out when the
+   * feature ends. Presentation-only.
+   */
+  setFreeSpins(active: boolean): void {
+    this.overlayTarget = active ? 0.34 : 0;
+  }
+
+  /** Redraw the full-screen bonus tint at the current size. */
+  private drawModeOverlay(): void {
+    this.modeOverlay.clear();
+    // Two stacked washes: a deep violet base plus a warmer magenta glow rising
+    // from the bottom, so the bonus tint has depth rather than a flat film.
+    this.modeOverlay.rect(0, 0, this.width, this.height).fill({ color: 0x36064e });
+    this.modeOverlay
+      .ellipse(this.width / 2, this.height * 1.05, this.width * 0.75, this.height * 0.55)
+      .fill({ color: 0x8a1370, alpha: 0.55 });
+    this.modeOverlay.alpha = this.overlayAlpha;
+  }
+
   /** Resize the background to fill the given dimensions. */
   resize(width: number, height: number): void {
     this.width = width;
@@ -117,6 +143,7 @@ export class Background {
       star.sprite.y = Math.random() * height;
     }
     this.draw();
+    this.drawModeOverlay();
   }
 
   /** Advance the animation. Driven by the stage ticker. */
@@ -133,6 +160,13 @@ export class Background {
     }
     this.nebula.x = Math.sin(this.elapsed * 0.1) * 20;
     this.nebula.y = Math.cos(this.elapsed * 0.08) * 16;
+
+    // Ease the bonus ambience toward its target (~0.5s cross-fade).
+    const delta = this.overlayTarget - this.overlayAlpha;
+    if (Math.abs(delta) > 0.001) {
+      this.overlayAlpha += delta * Math.min(1, dt * 4);
+      this.modeOverlay.alpha = this.overlayAlpha;
+    }
   }
 
   /** Tear down resources. */

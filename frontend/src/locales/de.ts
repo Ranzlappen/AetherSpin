@@ -42,9 +42,13 @@ export const de: Partial<Translations> = {
   'buyBonus.label': 'Freispiele kaufen',
   'buyBonus.confirmTitle': 'Freispiele kaufen?',
   'buyBonus.confirmBody': 'Bonus kaufen für {cost} ({multiplier}× Ihres Einsatzes).',
+  'buyBonus.featSpins': 'Gewährt {min}–{max} Freispiele',
+  'buyBonus.featLadder': 'Gewinnmultiplikator steigt bis ×{max}',
+  'buyBonus.featWilds': 'Multiplikator- & expandierende Wilds',
 
   'freeSpins.won': 'Gewonnen {amount}',
   'freeSpins.awarded': '{count} Freispiele',
+  'freeSpins.totalWin': 'Gesamtgewinn',
 
   'autoplay.label': 'Autoplay',
   'autoplay.auto': 'Auto',

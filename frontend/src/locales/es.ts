@@ -46,9 +46,13 @@ export const es: Partial<Translations> = {
   'buyBonus.label': 'Comprar giros gratis',
   'buyBonus.confirmTitle': '¿Comprar giros gratis?',
   'buyBonus.confirmBody': 'Compra el bono por {cost} ({multiplier}× tu apuesta).',
+  'buyBonus.featSpins': 'Otorga {min}–{max} giros gratis',
+  'buyBonus.featLadder': 'El multiplicador de ganancias sube hasta ×{max}',
+  'buyBonus.featWilds': 'Comodines multiplicadores y expansivos',
 
   'freeSpins.won': 'Ganaste {amount}',
   'freeSpins.awarded': '{count} giros gratis',
+  'freeSpins.totalWin': 'Ganancia total',
 
   'autoplay.label': 'Giro automático',
   'autoplay.auto': 'Auto',

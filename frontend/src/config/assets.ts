@@ -75,6 +75,8 @@ const SCENE_ART: Record<string, string> = {
   'ui:frame': 'ui/reel-frame.webp',
   // White radial glow with a star flare, tinted per symbol for win highlights.
   'fx:cellGlow': 'fx/line-glow.webp',
+  // Wordmark rendered as the cabinet marquee on the frame's top band.
+  'brand:logo': 'brand/novaforged-logo.webp',
 };
 
 /**

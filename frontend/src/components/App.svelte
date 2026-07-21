@@ -19,6 +19,8 @@
     errorMessage,
     getCurrentBet,
     lastResult,
+    totalWin,
+    totalWinLabel,
   } from '../core/gameState';
   import { startAutoplay, stopAutoplay, type AutoplayRunOptions } from '../core/autoplay';
   import { sound } from '../core/sound';
@@ -350,6 +352,10 @@
         <SpinButton on:spin={onSpin} on:skip={onSkip} />
       </div>
       <div class="right-controls">
+        <div class="dock-win panel" role="status">
+          <span class="dock-win-label">{$t('hud.win')}</span>
+          <span class="dock-win-value" class:zero={$totalWin === 0}>{$totalWinLabel}</span>
+        </div>
         <Autoplay on:start={onAutoplayStart} on:stop={stopAutoplay} />
       </div>
     </footer>
@@ -412,6 +418,8 @@
     padding: env(safe-area-inset-top, 0.6rem) 0.8rem 0.6rem;
     gap: 0.6rem;
     pointer-events: none;
+    /* Anchor the HUD as a dock strip rather than pills floating in space. */
+    background: linear-gradient(180deg, rgba(4, 1, 14, 0.82) 0%, rgba(4, 1, 14, 0.35) 65%, transparent);
   }
   .hud-top > * {
     pointer-events: auto;
@@ -449,7 +457,9 @@
   }
   .win-zone {
     position: absolute;
-    top: 18%;
+    /* Ride the frame's lower band: clear of the marquee up top, the symbols in
+       the window, and the control dock below. */
+    bottom: 25%;
     left: 0;
     right: 0;
     display: flex;
@@ -466,6 +476,32 @@
     justify-content: space-between;
     gap: 0.6rem;
     padding: 0.8rem 1rem calc(env(safe-area-inset-bottom, 0.6rem) + 0.8rem);
+    /* Control dock: ground the controls against the starfield. */
+    background: linear-gradient(0deg, rgba(4, 1, 14, 0.9) 0%, rgba(4, 1, 14, 0.5) 60%, transparent);
+  }
+  .dock-win {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    padding: 0.3rem 0.8rem;
+    border-color: rgba(255, 209, 102, 0.45);
+  }
+  .dock-win-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+  }
+  .dock-win-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--neon-gold);
+    font-variant-numeric: tabular-nums;
+  }
+  .dock-win-value.zero {
+    color: var(--text-dim);
   }
   .left-controls,
   .right-controls {
@@ -572,6 +608,10 @@
       min-width: 0;
       flex-wrap: wrap;
       justify-content: center;
+    }
+    /* The floating win plate still shows wins; reclaim the width. */
+    .dock-win {
+      display: none;
     }
   }
 </style>

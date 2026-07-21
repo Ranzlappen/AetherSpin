@@ -26,6 +26,7 @@ describe('assets', () => {
       'bg:main',
       'ui:frame',
       'fx:cellGlow',
+      'brand:logo',
     ];
     expect(new Set(keys)).toEqual(new Set(expected));
     // manifestPaths/manifestUrls mirror the declared assets (bundle-relative here).
