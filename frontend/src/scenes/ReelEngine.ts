@@ -27,6 +27,17 @@ const CELL = SYMBOL_SIZE + SYMBOL_GAP;
 const REEL_WIDTH = CELL;
 const BOARD_WIDTH = REEL_WIDTH * NUM_REELS;
 const BOARD_HEIGHT = CELL * NUM_ROWS;
+/**
+ * The delivered frame plate's transparent opening, measured (flood-filled) from
+ * the 1152×768 art: x 220–932 (712 wide), y 180–588 (408 tall), centred. The
+ * frame is sized so this opening lands `FRAME_MARGIN` px outside the board on
+ * every side — the reels sit fully inside the window with a small clean gap, and
+ * the foreground plate never slices a symbol.
+ */
+const FRAME_WINDOW_X = 712 / 1152;
+const FRAME_WINDOW_Y = 408 / 768;
+/** Clean gap (px) between the board edge and the metal opening, each side. */
+const FRAME_MARGIN = 16;
 
 /** A single symbol cell sprite (background tile + glyph). */
 interface Cell {
@@ -78,6 +89,10 @@ export class ReelEngine {
     this.view.addChild(this.lineOverlay);
     this.view.addChild(this.glowLayer);
     this.applyMask();
+    // Lift the metal plate to the foreground so the reels spin *behind* the
+    // frame (its inner lip overlaps the reel edges) rather than the symbols
+    // floating on top of it. Re-adding moves the existing child to the top.
+    if (this.frameArt) this.view.addChild(this.frameArt);
     this.subscribe();
   }
 
@@ -108,13 +123,12 @@ export class ReelEngine {
     this.buildBoardBackdrop();
     const art = assetRegistry.getTexture('ui:frame');
     if (art) {
-      // Window fractions measured from the delivered plate (transparent
-      // window ≈ 679×350 in a 1152×768 image, centered).
-      const WINDOW_X = 679 / 1152;
-      const WINDOW_Y = 350 / 768;
+      // Size the plate so its measured opening lands FRAME_MARGIN px outside the
+      // board on every side: the reels sit fully inside the window (the
+      // foreground plate never clips a symbol) with only a thin backdrop gap.
       this.frameArt = new Sprite(art);
-      this.frameArt.width = (BOARD_WIDTH + 24) / WINDOW_X;
-      this.frameArt.height = (BOARD_HEIGHT + 44) / WINDOW_Y;
+      this.frameArt.width = (BOARD_WIDTH + FRAME_MARGIN * 2) / FRAME_WINDOW_X;
+      this.frameArt.height = (BOARD_HEIGHT + FRAME_MARGIN * 2) / FRAME_WINDOW_Y;
       this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
       this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
       this.view.addChild(this.frameArt);
@@ -134,8 +148,12 @@ export class ReelEngine {
    * translucent pane.
    */
   private buildBoardBackdrop(): void {
-    const padX = 18;
-    const padY = 28;
+    // Overfill well past the (now tighter) frame window so the metal hides the
+    // backdrop edges and no nebula leaks through the seam — the plate is scaled
+    // down (FRAME_SCALE) to hug the reels, so the backdrop must reach further out
+    // than the board to stay under the metal lip on every side.
+    const padX = 52;
+    const padY = 60;
     const x = -padX;
     const y = -padY;
     const w = BOARD_WIDTH + padX * 2;
@@ -153,9 +171,11 @@ export class ReelEngine {
       // Dark gutter between reels.
       if (r > 0) g.rect(cx - 1.5, y, 3, h).fill({ color: 0x04010e });
     }
-    // Inner top/bottom shadows for depth.
-    g.rect(x, y, w, 18).fill({ color: 0x000000, alpha: 0.4 });
-    g.rect(x, BOARD_HEIGHT + padY - 18, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    // Inner top/bottom shadows anchored to the visible board edge (the wide
+    // overfill above sits under the metal, so edge-anchored shadows keep the
+    // depth cue inside the frame window).
+    g.rect(x, -8, w, 18).fill({ color: 0x000000, alpha: 0.4 });
+    g.rect(x, BOARD_HEIGHT - 10, w, 18).fill({ color: 0x000000, alpha: 0.4 });
     this.view.addChild(g);
   }
 
