@@ -47,10 +47,10 @@ validated by `shared/schemas/game-definition.schema.json`.
 
 ### Every field explained
 
-| Field                               | Meaning                                                                      | NovaForge example                   |
+| Field                               | Meaning                                                                      | NovaForge example                    |
 | ----------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
 | `id`                                | Slug (`^[a-z0-9_]+$`), matches the directory name                            | `"novaforged"`                       |
-| `displayName`                       | Player-facing title                                                          | `"NovaForge"`                       |
+| `displayName`                       | Player-facing title                                                          | `"NovaForge"`                        |
 | `version`                           | SemVer; bump on math/visual changes                                          | `"1.0.0"`                            |
 | `studio`, `theme`, `description`    | Metadata                                                                     | `"AetherSpin"`, `"neon-cosmic"`      |
 | `engine.type`                       | `lines` \| `ways` \| `cluster` \| `scatter`                                  | `"lines"`                            |

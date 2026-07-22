@@ -6,7 +6,7 @@ are taken from the single source of truth, `shared/games/novaforged/game-definit
 |                  |                                                                     |
 | ---------------- | ------------------------------------------------------------------- |
 | **Game id**      | `novaforged`                                                        |
-| **Display name** | NovaForge                                                          |
+| **Display name** | NovaForge                                                           |
 | **Version**      | 1.0.0                                                               |
 | **Studio**       | AetherSpin                                                          |
 | **Theme**        | neon-cosmic                                                         |

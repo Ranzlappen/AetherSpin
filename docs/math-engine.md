@@ -121,10 +121,10 @@ flowchart TD
 `features.freeSpins.multiplierLadder` defines a **global** multiplier applied to every free spin:
 
 | Field   | NovaForge value |
-| ------- | ---------------- |
-| `start` | 1                |
-| `step`  | 1                |
-| `max`   | 3                |
+| ------- | --------------- |
+| `start` | 1               |
+| `step`  | 1               |
+| `max`   | 3               |
 
 It begins at `start` and increases by `step` after **any winning free spin**, capped at `max`
 (×1 → ×2 → ×3). Each escalation emits a `ladderStep` event. The current value rides on every

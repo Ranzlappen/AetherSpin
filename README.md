@@ -327,7 +327,7 @@ active construction (core, scenes, components).
 | [frontend.md](docs/frontend.md)                                                   | Frontend architecture & dev guide                       |
 | [developing-a-new-game.md](docs/developing-a-new-game.md)                         | Step-by-step new-game guide                             |
 | [stake-engine-submission-checklist.md](docs/stake-engine-submission-checklist.md) | Pre-submission checklist + upload steps                 |
-| [novaforged-design.md](docs/novaforged-design.md)                                 | The filled-in NovaForge game design document           |
+| [novaforged-design.md](docs/novaforged-design.md)                                 | The filled-in NovaForge game design document            |
 | [adr/](docs/adr/)                                                                 | Architecture Decision Records                           |
 | [templates/](docs/templates/)                                                     | GDD + PAR-sheet templates                               |
 
