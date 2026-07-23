@@ -19,10 +19,12 @@
     errorMessage,
     getCurrentBet,
     lastResult,
+    totalWin,
+    totalWinLabel,
   } from '../core/gameState';
   import { startAutoplay, stopAutoplay, type AutoplayRunOptions } from '../core/autoplay';
   import { sound } from '../core/sound';
-  import { buyBonusMode, formatCurrency, availableGames, activeGameId } from '../config/gameConfig';
+  import { buyBonusMode, formatCurrency, activeGameId, WINCAP_MULTIPLIER } from '../config/gameConfig';
   import { t, tn, setLocale, localeTag } from '../core/i18n';
   import { announce, announcement, prefersReducedMotion } from '../core/a11y';
   import { startSession, stopSession } from '../core/session';
@@ -43,6 +45,7 @@
   import FreeSpinsSplash from './FreeSpinsSplash.svelte';
   import RealityCheck from './RealityCheck.svelte';
   import AgeGate from './AgeGate.svelte';
+  import HudClock from './HudClock.svelte';
 
   let canvasHost: HTMLDivElement;
   let stage: Stage | null = null;
@@ -55,6 +58,14 @@
   let usingMock = false;
   let paytableOpen = false;
   let fps = 0;
+
+  // First-run "Space to spin" hint: desktop pointers only, until the first
+  // round settles (lastResult set) — a standard discoverability nudge.
+  const finePointer =
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(pointer: fine)').matches
+      : false;
+  $: showSpaceHint = finePointer && !loading && !$isSpinning && !$lastResult;
 
   // The DOM HUD is absolute-positioned over the canvas. Measure how much space
   // it occupies at the top and bottom (it wraps/grows on narrow screens) and
@@ -157,6 +168,10 @@
       transport = new RgsClient({ params });
     }
     player = new BookPlayer({ transport });
+
+    // Ambient base-game loop (starts on the first user gesture per autoplay
+    // policy; the book player cross-fades it with the bonus loop).
+    sound.playMusic('base');
 
     if (params.currency) currency.set(params.currency);
 
@@ -292,15 +307,6 @@
   function dismissError(): void {
     errorMessage.set(null);
   }
-
-  /** Demo-only: reload the client mounting a different game (?game=<id>). */
-  function switchGame(event: Event): void {
-    const id = (event.target as HTMLSelectElement).value;
-    if (id === activeGameId) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('game', id);
-    window.location.href = url.toString();
-  }
 </script>
 
 <svelte:window on:keydown={onGlobalKeydown} />
@@ -314,18 +320,20 @@
   {#if !loading}
     <!-- Top HUD -->
     <header class="hud-top" use:trackInset={'top'}>
-      <BalanceDisplay />
+      <div class="top-left">
+        <BalanceDisplay />
+        <!-- Accessible name is its visible "Max win N×" text; the title hints
+             that it opens the paytable without colliding with the info button's
+             "Paytable" label. -->
+        <button class="maxwin-chip" on:click={() => (paytableOpen = true)} title={$t('paytable.open')}>
+          {$t('hud.maxWin', { max: WINCAP_MULTIPLIER.toLocaleString($localeTag) })}
+        </button>
+      </div>
       <div class="top-center">
         <FreeSpinsBanner />
       </div>
       <div class="top-right">
-        {#if usingMock && availableGames.length > 1}
-          <select class="game-select" aria-label="Switch game (demo)" on:change={switchGame}>
-            {#each availableGames as id (id)}
-              <option value={id} selected={id === activeGameId}>{id}</option>
-            {/each}
-          </select>
-        {/if}
+        <HudClock />
         <TurboToggle />
         <SoundToggle />
         <button class="icon-btn" aria-label={$t('paytable.open')} on:click={() => (paytableOpen = true)}>
@@ -350,9 +358,17 @@
         <SpinButton on:spin={onSpin} on:skip={onSkip} />
       </div>
       <div class="right-controls">
+        <div class="dock-win panel" role="status">
+          <span class="dock-win-label">{$t('hud.win')}</span>
+          <span class="dock-win-value" class:zero={$totalWin === 0}>{$totalWinLabel}</span>
+        </div>
         <Autoplay on:start={onAutoplayStart} on:stop={stopAutoplay} />
       </div>
     </footer>
+
+    {#if showSpaceHint}
+      <div class="space-hint" aria-hidden="true">{$t('hud.spaceHint')}</div>
+    {/if}
 
     <FreeSpinsSplash />
     <WinCelebration />
@@ -412,6 +428,8 @@
     padding: env(safe-area-inset-top, 0.6rem) 0.8rem 0.6rem;
     gap: 0.6rem;
     pointer-events: none;
+    /* Anchor the HUD as a dock strip rather than pills floating in space. */
+    background: linear-gradient(180deg, rgba(4, 1, 14, 0.82) 0%, rgba(4, 1, 14, 0.35) 65%, transparent);
   }
   .hud-top > * {
     pointer-events: auto;
@@ -421,20 +439,43 @@
     display: flex;
     justify-content: center;
   }
+  .top-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .maxwin-chip {
+    height: 28px;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 209, 102, 0.4);
+    background: rgba(12, 6, 34, 0.6);
+    color: var(--neon-gold);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .space-hint {
+    position: absolute;
+    bottom: 7.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(4, 1, 14, 0.55);
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    pointer-events: none;
+    animation: fadeIn 0.6s ease;
+  }
   .top-right {
     display: flex;
     gap: 0.5rem;
     align-items: center;
-  }
-  .game-select {
-    height: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(125, 249, 255, 0.35);
-    background: rgba(12, 6, 34, 0.6);
-    color: var(--neon-cyan);
-    font-family: inherit;
-    font-weight: 700;
-    padding: 0 0.5rem;
   }
   .icon-btn {
     width: 40px;
@@ -449,7 +490,9 @@
   }
   .win-zone {
     position: absolute;
-    top: 18%;
+    /* Ride the frame's lower band: clear of the marquee up top, the symbols in
+       the window, and the control dock below. */
+    bottom: 25%;
     left: 0;
     right: 0;
     display: flex;
@@ -466,6 +509,32 @@
     justify-content: space-between;
     gap: 0.6rem;
     padding: 0.8rem 1rem calc(env(safe-area-inset-bottom, 0.6rem) + 0.8rem);
+    /* Control dock: ground the controls against the starfield. */
+    background: linear-gradient(0deg, rgba(4, 1, 14, 0.9) 0%, rgba(4, 1, 14, 0.5) 60%, transparent);
+  }
+  .dock-win {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    padding: 0.3rem 0.8rem;
+    border-color: rgba(255, 209, 102, 0.45);
+  }
+  .dock-win-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+  }
+  .dock-win-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--neon-gold);
+    font-variant-numeric: tabular-nums;
+  }
+  .dock-win-value.zero {
+    color: var(--text-dim);
   }
   .left-controls,
   .right-controls {
@@ -558,9 +627,6 @@
       flex-wrap: wrap;
       justify-content: flex-end;
     }
-    .game-select {
-      max-width: 116px;
-    }
     .hud-bottom {
       padding-left: 0.5rem;
       padding-right: 0.5rem;
@@ -572,6 +638,21 @@
       min-width: 0;
       flex-wrap: wrap;
       justify-content: center;
+    }
+    /* The floating win plate still shows wins; reclaim the width. */
+    .dock-win {
+      display: none;
+    }
+  }
+
+  /* Phones: the max-win chip and clock are extras — below tablet width they
+     crowd the core controls out of the viewport, so shed them first. */
+  @media (max-width: 519px) {
+    .maxwin-chip {
+      display: none;
+    }
+    .top-right :global(.clock) {
+      display: none;
     }
   }
 </style>

@@ -24,7 +24,7 @@ test('asset pipeline: every declared texture loads in the browser', async ({ pag
   // The readiness marker reports all declared assets loaded (loaded === total).
   await expect
     .poll(() => logs.find((m) => m.includes('[assets] ready:')) ?? '', { timeout: 30_000 })
-    .toMatch(/\[assets\] ready: 14\/14 loaded/);
+    .toMatch(/\[assets\] ready: 15\/15 loaded/);
 
   // No asset failed to fetch/decode in Chromium.
   expect(logs.filter((m) => m.includes('[assets] failed to load'))).toEqual([]);

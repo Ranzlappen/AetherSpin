@@ -110,10 +110,10 @@ describe('asset singleton (boot path)', () => {
     expect(loaded).toContain('symbol:L5');
     expect(loaded).toContain('bg:main');
     expect(loaded).toContain('ui:frame');
-    expect(loaded).toHaveLength(14);
+    expect(loaded).toHaveLength(15);
     expect(assetRegistry.getTexture('symbol:H1')).not.toBeNull();
     // Readiness marker the E2E asset-load check asserts on in a real browser.
-    expect(info).toHaveBeenCalledWith('[assets] ready: 14/14 loaded');
+    expect(info).toHaveBeenCalledWith('[assets] ready: 15/15 loaded');
     info.mockRestore();
   });
 });

@@ -1,4 +1,4 @@
-# Runtime configuration for the official math-sdk pipeline (NovaForged).
+# Runtime configuration for the official math-sdk pipeline (NovaForge).
 # Used by the refactored math-sdk run.py to control execution & simulation.
 
 [execution]

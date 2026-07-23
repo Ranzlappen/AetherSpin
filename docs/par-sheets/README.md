@@ -6,7 +6,7 @@ single-seed engineering estimate — not the certified figure.
 
 ## Why no committed headline PAR
 
-NovaForged is high volatility with a 5000× win cap that occurs only ~1 in 500k
+NovaForge is high volatility with a 5000× win cap that occurs only ~1 in 500k
 spins. A handful of cap hits dominate the RTP estimate, so a single-seed run can
 land several percent away from the 96.5% target in either direction (e.g. one
 seed reads ~96%, another ~104%) even at one million spins. Committing one such

@@ -71,14 +71,12 @@ def test_corpus_books_are_valid_and_reconcile(path: Path) -> None:
         )
 
 
-def test_corpus_covers_all_mechanics_and_the_feature() -> None:
-    """Guard that the corpus actually exercises lines, ways, cluster, and free
-    spins — otherwise parity would pass vacuously."""
+def test_corpus_covers_the_shipped_mechanic_and_the_feature() -> None:
+    """Guard that the corpus actually exercises the shipped lines mechanic and
+    free spins — otherwise parity would pass vacuously."""
     seen_types: set[str] = set()
     for path in _corpus_files():
         for book in _load(path):
             seen_types.update(e["type"] for e in book["events"])
     assert "lineWins" in seen_types, "corpus missing a lines win"
-    assert "wayWins" in seen_types, "corpus missing a ways win"
-    assert "clusterWins" in seen_types, "corpus missing a cluster win"
     assert "freeSpinResult" in seen_types, "corpus missing the free-spin feature"

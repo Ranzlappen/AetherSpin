@@ -9,7 +9,7 @@ describe('shared game definitions', () => {
     expect(ids).toContain('template');
   });
 
-  it('loads a structurally valid NovaForged definition', () => {
+  it('loads a structurally valid NovaForge definition', () => {
     const d = loadGameDefinition('novaforged');
     expect(d.id).toBe('novaforged');
     expect(d.engine.numReels).toBe(5);

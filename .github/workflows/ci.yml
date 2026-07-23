@@ -46,20 +46,14 @@ jobs:
       - name: Run unit + property tests with coverage
         run: python -m pytest math/tests -q --cov=simulator --cov-report=term-missing --cov-fail-under=70
 
-      - name: Validate RTP — base + buy-bonus (gates the build, all games)
+      - name: Validate RTP — base + buy-bonus (gates the build)
         run: |
           python math/scripts/validate_rtp.py --game novaforged --sims 150000 --tol 0.05 --mode all
-          python math/scripts/validate_rtp.py --game cosmicways --sims 150000 --tol 0.05 --mode all
-          python math/scripts/validate_rtp.py --game stellarclusters --sims 150000 --tol 0.05 --mode all
 
-      - name: Generate + validate book libraries (integrity gate, all games)
+      - name: Generate + validate book libraries (integrity gate)
         run: |
           python math/scripts/generate_books.py --game novaforged --sims 5000
           python math/scripts/validate_books.py --game novaforged
-          python math/scripts/generate_books.py --game cosmicways --sims 5000
-          python math/scripts/validate_books.py --game cosmicways
-          python math/scripts/generate_books.py --game stellarclusters --sims 5000
-          python math/scripts/validate_books.py --game stellarclusters
 
       - name: Golden-book corpus drift guard (math↔client parity fixtures)
         run: |
@@ -77,7 +71,7 @@ jobs:
           set -e
           cleanup() { rm -rf shared/games/scaffoldsmoke math/games/scaffoldsmoke math/library/scaffoldsmoke; }
           trap cleanup EXIT
-          bash scripts/new-game.sh scaffoldsmoke --mechanic ways
+          bash scripts/new-game.sh scaffoldsmoke --mechanic lines
           python scripts/validate_definitions.py
           python math/scripts/generate_books.py --game scaffoldsmoke --sims 1000
           python math/scripts/validate_books.py --game scaffoldsmoke

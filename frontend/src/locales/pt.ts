@@ -8,7 +8,7 @@ import type { Translations } from '../core/i18n';
  * the copy (esp. responsible-gaming/legal lines) before shipping to a market.
  */
 export const pt: Partial<Translations> = {
-  'app.initializing': 'Inicializando NovaForged…',
+  'app.initializing': 'Inicializando NovaForge…',
   'app.authenticating': 'Autenticando…',
   'app.startingDemo': 'Iniciando sessão de demonstração local…',
   'app.rendererFailed': 'Falha ao iniciar o renderizador: {message}',
@@ -25,6 +25,9 @@ export const pt: Partial<Translations> = {
   'hud.freeSpins': 'GIROS GRÁTIS',
   'hud.demoBadge': 'DEMO · RGS simulado · {fps} fps',
   'hud.demoTitle': 'Nenhum parâmetro de RGS detectado — executando no RGS simulado local',
+  'hud.clock': 'Hora local',
+  'hud.maxWin': 'Ganho máx. {max}×',
+  'hud.spaceHint': 'Pressione Espaço para girar',
 
   'spin.label': 'Girar',
   'spin.skip': 'Pular',
@@ -42,13 +45,19 @@ export const pt: Partial<Translations> = {
 
   'bet.decrease': 'Diminuir aposta',
   'bet.increase': 'Aumentar aposta',
+  'bet.max': 'Aposta máxima',
+  'bet.maxShort': 'Máx',
 
   'buyBonus.label': 'Comprar giros grátis',
   'buyBonus.confirmTitle': 'Comprar giros grátis?',
   'buyBonus.confirmBody': 'Compre o bônus por {cost} ({multiplier}× sua aposta).',
+  'buyBonus.featSpins': 'Concede {min}–{max} giros grátis',
+  'buyBonus.featLadder': 'O multiplicador de ganhos sobe até ×{max}',
+  'buyBonus.featWilds': 'Curingas multiplicadores e expansivos',
 
   'freeSpins.won': 'Você ganhou {amount}',
   'freeSpins.awarded': '{count} giros grátis',
+  'freeSpins.totalWin': 'Ganho total',
 
   'autoplay.label': 'Giro automático',
   'autoplay.auto': 'Auto',
@@ -92,10 +101,6 @@ export const pt: Partial<Translations> = {
   'paytable.rtpLine': 'RTP teórico: {rtp}% · Ganho máximo: {maxWin}× · Volatilidade: {volatility}',
   'paytable.desc.novaforged':
     'Um caça-níquel de vídeo premium 5×3 com 20 linhas e visual neon-cósmico: curingas multiplicadores, giros grátis ativados por scatters com escada de multiplicadores, curingas expansivos e compra de bônus.',
-  'paytable.desc.cosmicways':
-    'Um caça-níquel de vídeo 5×3 com 243 formas de ganhar e visual neon-cósmico. Os símbolos pagam em rolos adjacentes a partir da esquerda, com giros grátis ativados por scatters.',
-  'paytable.desc.stellarclusters':
-    'Um caça-níquel de pagamentos por grupos 5×3 com visual neon-cósmico: grupos conectados de um símbolo (curingas substituem) pagam pelo tamanho, com giros grátis ativados por scatters.',
 
   'volatility.low': 'Baixa',
   'volatility.medium': 'Média',

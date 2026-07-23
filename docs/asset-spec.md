@@ -26,7 +26,7 @@ anything marked _wired_.
   declared asset is missing under `public/`; `e2e/assets.spec.ts` asserts every
   symbol texture loads and every audio clip is served. So a typo or missing file
   is caught automatically.
-- **Shared vs per-game:** all three games (NovaForged · lines, Cosmic Ways ·
+- **Shared vs per-game:** all three games (NovaForge · lines, Cosmic Ways ·
   ways, Stellar Clusters · cluster) currently **share one symbol set** (same
   ids, same neon-cosmic theme). The per-game theming seam is already built — see
   _Per-game art_ below to give each title its own look (drop-in, no code change).
@@ -86,7 +86,7 @@ To give a title its own symbols:
    `cosmicways: { H1: 'games/cosmicways/symbols/H1.svg', … }`.
 
 Any id you don't override keeps the shared placeholder, so theming is incremental.
-Themes to target: **NovaForged** neon-cosmic (lines), **Cosmic Ways**
+Themes to target: **NovaForge** neon-cosmic (lines), **Cosmic Ways**
 ways-cosmic (brighter/expansive), **Stellar Clusters** cluster-cosmic
 (gem/constellation).
 
@@ -135,7 +135,7 @@ Sizes give **on-screen (design px) → deliver @2× (optimal)**; SVG = any size.
 | **Board frame / housing**     | `public/ui/reel-frame.webp` (9-slice ok)                     | WebP/PNG, transparent        | ~760×480 → **~1520×960** (or 9-slice)   | The decorative frame around the 5×3 board (`ReelEngine` draws a plain neon frame today).                                                     |
 | **Game logo / wordmark**      | `public/brand/<game>-logo.webp`                              | WebP/PNG/SVG, transparent    | ~600 w → **~1200 w** (SVG any)          | For the loading screen and/or header; one per title.                                                                                         |
 | **Loading screen**            | `public/brand/loading-bg.webp`                               | WebP                         | 1280×800 → **2560×1600**                | Shown during boot (currently a CSS color + spinner).                                                                                         |
-| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`    | WebP, transparent            | ~256×256 → **~512×512**                 | Highlight art for paylines (NovaForged), ways, and cluster blobs (today glow strokes).                                                       |
+| **Win-line / shape overlays** | `public/fx/line-glow.webp`, `public/fx/cluster-glow.webp`    | WebP, transparent            | ~256×256 → **~512×512**                 | Highlight art for paylines (NovaForge), ways, and cluster blobs (today glow strokes).                                                        |
 | **Big-win celebration**       | `public/fx/burst.webp` (+ sprite sheet)                      | WebP/PNG or sprite atlas     | frames ~256² → **512²** (sheet ≤ 2048²) | Coin/star burst for big/mega/wincap tiers (today a procedural burst in `scenes/Particles.ts`).                                               |
 | **Win-tier overlay plates**   | `public/fx/win-<tier>.webp` (optional per-tier variants)     | WebP/PNG, transparent        | ~640×360 → **~1280×720**                | One shared burst (`fx/win-plate.webp`) is wired for all tiers; the `data-tier` hook on `WinCelebration.svelte` allows per-tier plates later. |
 | **Free-spins intro card**     | `public/fx/freespins-card.webp`                              | WebP, transparent            | 1280×800 → **2560×1600**                | Full-screen "Free Spins!" splash when the feature triggers.                                                                                  |

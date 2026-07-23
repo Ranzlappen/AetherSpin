@@ -1,4 +1,4 @@
-"""NovaForged simulation state for the official math-sdk (real API).
+"""NovaForge simulation state for the official math-sdk (real API).
 
 Drives the run loops and emits the shared `BookEvent` contract in the same order
 as the standalone engine (`math/simulator/engine.py`), so the certified SDK books

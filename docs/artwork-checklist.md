@@ -89,7 +89,7 @@ back to the shared set. To theme a title:
    `cosmicways: { H1: 'games/cosmicways/symbols/H1.svg', … }`.
 
 Any id you don't override keeps the shared placeholder, so theming is incremental.
-Themes to target: **NovaForged** neon-cosmic (lines), **Cosmic Ways**
+Themes to target: **NovaForge** neon-cosmic (lines), **Cosmic Ways**
 brighter/expansive (ways), **Stellar Clusters** gem/constellation (cluster).
 
 ## Guarantees

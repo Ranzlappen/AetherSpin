@@ -354,6 +354,7 @@ export class BookPlayer {
           startMultiplier: event.startMultiplier,
         });
         sound.play('freeSpinStart');
+        sound.playMusic('freespins'); // cross-fade the ambience into bonus mode
         await this.pause(this.timings.freeSpinTransition, 500);
         return runningWin;
       }
@@ -396,6 +397,7 @@ export class BookPlayer {
 
       case 'freeSpinEnd': {
         bus.emit('freespins:end', { totalWin: event.totalWin });
+        sound.playMusic('base'); // ambience back to the base loop
         await this.pause(this.timings.freeSpinEnd, 600);
         gameMode.set('base');
         resetFreeSpins();

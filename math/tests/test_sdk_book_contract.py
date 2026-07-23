@@ -1,4 +1,4 @@
-"""End-to-end contract test for the NovaForged official-SDK book output.
+"""End-to-end contract test for the NovaForge official-SDK book output.
 
 Unlike the pure event-factory contract tests (which validate the factories in
 isolation with no SDK present), this one **runs the real `StakeEngine/math-sdk`**

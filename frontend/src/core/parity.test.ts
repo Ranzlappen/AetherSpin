@@ -5,8 +5,6 @@ import type { Book, BookEvent } from '../../../shared/src/types/events';
 import type { RgsTransport, PlayResult, AuthenticateResult, EndRoundResult, Balance } from './rgsClient';
 import { balance, totalWin, gameMode, isSpinning, lastResult, resetFreeSpins } from './gameState';
 import novaforged from '../../../shared/games/novaforged/game-definition.json';
-import cosmicways from '../../../shared/games/cosmicways/game-definition.json';
-import stellarclusters from '../../../shared/games/stellarclusters/game-definition.json';
 
 /**
  * Cross-language parity against the committed golden-book corpus
@@ -25,8 +23,6 @@ import stellarclusters from '../../../shared/games/stellarclusters/game-definiti
 
 const WINCAP: Record<string, number> = {
   novaforged: novaforged.engine.wincapMultiplier,
-  cosmicways: cosmicways.engine.wincapMultiplier,
-  stellarclusters: stellarclusters.engine.wincapMultiplier,
 };
 
 // Eagerly load the committed corpus as raw text, keyed by `<game>_<mode>`.
@@ -110,10 +106,8 @@ beforeEach(() => {
 });
 
 it('loads a non-empty corpus for every game', () => {
-  expect(fixtures.length).toBeGreaterThanOrEqual(6);
+  expect(fixtures.length).toBeGreaterThanOrEqual(2);
   expect(fixtures.some((f) => f.game === 'novaforged')).toBe(true);
-  expect(fixtures.some((f) => f.game === 'cosmicways')).toBe(true);
-  expect(fixtures.some((f) => f.game === 'stellarclusters')).toBe(true);
   for (const f of fixtures) expect(f.books.length).toBeGreaterThan(0);
 });
 

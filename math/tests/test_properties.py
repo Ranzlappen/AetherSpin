@@ -1,4 +1,4 @@
-"""Property-based tests for the NovaForged engine (hypothesis).
+"""Property-based tests for the NovaForge engine (hypothesis).
 
 Where ``test_engine.py`` checks a few explicit scenarios, these assert invariants
 that must hold for *any* seed/board the engine can produce — the kind of edge

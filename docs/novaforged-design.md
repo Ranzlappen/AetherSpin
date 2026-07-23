@@ -1,4 +1,4 @@
-# Game Design Document — NovaForged
+# Game Design Document — NovaForge
 
 The flagship AetherSpin title and the fully worked reference for this monorepo. All numbers below
 are taken from the single source of truth, `shared/games/novaforged/game-definition.json`.
@@ -6,7 +6,7 @@ are taken from the single source of truth, `shared/games/novaforged/game-definit
 |                  |                                                                     |
 | ---------------- | ------------------------------------------------------------------- |
 | **Game id**      | `novaforged`                                                        |
-| **Display name** | NovaForged                                                          |
+| **Display name** | NovaForge                                                           |
 | **Version**      | 1.0.0                                                               |
 | **Studio**       | AetherSpin                                                          |
 | **Theme**        | neon-cosmic                                                         |

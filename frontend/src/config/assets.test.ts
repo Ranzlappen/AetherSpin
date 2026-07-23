@@ -26,6 +26,7 @@ describe('assets', () => {
       'bg:main',
       'ui:frame',
       'fx:cellGlow',
+      'brand:logo',
     ];
     expect(new Set(keys)).toEqual(new Set(expected));
     // manifestPaths/manifestUrls mirror the declared assets (bundle-relative here).
@@ -52,21 +53,21 @@ describe('assets', () => {
     it('falls back to the shared set when a game has no override', () => {
       // No themed sets shipped today → every id resolves to the shared art.
       expect(THEMED_SYMBOL_SETS).toEqual({});
-      expect(symbolAssetPath('H1', 'cosmicways')).toBe('symbols/H1.webp');
-      expect(symbolAssetPath('W', 'stellarclusters')).toBe('symbols/W.webp');
+      expect(symbolAssetPath('H1', 'somefuturegame')).toBe('symbols/H1.webp');
+      expect(symbolAssetPath('W', 'somefuturegame')).toBe('symbols/W.webp');
     });
 
     it('prefers a game-specific override path, others still fall back', () => {
       // Simulate a delivered themed set for one game/symbol.
-      const themed = { cosmicways: { H1: 'games/cosmicways/symbols/H1.webp' } };
+      const themed = { somefuturegame: { H1: 'games/somefuturegame/symbols/H1.webp' } };
       try {
         Object.assign(THEMED_SYMBOL_SETS, themed);
-        expect(symbolAssetPath('H1', 'cosmicways')).toBe('games/cosmicways/symbols/H1.webp');
+        expect(symbolAssetPath('H1', 'somefuturegame')).toBe('games/somefuturegame/symbols/H1.webp');
         // Non-overridden id and other games keep the shared art.
-        expect(symbolAssetPath('H2', 'cosmicways')).toBe('symbols/H2.webp');
+        expect(symbolAssetPath('H2', 'somefuturegame')).toBe('symbols/H2.webp');
         expect(symbolAssetPath('H1', 'novaforged')).toBe('symbols/H1.webp');
       } finally {
-        delete THEMED_SYMBOL_SETS.cosmicways;
+        delete THEMED_SYMBOL_SETS.somefuturegame;
       }
     });
   });

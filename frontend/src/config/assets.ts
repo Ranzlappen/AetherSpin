@@ -75,12 +75,14 @@ const SCENE_ART: Record<string, string> = {
   'ui:frame': 'ui/reel-frame.webp',
   // White radial glow with a star flare, tinted per symbol for win highlights.
   'fx:cellGlow': 'fx/line-glow.webp',
+  // Wordmark rendered as the cabinet marquee on the frame's top band.
+  'brand:logo': 'brand/novaforged-logo.webp',
 };
 
 /**
  * Per-game symbol-art overrides — the drop-in theming seam. A game may ship its
  * own themed symbol set under its namespace (e.g.
- * `games/cosmicways/symbols/H1.webp`); any id it doesn't override falls back to
+ * `games/<id>/symbols/H1.webp`); any id it doesn't override falls back to
  * the shared set above. Empty today (all three games share one set), so
  * theming a game is a pure data change: drop the files under
  * `public/games/<id>/symbols/` and add the entries here — the renderer still
@@ -88,7 +90,7 @@ const SCENE_ART: Record<string, string> = {
  *
  * @example
  * export const THEMED_SYMBOL_SETS = {
- *   cosmicways: { H1: 'games/cosmicways/symbols/H1.webp' },
+ *   somefuturegame: { H1: 'games/somefuturegame/symbols/H1.webp' },
  * };
  */
 export const THEMED_SYMBOL_SETS: Record<string, Record<string, string>> = {};

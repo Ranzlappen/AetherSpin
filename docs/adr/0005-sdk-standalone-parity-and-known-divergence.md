@@ -34,7 +34,7 @@ The two paths intentionally agree on the **event vocabulary** but currently
   `expected_wild_multiplier` (the weighted mean of the multiplier values) to
   every wild win, and the SDK `reveal_event` does not emit `multiplierWilds`.
 
-Consequence: for **NovaForged** (multiplier wilds `[2,3,5]@[60,30,10]`), the SDK
+Consequence: for **NovaForge** (multiplier wilds `[2,3,5]@[60,30,10]`), the SDK
 and standalone free-game payouts differ for the same board, and the certified
 books wouldn't carry the per-cell `multiplierWilds` the frontend expects.
 **Cosmic Ways is unaffected** — its multiplier wilds are disabled (value `1`), so
@@ -138,7 +138,7 @@ free-game-aware `check-sdk-parity.sh` is the acceptance test (RTP + book contrac
 
 ## Update 3 — the port landed; and why raw SDK RTP isn't a parity oracle
 
-The NovaForged module has now been **ported to the real SDK API and runs
+The NovaForge module has now been **ported to the real SDK API and runs
 end-to-end** (`create_books`). The six modules were rewritten against the actual
 surface (`Config`/`BetMode`/`Distribution`, `GeneralGameState`, static
 `Lines.get_lines`/`record_lines_wins`/`emit_linewin_events`,
@@ -153,7 +153,7 @@ needed to share the canonical inputs:
   the SDK's `read_reels_csv` would ingest as a symbol (`'R4' is not
 registered`); `game_config` overrides the reader to drop it.
 
-All four NovaForged free-game mechanics are realized natively in the SDK and
+All four NovaForge free-game mechanics are realized natively in the SDK and
 verified against a book set: realized multiplier wilds (native Symbol
 `multiplier` attribute, summed per line via `multiplier_method="symbol"`) in
 5000/5000 bonus books; expanding wilds on the middle reels; the escalating
@@ -172,7 +172,7 @@ reel is added.
 The original parity premise (run the SDK, compare its **RTP** to the
 standalone's) is **flawed by construction**. The SDK's `create_books` does not
 sample a natural population of rounds — it generates books **per forced
-distribution**, in the quotas declared on each `BetMode` (NovaForged base:
+distribution**, in the quotas declared on each `BetMode` (NovaForge base:
 `freegame` 0.1, `"0"` 0.4, `basegame` 0.5). The raw RTP of that book pile is an
 artifact of the forcing quotas, not the game's true return. A direct run here
 showed a base "RTP" of **~16x** precisely because 10% of books are forced
@@ -254,7 +254,7 @@ to (but not including) the optimizer.
 ## Update 5 — all three games ported
 
 The remaining two games are now ported to the real SDK with the same treatment
-as NovaForged:
+as NovaForge:
 
 | Game              | Mechanic | SDK calc                   | Win event     |
 | ----------------- | -------- | -------------------------- | ------------- |
@@ -292,7 +292,7 @@ Two fixes made it work:
    `ConstructFenceBias` + `verify_optimization_input`) — the previous module
    imported a non-existent `OptimizationSetup` from `optimization_config`. The
    per-mode RTP allocation across criteria (base: wincap/0/freegame/basegame;
-   bonus: wincap/freegame) sums to the target; NovaForged splits base-heavy, the
+   bonus: wincap/freegame) sums to the target; NovaForge splits base-heavy, the
    ways/cluster games free-game-heavy.
 2. **`run.py` ordering** — `OptimizationSetup(config)` must run **before** the
    first `generate_configs`, because it populates `config.opt_params`, which

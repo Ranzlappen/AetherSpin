@@ -1,6 +1,6 @@
 # Stake Engine Submission Checklist
 
-A thorough, professional pre-submission checklist for shipping an AetherSpin title (e.g. NovaForged
+A thorough, professional pre-submission checklist for shipping an AetherSpin title (e.g. NovaForge
 v1.0) to the [Stake Engine](https://stakeengine.com) dashboard. Work top to bottom; everything must
 be green before you upload.
 
@@ -34,7 +34,7 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
       `bash scripts/run-sdk-parity.sh --strict` is green (PASS, not SKIP) for the
       game. This proves the certified books match what was validated standalone —
       it gates the book contract, **base RTP**, **bonus/free-game RTP**, and that
-      free reveals carry realized `multiplierWilds`. The NovaForged multiplier-wild
+      free reveals carry realized `multiplierWilds`. The NovaForge multiplier-wild
       divergence is reconciled in code and unit-proven against the standalone
       (`math/tests/test_sdk_book_contract.py`, `math/tests/test_parity.py`); this
       gate is the real-SDK confirmation.
@@ -44,7 +44,7 @@ official-SDK `run.py` (certified). Located at `math/library/<game>/`.
 
 ## 2. RTP / PAR documentation
 
-- [ ] Measured **base** RTP within tolerance of `engine.rtpTarget` (96.5% for NovaForged)
+- [ ] Measured **base** RTP within tolerance of `engine.rtpTarget` (96.5% for NovaForge)
       — `python3 math/scripts/validate_rtp.py --game <game> --sims 1000000 --tol 0.03` passes
 - [ ] Measured **bonus** RTP within tolerance **measured against the 100× cost** (not the base bet)
 - [ ] Buy-bonus is **not** player-EV-positive (RTP ≤ 100% at scale)

@@ -9,7 +9,7 @@ read — and to ground itself in the official requirements first.
 
 ```
 You are reviewing the AetherSpin monorepo for readiness to submit three slot
-games (NovaForged · lines, Cosmic Ways · ways, Stellar Clusters · cluster) to
+games (NovaForge · lines, Cosmic Ways · ways, Stellar Clusters · cluster) to
 Stake Engine (stakeengine.com). Audit the code against Stake Engine's
 guidelines and report findings. Be rigorous and adversarial: prove each claim
 against the actual code or by running a gate — do not take comments or docs at

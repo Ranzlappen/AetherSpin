@@ -1,4 +1,4 @@
-"""Optimization setup for NovaForged (real optimization_program API).
+"""Optimization setup for NovaForge (real optimization_program API).
 
 Declares the per-mode RTP allocation, win-range scaling, and run parameters the
 Rust optimizer consumes to solve for the per-book selection weights that hit the

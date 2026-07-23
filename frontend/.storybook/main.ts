@@ -1,6 +1,6 @@
 import type { StorybookConfig } from '@storybook/svelte-vite';
 
-/** Storybook configuration for the NovaForged component library. */
+/** Storybook configuration for the NovaForge component library. */
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(ts|svelte)'],
   addons: [],

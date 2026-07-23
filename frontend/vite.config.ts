@@ -4,7 +4,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath, URL } from 'node:url';
 
 /**
- * Vite configuration for the NovaForged web client.
+ * Vite configuration for the NovaForge web client.
  *
  * - `base` is `./` so the built bundle works when served from an arbitrary
  *   path inside the Stake CDN iframe.

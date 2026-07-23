@@ -1,4 +1,4 @@
-"""Book events for NovaForged (real math-sdk API) — emitted in the shared
+"""Book events for NovaForge (real math-sdk API) — emitted in the shared
 `BookEvent` contract (`shared/src/types/events.ts`), NOT the SDK's native
 vocabulary.
 

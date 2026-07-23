@@ -1,4 +1,4 @@
-# NovaForged — math white paper (PAR)
+# NovaForge — math white paper (PAR)
 
 **Game id:** `novaforged` · **version** 1.0.0 · **mechanic** lines · **5×3**
 **Target RTP** 0.9650 · **win cap** 5,000x · **volatility (base)** Medium

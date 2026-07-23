@@ -1,6 +1,7 @@
 <script lang="ts">
   /** Buys the bonus (free-spins) mode for the configured cost multiplier. */
-  import { buyBonusMode } from '../config/gameConfig';
+  import { buyBonusMode, gameDefinition } from '../config/gameConfig';
+  import { assetUrl } from '../config/assets';
   import { currentBet, balance, isSpinning, gameMode, currency } from '../core/gameState';
   import { formatCurrency } from '../config/gameConfig';
   import { t, localeTag } from '../core/i18n';
@@ -8,6 +9,12 @@
 
   const dispatch = createEventDispatcher<{ buy: void }>();
   const costMultiplier = buyBonusMode?.cost ?? 100;
+
+  // Feature summary straight from the definition — never hard-coded numbers.
+  const fsAwards = Object.values(gameDefinition.features.freeSpins.awards);
+  const minSpins = Math.min(...fsAwards);
+  const maxSpins = Math.max(...fsAwards);
+  const ladderMax = gameDefinition.features.freeSpins.multiplierLadder.max;
 
   let confirming = false;
 
@@ -34,8 +41,14 @@
   {#if confirming}
     <div class="overlay" role="dialog" aria-modal="true">
       <div class="dialog panel">
+        <img class="card" src={assetUrl('fx/freespins-card.webp')} alt="" aria-hidden="true" />
         <h3>{$t('buyBonus.confirmTitle')}</h3>
-        <p>
+        <ul class="features">
+          <li>{$t('buyBonus.featSpins', { min: minSpins, max: maxSpins })}</li>
+          <li>{$t('buyBonus.featLadder', { max: ladderMax })}</li>
+          <li>{$t('buyBonus.featWilds')}</li>
+        </ul>
+        <p class="cost-line">
           {$t('buyBonus.confirmBody', {
             cost: formatCurrency(cost, $currency, $localeTag),
             multiplier: costMultiplier,
@@ -80,14 +93,44 @@
     z-index: 60;
   }
   .dialog {
-    max-width: 340px;
+    max-width: 380px;
+    width: min(380px, 92vw);
     padding: 1.4rem;
     text-align: center;
     border-color: var(--neon-magenta);
+    box-shadow: 0 0 42px rgba(255, 69, 224, 0.28);
+  }
+  .card {
+    width: min(240px, 60vw);
+    height: auto;
+    margin: -0.4rem auto 0.2rem;
+    display: block;
+    filter: drop-shadow(0 6px 22px rgba(255, 69, 224, 0.35));
   }
   .dialog h3 {
     margin: 0 0 0.6rem;
+    font-size: 1.25rem;
     color: var(--neon-magenta);
+    text-shadow: 0 0 12px rgba(255, 69, 224, 0.6);
+  }
+  .features {
+    list-style: none;
+    margin: 0 0 0.6rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .features li::before {
+    content: '◆ ';
+    color: var(--neon-cyan);
+  }
+  .cost-line {
+    margin: 0.2rem 0 0;
+    color: var(--text-dim);
+    font-size: 0.85rem;
   }
   .actions {
     display: flex;

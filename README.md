@@ -4,7 +4,7 @@
 
 ### A production-grade Stake Engine slot-game studio monorepo
 
-**Reusable Python math engine + PixiJS web client + shared single-source-of-truth game definition — with the flagship neon-cosmic slot _NovaForged_ built end to end.**
+**Reusable Python math engine + PixiJS web client + shared single-source-of-truth game definition — with the flagship neon-cosmic slot _NovaForge_ built end to end.**
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows/ci.yml)
 [![Math Validation](https://img.shields.io/badge/RTP-validated-blue)](.github/workflows/math-validation.yml)
@@ -25,14 +25,14 @@
 canonical **`game-definition.json`** that both sides read so the math and the visuals can never
 drift.
 
-The repo ships with **NovaForged** — a complete, polished reference title:
+The repo ships with **NovaForge** — a complete, polished reference title:
 
-> **NovaForged** — a premium **5×3, 20-line** neon-cosmic video slot. **Multiplier wilds**,
+> **NovaForge** — a premium **5×3, 20-line** neon-cosmic video slot. **Multiplier wilds**,
 > **scatter-triggered free spins** with an escalating **×1 → ×3 multiplier ladder**, **expanding
 > wilds** in free spins, and a **100× bonus buy**. RTP target **96.5%**, win cap **5000×**,
 > **medium volatility** (certified base CV ≈ 10.4).
 
-Clone NovaForged, retune the numbers, and you have your next game.
+Clone NovaForge, retune the numbers, and you have your next game.
 
 ---
 
@@ -193,9 +193,9 @@ bash scripts/setup-math.sh      # clones StakeEngine/math-sdk into math/engine/
 
 ## 🛠 Common commands
 
-All math commands accept `--game <id>`; defaults shown are for NovaForged.
+All math commands accept `--game <id>`; defaults shown are for NovaForge.
 
-### (a) Simulate NovaForged
+### (a) Simulate NovaForge
 
 ```bash
 python3 math/scripts/simulate.py --game novaforged --sims 100000
@@ -304,13 +304,13 @@ pnpm format:check                                    # prettier
 
 ## 📈 Project status & roadmap
 
-**Status:** NovaForged math is complete and RTP-validated on the standalone engine; the
+**Status:** NovaForge math is complete and RTP-validated on the standalone engine; the
 official-SDK game files are written and run once the SDK is fetched. The frontend is under
 active construction (core, scenes, components).
 
 - [x] Shared single-source-of-truth definition + schema + TS types
 - [x] Standalone stdlib math engine (simulate / validate / books / optimize / PAR)
-- [x] Official-SDK-compatible NovaForged game files
+- [x] Official-SDK-compatible NovaForge game files
 - [x] CI with RTP gate + nightly deep validation
 - [ ] Frontend feature-complete (reels, free-spin scene, paytable/rules, autoplay)
 - [ ] Official-SDK certified run + dashboard submission
@@ -327,7 +327,7 @@ active construction (core, scenes, components).
 | [frontend.md](docs/frontend.md)                                                   | Frontend architecture & dev guide                       |
 | [developing-a-new-game.md](docs/developing-a-new-game.md)                         | Step-by-step new-game guide                             |
 | [stake-engine-submission-checklist.md](docs/stake-engine-submission-checklist.md) | Pre-submission checklist + upload steps                 |
-| [novaforged-design.md](docs/novaforged-design.md)                                 | The filled-in NovaForged game design document           |
+| [novaforged-design.md](docs/novaforged-design.md)                                 | The filled-in NovaForge game design document            |
 | [adr/](docs/adr/)                                                                 | Architecture Decision Records                           |
 | [templates/](docs/templates/)                                                     | GDD + PAR-sheet templates                               |
 

@@ -34,6 +34,14 @@
     dispatch('close');
   }
 
+  /** Standard modal affordance: Escape closes the paytable. */
+  function onKeydown(event: KeyboardEvent): void {
+    if (open && event.key === 'Escape') {
+      event.preventDefault();
+      close();
+    }
+  }
+
   const paySymbols = gameDefinition.symbols.filter((s) => gameDefinition.paytable[s.id] !== undefined);
   const mechanic = gameDefinition.engine.type;
   // Column buckets are the union of payout sizes across the paytable, sorted
@@ -72,6 +80,8 @@
     return grid;
   }
 </script>
+
+<svelte:window on:keydown={onKeydown} />
 
 {#if open}
   <div class="overlay" role="dialog" aria-modal="true" aria-label={$t('paytable.open')}>

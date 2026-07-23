@@ -41,6 +41,8 @@ export class Stage {
   private fpsFrames = 0;
   private resizeObserver: ResizeObserver | null = null;
   private celebrateOff: (() => void) | null = null;
+  private freeSpinsOnOff: (() => void) | null = null;
+  private freeSpinsEndOff: (() => void) | null = null;
   private reducedMotion = false;
   /** Reserved DOM-HUD bands (CSS px) the board must not sit under. */
   private insetTop = 0;
@@ -96,6 +98,7 @@ export class Stage {
     await preloadAssets();
 
     this.background = new Background();
+    this.background.setReducedMotion(this.reducedMotion);
     this.reels = new ReelEngine(app.renderer);
     this.particles = new Particles();
 
@@ -108,6 +111,9 @@ export class Stage {
     app.ticker.add(this.update, this);
 
     this.celebrateOff = bus.on('celebrate', (p) => this.onCelebrate(p.tier));
+    // Bonus ambience: tint the background for the duration of free spins.
+    this.freeSpinsOnOff = bus.on('freespins:start', () => this.background?.setFreeSpins(true));
+    this.freeSpinsEndOff = bus.on('freespins:end', () => this.background?.setFreeSpins(false));
 
     this.observeResize(options.container);
     this.resize();
@@ -133,6 +139,7 @@ export class Stage {
   /** Allow the host to follow OS "reduce motion" changes after init. */
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced;
+    this.background?.setReducedMotion(reduced);
   }
 
   /**
@@ -235,6 +242,8 @@ export class Stage {
   /** Tear down everything. */
   destroy(): void {
     this.celebrateOff?.();
+    this.freeSpinsOnOff?.();
+    this.freeSpinsEndOff?.();
     this.resizeObserver?.disconnect();
     if (this.canvasEl && this.onContextLost)
       this.canvasEl.removeEventListener('webglcontextlost', this.onContextLost);

@@ -43,6 +43,9 @@ for (const vp of VIEWPORTS) {
       !vp.phone && testInfo.project.name === 'mobile-chromium',
       'desktop/tablet sizes are covered on the desktop project'
     );
+    // Every protocol roundtrip (boundingBox etc.) costs seconds when the CPU
+    // renderer is saturated by a large canvas; give the layout sweep 3× budget.
+    test.slow();
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await page.goto('/');
 

@@ -16,6 +16,10 @@
     sound.play('buttonClick');
     increaseBet();
   }
+  function max(): void {
+    sound.play('buttonClick');
+    betLevelIndex.set(betLevels.length - 1);
+  }
 </script>
 
 <div class="bet panel">
@@ -27,6 +31,9 @@
     <span class="value neon-text">{$currentBetLabel}</span>
     <button class="step" aria-label={$t('bet.increase')} on:click={inc} disabled={atMax || $isSpinning}>
       +
+    </button>
+    <button class="max" aria-label={$t('bet.max')} on:click={max} disabled={atMax || $isSpinning}>
+      {$t('bet.maxShort')}
     </button>
   </div>
 </div>
@@ -61,6 +68,21 @@
   .step:not(:disabled):active {
     transform: scale(0.92);
   }
+  .max {
+    height: 30px;
+    padding: 0 0.55rem;
+    border-radius: 15px;
+    border: 1px solid rgba(125, 249, 255, 0.5);
+    background: rgba(125, 249, 255, 0.08);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--neon-cyan);
+  }
+  .max:not(:disabled):active {
+    transform: scale(0.94);
+  }
   .value {
     font-size: 1.05rem;
     font-weight: 800;
@@ -84,6 +106,14 @@
     .value {
       font-size: 0.95rem;
       min-width: 58px;
+    }
+  }
+
+  /* The +/− stepper still reaches every level; below tablet width the Max
+     shortcut costs more room than it's worth in the bottom dock. */
+  @media (max-width: 519px) {
+    .max {
+      display: none;
     }
   }
 </style>

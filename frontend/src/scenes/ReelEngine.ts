@@ -7,7 +7,17 @@
  * the game runs with zero art assets. Pixi-only; it reacts to intents emitted on
  * the shared event bus.
  */
-import { Container, Graphics, Text, TextStyle, Texture, Sprite, type Renderer, type Ticker } from 'pixi.js';
+import {
+  Container,
+  Graphics,
+  Rectangle,
+  Text,
+  TextStyle,
+  Texture,
+  Sprite,
+  type Renderer,
+  type Ticker,
+} from 'pixi.js';
 import type { Board, Win } from '../../../shared/src/types/events';
 import {
   NUM_REELS,
@@ -73,10 +83,16 @@ export class ReelEngine {
   /** Solid, opaque reel-cabinet backdrop drawn behind the symbols. */
   private readonly boardBackdrop = new Graphics();
   private frameArt: Sprite | null = null;
+  /** Wordmark marquee sitting on the frame's top metal band. */
+  private logoArt: Sprite | null = null;
   private readonly lineOverlay = new Graphics();
   /** Additive glow sprites over winning cells (uses the `fx:cellGlow` art). */
   private readonly glowLayer = new Container();
   private readonly textureCache = new Map<string, Texture>();
+  /** Alpha-trimmed views over registry art (share their source — see destroy). */
+  private readonly trimmedViews = new Set<Texture>();
+  /** Textures generated here (procedural tiles) — fully owned, fully destroyed. */
+  private readonly ownedTextures = new Set<Texture>();
   private readonly renderer: Renderer;
   private elapsed = 0;
   private board: Board = [];
@@ -93,6 +109,8 @@ export class ReelEngine {
     // frame (its inner lip overlaps the reel edges) rather than the symbols
     // floating on top of it. Re-adding moves the existing child to the top.
     if (this.frameArt) this.view.addChild(this.frameArt);
+    // The marquee sits on the plate's top band, so it rides above the plate.
+    if (this.logoArt) this.view.addChild(this.logoArt);
     this.subscribe();
   }
 
@@ -132,12 +150,39 @@ export class ReelEngine {
       this.frameArt.x = (BOARD_WIDTH - this.frameArt.width) / 2;
       this.frameArt.y = (BOARD_HEIGHT - this.frameArt.height) / 2;
       this.view.addChild(this.frameArt);
+      this.buildLogoMarquee();
       return;
     }
     this.frame
       .roundRect(-12, -12, BOARD_WIDTH + 24, BOARD_HEIGHT + 24, 18)
       .stroke({ color: 0x7df9ff, width: 3, alpha: 0.8 });
     this.view.addChild(this.frame);
+  }
+
+  /**
+   * The wordmark rendered as a cabinet marquee, centred on the metal band
+   * between the frame's top edge and the reel window — so the game is branded
+   * in-play (not just on the loading screen) the way a finished cabinet is.
+   * Skipped when either the frame or the logo art is missing.
+   */
+  private buildLogoMarquee(): void {
+    if (!this.frameArt) return;
+    const art = assetRegistry.getTexture('brand:logo');
+    if (!art) return;
+    const texture = trimTexture(art);
+    if (texture !== art) this.trimmedViews.add(texture);
+    const bandTop = this.frameArt.y;
+    const bandHeight = -FRAME_MARGIN - bandTop;
+    if (bandHeight <= 0) return;
+    const logo = new Sprite(texture);
+    const fit = Math.min((bandHeight * 0.92) / texture.height, (this.frameArt.width * 0.42) / texture.width);
+    logo.width = texture.width * fit;
+    logo.height = texture.height * fit;
+    logo.anchor.set(0.5);
+    logo.x = BOARD_WIDTH / 2;
+    logo.y = bandTop + bandHeight * 0.5;
+    this.logoArt = logo;
+    this.view.addChild(logo);
   }
 
   /**
@@ -272,8 +317,14 @@ export class ReelEngine {
     if (cached) return cached;
     const art = assetRegistry.getTexture(`symbol:${symbolId}`);
     if (art) {
-      this.textureCache.set(symbolId, art);
-      return art;
+      // Delivered symbol plates carry generous transparent padding (some gems
+      // occupy barely a third of the 512² canvas), which made the board read
+      // sparse. Trim to the alpha bounding box so the artwork itself — not its
+      // padding — is what gets fitted into the cell.
+      const trimmed = trimTexture(art);
+      if (trimmed !== art) this.trimmedViews.add(trimmed);
+      this.textureCache.set(symbolId, trimmed);
+      return trimmed;
     }
     const color = parseInt(getSymbolColor(symbolId).replace('#', ''), 16);
     const g = new Graphics();
@@ -282,6 +333,7 @@ export class ReelEngine {
     g.roundRect(3, 3, SYMBOL_SIZE - 6, SYMBOL_SIZE - 6, 12).stroke({ color, width: 3, alpha: 0.9 });
     const tex = this.renderer.generateTexture(g);
     g.destroy();
+    this.ownedTextures.add(tex);
     this.textureCache.set(symbolId, tex);
     return tex;
   }
@@ -290,12 +342,19 @@ export class ReelEngine {
   private setCellSymbol(cell: Cell, symbolId: string): void {
     cell.symbolId = symbolId;
     cell.bg.clear();
-    // Use a sprite from the cached texture for the tile background, sized to
-    // the cell (art textures ship at 512×512; procedural ones at cell size).
+    // Use a sprite from the cached texture for the tile background. Art
+    // textures are alpha-trimmed, so aspect-fit the real content into the cell
+    // (centred); procedural tiles are square and fill it exactly.
     cell.bg.removeChildren();
-    const tile = new Sprite(this.symbolTexture(symbolId));
-    tile.width = SYMBOL_SIZE;
-    tile.height = SYMBOL_SIZE;
+    const texture = this.symbolTexture(symbolId);
+    const tile = new Sprite(texture);
+    const box = SYMBOL_SIZE * (this.trimmedViews.has(texture) ? 0.98 : 1);
+    const fit = Math.min(box / texture.width, box / texture.height);
+    tile.width = texture.width * fit;
+    tile.height = texture.height * fit;
+    tile.anchor.set(0.5);
+    tile.x = SYMBOL_SIZE / 2;
+    tile.y = SYMBOL_SIZE / 2;
     cell.bg.addChild(tile);
 
     // The procedural glyph letter is only a stand-in for missing art; when a
@@ -586,8 +645,17 @@ export class ReelEngine {
 
   /** Tear down resources. */
   destroy(): void {
-    for (const tex of this.textureCache.values()) tex.destroy(true);
+    for (const tex of this.textureCache.values()) {
+      // Trimmed views share their source with the asset registry's texture —
+      // destroy the view only, never the shared source. Procedural textures own
+      // their source and are destroyed fully. Registry originals (untrimmed art)
+      // stay alive for the registry.
+      if (this.trimmedViews.has(tex)) tex.destroy(false);
+      else if (this.ownedTextures.has(tex)) tex.destroy(true);
+    }
     this.textureCache.clear();
+    this.trimmedViews.clear();
+    this.ownedTextures.clear();
     this.view.destroy({ children: true });
   }
 }
@@ -597,6 +665,56 @@ function labelFor(symbolId: string): string {
   if (symbolId === wildSymbolId) return 'W';
   if (symbolId === scatterSymbolId) return '★';
   return symbolId;
+}
+
+/**
+ * A view over `texture` cropped to its alpha bounding box (with a small halo
+ * margin), sharing the same GPU source. Returns the original texture when the
+ * pixels can't be read (no DOM canvas, cross-origin) or the trim would be a
+ * no-op — the caller falls back to the untrimmed plate either way.
+ */
+function trimTexture(texture: Texture): Texture {
+  try {
+    if (typeof document === 'undefined') return texture;
+    const source = texture.source.resource as CanvasImageSource | null | undefined;
+    if (!source) return texture;
+    const w = texture.source.pixelWidth;
+    const h = texture.source.pixelHeight;
+    if (!w || !h) return texture;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return texture;
+    ctx.drawImage(source, 0, 0);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let minX = w;
+    let minY = h;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 12) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) return texture; // fully transparent — keep the plate as-is
+    const pad = Math.round(Math.min(w, h) * 0.02); // keep a soft-glow margin
+    minX = Math.max(0, minX - pad);
+    minY = Math.max(0, minY - pad);
+    maxX = Math.min(w - 1, maxX + pad);
+    maxY = Math.min(h - 1, maxY + pad);
+    const cw = maxX - minX + 1;
+    const ch = maxY - minY + 1;
+    if (cw >= w - 2 && ch >= h - 2) return texture; // nothing worth trimming
+    return new Texture({ source: texture.source, frame: new Rectangle(minX, minY, cw, ch) });
+  } catch {
+    return texture;
+  }
 }
 
 /** A weighted-ish random symbol used only for the spinning blur fill. */

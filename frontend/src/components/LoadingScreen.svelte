@@ -5,7 +5,7 @@
    */
   import { assetUrl } from '../config/assets';
 
-  export let message = 'Initializing NovaForged…';
+  export let message = 'Initializing NovaForge…';
   let logoFailed = false;
 </script>
 
@@ -16,7 +16,7 @@
     <img
       class="logo-img"
       src={assetUrl('brand/novaforged-logo.webp')}
-      alt="NovaForged"
+      alt="NovaForge"
       on:error={() => (logoFailed = true)}
     />
   {/if}

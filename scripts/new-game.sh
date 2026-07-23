@@ -2,8 +2,7 @@
 #
 # new-game.sh — scaffold a new game from a declared MECHANIC, not a fixed clone.
 #
-#   --mechanic lines  -> seeds from NovaForged  (fixed paylines)
-#   --mechanic ways   -> seeds from Cosmic Ways  (all-ways, no paylines)
+#   --mechanic lines  -> seeds from NovaForge  (fixed paylines)
 #
 # Creates a complete, immediately-runnable game (you then retune it):
 #   shared/games/<id>/game-definition.json   (reference def, id/name rewritten)
@@ -12,7 +11,7 @@
 #
 # Refuses to overwrite existing targets.
 #
-# Usage: scripts/new-game.sh <new-game-id> [--mechanic lines|ways]
+# Usage: scripts/new-game.sh <new-game-id> [--mechanic lines]
 #
 set -euo pipefail
 
@@ -32,7 +31,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$GAME_ID" ]; then
-  echo "Usage: scripts/new-game.sh <new-game-id> [--mechanic lines|ways]" >&2
+  echo "Usage: scripts/new-game.sh <new-game-id> [--mechanic lines]" >&2
   exit 1
 fi
 
@@ -43,11 +42,12 @@ if ! printf '%s' "$GAME_ID" | grep -Eq '^[a-z][a-z0-9_-]*$'; then
 fi
 
 # Map the mechanic to its reference game (which already encodes engine.type,
-# paylines, and a matching SDK module + reels for that mechanic).
+# paylines, and a matching SDK module + reels for that mechanic). Only 'lines'
+# ships a reference title today; the ways/cluster engine plugins remain in
+# math/simulator/mechanics.py for future titles.
 case "$MECHANIC" in
   lines) REF_ID="novaforged" ;;
-  ways)  REF_ID="cosmicways" ;;
-  *) echo "ERROR: unknown mechanic '$MECHANIC' (use 'lines' or 'ways')." >&2; exit 1 ;;
+  *) echo "ERROR: unknown mechanic '$MECHANIC' (only 'lines' has a shipped reference game)." >&2; exit 1 ;;
 esac
 
 REF_DEF="$ROOT/shared/games/$REF_ID/game-definition.json"

@@ -1,4 +1,4 @@
-"""Unit tests for the NovaForged standalone engine.
+"""Unit tests for the NovaForge standalone engine.
 
 Fast, hermetic tests (stdlib only) that gate CI. They assert structural
 correctness and statistical sanity rather than exact RTP convergence (which a

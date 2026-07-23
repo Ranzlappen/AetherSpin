@@ -1,4 +1,4 @@
-"""Reusable executable steps for NovaForged (real math-sdk API).
+"""Reusable executable steps for NovaForge (real math-sdk API).
 
 These mirror the standalone engine (`math/simulator/engine.py` +
 `mechanics.py`) so the certified math evaluates a board the same way:

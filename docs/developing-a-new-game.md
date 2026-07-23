@@ -1,7 +1,7 @@
 # Developing a New Game
 
 This guide walks you through creating a brand-new AetherSpin / Stake Engine title, from scaffold to
-packaged submission. The flagship **NovaForged** (`shared/games/novaforged/`,
+packaged submission. The flagship **NovaForge** (`shared/games/novaforged/`,
 `math/games/novaforged/`) is the fully worked reference — read it alongside this guide.
 
 > **Prerequisites:** Node ≥ 20, pnpm ≥ 10, Python ≥ 3.11. The standalone math engine is stdlib-only,
@@ -47,10 +47,10 @@ validated by `shared/schemas/game-definition.schema.json`.
 
 ### Every field explained
 
-| Field                               | Meaning                                                                      | NovaForged example                   |
+| Field                               | Meaning                                                                      | NovaForge example                    |
 | ----------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
 | `id`                                | Slug (`^[a-z0-9_]+$`), matches the directory name                            | `"novaforged"`                       |
-| `displayName`                       | Player-facing title                                                          | `"NovaForged"`                       |
+| `displayName`                       | Player-facing title                                                          | `"NovaForge"`                        |
 | `version`                           | SemVer; bump on math/visual changes                                          | `"1.0.0"`                            |
 | `studio`, `theme`, `description`    | Metadata                                                                     | `"AetherSpin"`, `"neon-cosmic"`      |
 | `engine.type`                       | `lines` \| `ways` \| `cluster` \| `scatter`                                  | `"lines"`                            |
@@ -148,7 +148,7 @@ python3 math/scripts/generate_books.py --game my_game --sims 100000
 ## Step 5 — Wire up the frontend
 
 The frontend reads the definition through `frontend/src/config/gameConfig.ts`, which currently
-imports NovaForged's JSON directly. To target your game:
+imports NovaForge's JSON directly. To target your game:
 
 1. Point `gameConfig.ts` at `shared/games/my_game/game-definition.json` (or parameterize it).
 2. Add art/audio assets under `frontend/src/assets/` keyed by your symbol ids.

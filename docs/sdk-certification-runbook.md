@@ -44,7 +44,7 @@ if any is missing, so it's safe to call in environments that can't run it.
 
 `create_books` does **not** produce a natural RTP — it generates books _per
 forced distribution_ (win-cap / free-game / zero / base) in declared quotas, so
-its raw RTP is quota-shaped (e.g. NovaForged base reads ~16–22x). Those books are
+its raw RTP is quota-shaped (e.g. NovaForge base reads ~16–22x). Those books are
 the _input_ to the optimizer, which solves for the per-book **selection weights**
 that make the final library hit the target RTP and volatility. The certified RTP
 only exists _after_ this step, in the optimized lookup tables.
@@ -53,14 +53,14 @@ The per-game optimization targets live in `math/games/<id>/game_optimization.py`
 (`OptimizationSetup`): an RTP allocation across criteria (must sum to the target),
 win-range scaling, and run parameters. The criteria mirror the bet-mode
 distributions: base = `wincap`/`0`/`freegame`/`basegame`, bonus =
-`wincap`/`freegame`. NovaForged splits base RTP base-heavy; Cosmic Ways / Stellar
+`wincap`/`freegame`. NovaForge splits base RTP base-heavy; Cosmic Ways / Stellar
 Clusters split it free-game-heavy (their base ways/cluster wins are small while
 the free game carries a high win-scale).
 
 ## Verified result
 
 Run in an SDK-capable environment (Python 3.12 + Rust), the optimizer converges
-to the target exactly. For NovaForged (100k base / 40k bonus sims, ~3 min):
+to the target exactly. For NovaForge (100k base / 40k bonus sims, ~3 min):
 
 ```
 [base]  POST-OPT RTP = 0.9650  (target 0.965)
