@@ -7,6 +7,26 @@ entries below this point are maintained automatically by
 [Release Please](https://github.com/googleapis/release-please) from Conventional
 Commits.
 
+## [2.0.0](https://github.com/Ranzlappen/AetherSpin/compare/v1.11.2...v2.0.0) (2026-07-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* the Cosmic Ways and Stellar Clusters titles are removed; the studio ships the single flagship game (internal id stays `novaforged`).
+
+### Features
+
+* **frontend:** visual completeness pass for release readiness ([99aa03f](https://github.com/Ranzlappen/AetherSpin/commit/99aa03fdaf5952361577b628c4217938b712dc9c))
+* NovaForge single-title release — rename, music, warp field, HUD extras ([e2267b2](https://github.com/Ranzlappen/AetherSpin/commit/e2267b26e865810c360d5f2c7a7d342b5f151f77))
+
+
+### Bug Fixes
+
+* **frontend:** frame to 17% + move it to the foreground over the reels ([c51b514](https://github.com/Ranzlappen/AetherSpin/commit/c51b5144c9cc42673303fac45401c36fae3e29b0))
+* **frontend:** scale the reel frame down ~15% so it hugs the reels ([ef6aa2d](https://github.com/Ranzlappen/AetherSpin/commit/ef6aa2da487b314a9d2a18121141b1146978079f))
+* **frontend:** scale the reel frame down ~15% so it hugs the reels ([a04506c](https://github.com/Ranzlappen/AetherSpin/commit/a04506c08b91205519b7c4905364eca5c0066ede))
+* **frontend:** size the frame from its true opening so it never clips symbols ([798936c](https://github.com/Ranzlappen/AetherSpin/commit/798936ce6dbfce2aa1993d836b46301ae5692ad1))
+
 ## [1.11.2](https://github.com/Ranzlappen/AetherSpin/compare/v1.11.1...v1.11.2) (2026-07-14)
 
 
